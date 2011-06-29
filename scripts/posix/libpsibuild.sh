@@ -534,7 +534,7 @@ prepare_sources() {
 
   # prepare icons
   cp -a "${PSI_DIR}"/git-plus/iconsets "${PSI_DIR}/build"
-  cp "${PSI_DIR}"/git-plus/app.ico "${PSI_DIR}/build"
+  cp "${PSI_DIR}"/git-plus/app.ico "${PSI_DIR}/build/win32"
 }
 
 prepare_plugins_sources() {
