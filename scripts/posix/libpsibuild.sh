@@ -514,7 +514,7 @@ prepare_sources() {
   )
 
   cd "${PSI_DIR}"
-  rev=$(cd psi-plus; echo $((`git describe --tags | cut -d - -f 2`+5000)))
+  rev=$(cd git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
   PATCHES=`ls -1 git-plus/patches/*diff 2>/dev/null`
   cd "${PSI_DIR}/build"
   [ -e "$PATCH_LOG" ] && rm "$PATCH_LOG"
