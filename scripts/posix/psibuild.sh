@@ -55,7 +55,7 @@ PLUGINS="${PLUGINS:-}"
 die() { echo "$@"; exit 1; }
 if [ ! -f ./libpsibuild.sh -o "$WORK_OFFLINE" = 0 ]; then
   [ -f libpsibuild.sh ] && { rm libpsibuild.sh || die "delete error"; }
-  wget --no-check-certificate "https://raw.github.com/psi-plus/main/master/scripts/posix/libpsibuild.sh" || die "Failed to update libpsibuild";
+  wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh" || die "Failed to update libpsibuild";
 fi
 . ./libpsibuild.sh
 
