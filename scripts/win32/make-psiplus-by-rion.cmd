@@ -89,8 +89,8 @@ goto :exit
 ::------------------------------------------------------------
 ::--           FUNCTIONS SECTION
 ::------------------------------------------------------------
-
-:getInstallDirFromRegistryWOW64         -  finds install path from windows registry. (any app from "Add/Remove software")
+ ::  finds install path from windows registry. (any app from "Add/Remove software")
+:getInstallDirFromRegistryWOW64
 setlocal
 set root=HKLM
 if not %2xxx == xxx set root=%2
