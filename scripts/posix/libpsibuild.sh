@@ -514,7 +514,7 @@ prepare_sources() {
   )
 
   cd "${PSI_DIR}"
-  rev="$(cd git-plus; git log -1 --pretty=%h)"
+  rev=$(cd git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
   PATCHES=`ls -1 git-plus/patches/*diff 2>/dev/null`
   cd "${PSI_DIR}/build"
   [ -e "$PATCH_LOG" ] && rm "$PATCH_LOG"
@@ -534,6 +534,7 @@ prepare_sources() {
 
   # prepare icons
   cp -a "${PSI_DIR}"/git-plus/iconsets "${PSI_DIR}/build"
+  cp "${PSI_DIR}"/git-plus/app.ico "${PSI_DIR}/build/win32"
 }
 
 prepare_plugins_sources() {
