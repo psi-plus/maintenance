@@ -245,7 +245,7 @@ CONTENT
         "Qt framework / Сначала установите утилиту $name из Qt framework"
       log "${name} Qt tool is not found. ignoring.."
     else
-      log "Found ${name} Qt tool"
+      log "Found ${name} Qt tool: ${result}"
     fi
   }
 
