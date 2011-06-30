@@ -65,6 +65,7 @@ cd "%WORKDIR%\git\iris"
 cd "%WORKDIR%\git\src\libpsi"
 "%GIT%" checkout-index -a --f --prefix=%WORKDIR%\build\src\libpsi\
 xcopy /Y /E /Q "%WORKDIR%\git-plus\iconsets" "%WORKDIR%\build\iconsets" || @echo icons export failed&goto :failExit
+copy /Y "%WORKDIR%\git-plus\app.ico" "%WORKDIR%\build\win32\app.ico"
 cd "%WORKDIR%"\build
 FOR /F "usebackq delims==" %%i IN (`dir /B "%WORKDIR%\git-plus\patches\*.diff"`) DO (
 	@echo Apply: %%i
@@ -74,12 +75,11 @@ FOR /F "usebackq delims==" %%i IN (`dir /B "%WORKDIR%\git-plus\patches\*.diff"`)
 
 cd "%WORKDIR%"\git-plus
 for /f "tokens=2 delims=-" %%i in ('"%GIT%" describe --tags') do set psiplusrev=%%i
+set /a psiplusrev=%psiplusrev%+5000
 call :doSed "s/\(xxx\)/%psiplusrev%/" "%WORKDIR%\build\src\applicationinfo.cpp"
 if %ERRORLEVEL% neq 0 @echo failed to set revision&goto :failExit
 
 cd "%WORKDIR%\build"
-pause
-copy ..\git-plus\app.ico win32\app.ico /Y
 qconf
 configure --enable-plugins --enable-whiteboarding --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
 @echo ================================
