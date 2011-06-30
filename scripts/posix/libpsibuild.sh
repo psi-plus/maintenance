@@ -99,14 +99,9 @@ END
 }
 
 # Exit with error message
-die() {
-  echo; echo " !!!ERROR: $@";
-  exit 1;
-}
-
-warning() {
-  echo; echo " !!!WARNING: $@";
-}
+die() { echo; echo " !!!ERROR: $@"; exit 1; }
+warning() { echo; echo " !!!WARNING: $@"; }
+log() { local opt; [ "$1" == "-n" ] && { opt="-n"; shift; }; echo $opt "*** $@"; }
 
 winpath2unix() {
   local path="$@"
@@ -115,7 +110,7 @@ winpath2unix() {
 }
 
 check_env() {
-  echo "Testing environment.. "
+  log "Testing environment.. "
 
   unset COMPILE_PREFIX
   unset PSILIBDIR
@@ -164,7 +159,7 @@ check_env() {
     local qtpath=`qmake -query QT_INSTALL_PREFIX 2>/dev/null`
     if [ -n "${qtpath}" ]; then
       QTDIR=`winpath2unix "${qtpath}"`
-      echo "Qt found in PATH: ${QTDIR}"
+      log "Qt found in PATH: ${QTDIR}"
       QTSDKPATH=$(cd "${QTDIR}"; cd ../../../../; pwd)
     else
       echo "$(cat <<'CONTENT'
@@ -184,7 +179,7 @@ CONTENT
     fi
     if [ -n "`mingw32-make --version 2>/dev/null`" ]; then
       MAKE="`which mingw32-make.exe`"
-      echo "make found in PATH: ${MAKE}"
+      log "make found in PATH: ${MAKE}"
     else
       MAKE="${QTSDKPATH}/mingw/bin/mingw32-make.exe"
       [ ! -f "${MAKE}" ] && die "QtSDK path detected but mingw not found"
@@ -221,7 +216,6 @@ CONTENT
     die "You should install subversion first. / Сначала установите subversion"
 
   # Make
-  echo -n "Checking for gmake.. "
   if [ ! -f "${MAKE}" ]; then
     MAKE=""
     for gn in gmake make; do
@@ -230,30 +224,28 @@ CONTENT
     [ -z "${MAKE}" ] && die "You should install GNU Make first / "\
             "Сначала установите GNU Make"
   fi
-  echo "${MAKE}"
+  log "Found make tool: ${MAKE}"
 
   # patch
-  echo -n "Checking for patch.. "
   [ -z "`which patch`" ] &&
     die "patch tool not found / утилита для наложения патчей не найдена"
   # autodetect --dry-run or -C
   [ -n "`patch --help 2>/dev/null | grep dry-run`" ] && PATCH_DRYRUN_ARG="--dry-run" \
     || PATCH_DRYRUN_ARG="-C"
-  echo "OK"
+  log "Found patch tool"
   
   find_qt_util() {
     local name=$1
     result=""
-    echo -n "Checking for ${name} Qt util.. "
     for un in $name-qt4 qt4-${name} ${name}4 $name; do
       [ -n "`$un -v 2>&1 |grep Qt`" ] && { result="$un"; break; }
     done
     if [ -z "${result}" ]; then
       [ "$nonfatal" = 1 ] || die "You should install $name util as part of"\
         "Qt framework / Сначала установите утилиту $name из Qt framework"
-      echo "Not found"
+      log "${name} Qt tool is not found. ignoring.."
     else
-      echo "OK - " $result
+      log "Found ${name} Qt tool"
     fi
   }
 
@@ -266,7 +258,6 @@ CONTENT
   find_qt_util rcc; # we don't use it dirrectly but its required.
 
   # QConf
-  echo -n "Checking for qconf.. "
   if [ -n "${QCONFDIR}" -a -n "`PATH="${PATH}:${QCONFDIR}" qconf 2>/dev/null`" ]; then
     QCONF="${QCONFDIR}/qconf"
   else
@@ -276,17 +267,16 @@ CONTENT
     [ -z "${QCONF}" ] && die "You should install "\
       "qconf(http://delta.affinix.com/qconf/) / Сначала установите qconf"
   fi
-  echo "OK - " $QCONF
+  log "Found qconf tool: " $QCONF
   
   # CCache
-  echo -n "Checking for ccache.. "
   case "`which gcc`" in
-    *cache*) echo "already in path. will be used" ;;
+    *cache*) log "Found ccache tool in PATH. will be used" ;;
     *)
       [ -n "${CCACHE_BIN_DIR}" ] && [ -x "${CCACHE_BIN_DIR}/gcc" ] && {
-        echo "Found. going to use it."
+        log "Found ccache tool. going to use it."
         export PATH="${CCACHE_BIN_DIR}:${PATH}";
-      } || echo "Not found"
+      } || log "ccache tool is not found"
       ;;
   esac
 
@@ -300,7 +290,7 @@ CONTENT
   # Compile prefix
   if [ -n "${COMPILE_PREFIX}" ]; then
     [ $have_prefix = 0 ] && CONF_OPTS="${CONF_OPTS} --prefix=$COMPILE_PREFIX"
-    echo "Compile prefix=${COMPILE_PREFIX}"
+    log "Compile prefix=${COMPILE_PREFIX}"
     if [ -z "${PSILIBDIR}" ]; then # --libdir is not present in argv
       PSILIBDIR="${COMPILE_PREFIX}/lib"
       [ "`uname -m`" = "x86_64" ] && [ -d "${COMPILE_PREFIX}"/lib64 ] && PSILIBDIR="${COMPILE_PREFIX}/lib64"
@@ -308,11 +298,10 @@ CONTENT
     fi
   fi
 
-  echo "Environment is OK"
+  log "Environment is OK"
 }
 
 validate_translations() {
-  echo -n "Choosing interface language: "
   local selected_langs=""
   [ -z "${TRANSLATIONS}" ] && {
     test_lang() {
@@ -333,7 +322,7 @@ validate_translations() {
     done
   }
   TRANSLATIONS="$(echo ${selected_langs})"
-  echo $TRANSLATIONS
+  log "Choosen interface language:" $TRANSLATIONS
 }
 
 validate_plugins_list() {
@@ -341,14 +330,13 @@ validate_plugins_list() {
   case "${CONF_OPTS}" in *--enable-plugins*) plugins_enabled=1; ;; *) ;; esac
 
   [ -n "${PLUGINS}" ] && [ "${plugins_enabled}" = 0 ] && {
-    echo "WARNING: there are selected plugins but plugins are disabled in"
-    echo "configuration options. no one will be built"
+    warning "WARNING: there are selected plugins but plugins are disabled in"
+    warning "configuration options. no one will be built"
     PLUGINS=""
   }
 }
 
 prepare_workspace() {
-  echo -n "Init directories.. "
   if [ ! -d "${PSI_DIR}" ]
   then
     mkdir "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"
@@ -358,7 +346,7 @@ prepare_workspace() {
     die "can't delete old build directory ${PSI_DIR}/build"
   mkdir "${PSI_DIR}"/build || \
     die "can't create build directory ${PSI_DIR}/build"
-  echo "OK"
+  log "Created base directory structure"
 }
 
 # fetches defined set of something from psi-dev svn. ex: plugins or iconsets
@@ -400,11 +388,11 @@ svn_fetch() {
   [ -z "$target" ] && die "can't determine target dir"
   if [ -d "$target" ]; then
     [ $WORK_OFFLINE = 0 ] && {
-      [ -n "$comment" ] && echo -n "Update ${comment} ... "
+      [ -n "$comment" ] && log -n "Update ${comment} ... "
       $SVN_UP "${target}" || die "${comment} update failed"
     } || true
   else
-    [ -n "$comment" ] && echo "Checkout ${comment} .."
+    [ -n "$comment" ] && log "Checkout ${comment} .."
     $SVN_FETCH "${remote}" "$target" \
     || die "${comment} checkout failed"
   fi
@@ -419,13 +407,13 @@ git_fetch() {
   [ -d "${target}/.git" ] && {
     [ $WORK_OFFLINE = 0 ] && {
       cd "${target}"
-      [ -n "${comment}" ] && echo "Update ${comment} .."
+      [ -n "${comment}" ] && log "Update ${comment} .."
       git pull || die "git update failed"
       cd "${curd}"
     } || true
   } || {
     forcesubmodule=1
-    echo "Checkout ${comment} .."
+    log "Checkout ${comment} .."
     git clone "${remote}" "$target" || die "git clone failed"
   }
   [ $WORK_OFFLINE = 0 -o $forcesubmodule = 1 ] && {
@@ -459,7 +447,7 @@ fetch_sources() {
 fetch_plugins_sources() {
   git_fetch "${GIT_REPO_PLUGINS}" plugins "Psi+ plugins"
   [ -z "${PLUGINS}" ] && return 0
-  echo "Validate plugins list.."
+  log "Validate plugins list.."
   local plugins_tmp=""
   local require_all_plugins="$([ "$PLUGINS" = "*" ] && echo 1 || echo 0)"
   local actual_plugins=""
@@ -474,7 +462,7 @@ fetch_plugins_sources() {
     }
   done
   PLUGINS="${actual_plugins}"
-  echo "Enabled plugins:" $(echo $PLUGINS | sed 's:generic/::g')
+  log "Enabled plugins:" $(echo $PLUGINS | sed 's:generic/::g')
 }
 
 fetch_all() {
@@ -486,7 +474,7 @@ fetch_all() {
 spatch() {
   PATCH_TARGET="$1"
 
-  echo -n " * applying ${PATCH_TARGET##*/} ..." | tee -a "$PATCH_LOG"
+  log -n "applying ${PATCH_TARGET##*/} ..." | tee -a "$PATCH_LOG"
 
   if (patch -p1 ${PATCH_DRYRUN_ARG} -i "${PATCH_TARGET}") >> "$PATCH_LOG" 2>&1
   then
@@ -504,7 +492,7 @@ spatch() {
 }
 
 prepare_sources() {
-  echo "Exporting sources"
+  log "Exporting sources"
   cd "${PSI_DIR}"/git
   git archive --format=tar HEAD | ( cd "${PSI_DIR}/build" ; tar xf - )
   (
@@ -524,7 +512,7 @@ prepare_sources() {
      then
        [ $SKIP_INVALID_PATCH = "0" ] \
          && die "can't continue due to patch failed" \
-         || echo "skip invalid patch"
+         || log "skip invalid patch"
      fi
   done
   sed -i${SED_INPLACE_ARG} "s/.xxx/.${rev}/"  src/applicationinfo.cpp
@@ -555,7 +543,7 @@ prepare_all() {
 compile_psi() {
   cd "${PSI_DIR}/build"
   $QCONF
-  echo "./${CONFIGURE} ${CONF_OPTS}"
+  log "./${CONFIGURE} ${CONF_OPTS}"
   ./${CONFIGURE} ${CONF_OPTS} || die "configure failed"
   $MAKE $MAKEOPT || die "make failed"
 }
@@ -564,12 +552,10 @@ compile_plugins() {
   failed_plugins="" # global var
 
   for name in ${PLUGINS}; do
-    echo "Compiling ${name} plugin.."
+    log "Compiling ${name} plugin.."
     cd  "${PSI_DIR}/build/src/plugins/$name"
     $QMAKE "PREFIX=${COMPILE_PREFIX}" && $MAKE $MAKEOPT || {
-      echo
-      echo "Failed to make plugin ${name}! Skipping.."
-      echo
+      warning "Failed to make plugin ${name}! Skipping.."
       failed_plugins="${failed_plugins} ${name}"
     }
   done
@@ -582,7 +568,7 @@ compile_all() {
 
 install_psi() {
   case "`uname`" in MINGW*) return 0; ;; esac # disable on windows, must be reimplemented
-  echo "Installing psi.."
+  log "Installing psi.."
   BATCH_CODE="${BATCH_CODE}
 cd \"${PSI_DIR}/build\";
 $MAKE  INSTALL_ROOT=\"${INSTALL_ROOT}\" install || die \"Failed to install Psi+\""
@@ -609,10 +595,10 @@ install_plugins() {
   for name in ${PLUGINS}; do
     case "$failed_plugins" in
       *"$name"*)
-        echo "Skipping installation of failed plugin ${name}"
+        log "Skipping installation of failed plugin ${name}"
     ;;
       *)
-        echo "Installing ${name} plugin.."
+        log "Installing ${name} plugin.."
         BATCH_CODE="${BATCH_CODE}
 cd \"${PSI_DIR}/build/src/plugins/$name\";
 $MAKE  INSTALL_ROOT=\"${INSTALL_ROOT}\" install || die \"Failed to install ${name} plugin..\""
@@ -651,7 +637,7 @@ $BATCH_CODE
   if [ "${ir_user}" = "`id -un`" ]; then
     ./install.sh || die "install failed"
   else
-    echo "owner of ${INSTALL_ROOT} is ${ir_user} and this is not you."
+    log "owner of ${INSTALL_ROOT} is ${ir_user} and this is not you."
     priveleged_exec "./install.sh" "${ir_user}"
   fi
   reset_install_batch
@@ -660,8 +646,8 @@ $BATCH_CODE
 priveleged_exec() {
   local script="${1}"
   local dest_user="${2}"
-  echo "Executing: su -m \"${dest_user}\" -c \"${script}\""
-  echo "please enter ${dest_user}'s password.."
+  log "Executing: su -m \"${dest_user}\" -c \"${script}\""
+  log "please enter ${dest_user}'s password.."
   su -m "${dest_user}" -c "${script}" || die "install failed"
 }
 
