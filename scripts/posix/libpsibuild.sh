@@ -101,7 +101,7 @@ END
 # Exit with error message
 die() { echo; echo " !!!ERROR: $@"; exit 1; }
 warning() { echo; echo " !!!WARNING: $@"; }
-log() { local opt; [ "$1" == "-n" ] && { opt="-n"; shift; }; echo $opt "*** $@"; }
+log() { local opt; [ "$1" = "-n" ] && { opt="-n"; shift; }; echo $opt "*** $@"; }
 
 winpath2unix() {
   local path="$@"
