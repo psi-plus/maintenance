@@ -1,4 +1,4 @@
-rem @echo off
+@echo off
 setlocal
 
 set PSI_GIT=https://github.com/psi-im/psi.git
