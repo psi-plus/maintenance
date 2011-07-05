@@ -1,10 +1,13 @@
 @echo off
-@echo Cloning Psi+ Plugins sources from Psi+ repository
-call svn export --force http://psi-dev.googlecode.com/svn/trunk/plugins/generic psi\src\plugins\generic
+setlocal
+set GIT=%GITDIR%\bin\git.exe
+"%GIT%" clone https://github.com/psi-plus/plugins.git
+rd /S /Q psi\build\src\plugins\generic
+move /Y plugins\generic psi\build\src\plugins
 pause
 @echo Completed
 @echo Building Psi+ Plugins
-cd psi\src\plugins\generic\attentionplugin
+cd psi\build\src\plugins\generic\attentionplugin
 call qmake attentionplugin.pro
 call mingw32-make -f makefile.release
 cd ..\autoreplyplugin
@@ -86,6 +89,7 @@ cd ..
 @echo Completed
 pause
 @echo Copying Psi+ Plugins to work dir
+rd /S /Q "%PSIPLUSDIR%\plugins\changelogs"
 mkdir "%PSIPLUSDIR%\plugins\changelogs"
 copy attentionplugin\release\attentionplugin.dll "%PSIPLUSDIR%\plugins\attentionplugin.dll" /Y
 copy attentionplugin\changelog.txt "%PSIPLUSDIR%\plugins\changelogs\attentionplugin.txt" /Y
@@ -140,9 +144,9 @@ copy translateplugin\changelog.txt "%PSIPLUSDIR%\plugins\changelogs\translateplu
 copy watcherplugin\release\watcherplugin.dll "%PSIPLUSDIR%\plugins\watcherplugin.dll" /Y
 copy watcherplugin\changelog.txt "%PSIPLUSDIR%\plugins\changelogs\watcherplugin.txt" /Y
 @echo Archiving Psi+ Plugins
-call 7z a -tzip -scsDOS -mx9 "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.3753-win32.zip" "%PSIPLUSDIR%\plugins\changelogs" "%PSIPLUSDIR%\plugins\*.dll"
+call 7z a -mx9 "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.5035-win32.7z" "%PSIPLUSDIR%\plugins\changelogs" "%PSIPLUSDIR%\plugins\*.dll"
 @echo Completed
 @echo Uploading archived Psi+ Plugins to Google Code
-call ..\..\..\..\googlecode_upload.py -p "psi-dev" -s "Psi+ Plugins || Qt 4.7.2" -l "Plugins,Windows,Archive" "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.3753-win32.zip"
+call ..\..\..\..\..\googlecode_upload.py -p "psi-dev" -s "Psi+ Plugins || Qt 4.7.2" -l "Plugins,Windows,Archive" "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.5035-win32.7z"
 @echo Completed
 pause & pause
