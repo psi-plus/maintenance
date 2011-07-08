@@ -53,8 +53,15 @@ PLUGINS="${PLUGINS:-}"
 
 # checkout libpsibuild
 die() { echo "$@"; exit 1; }
-if [ ! -f ./libpsibuild.sh -o "$WORK_OFFLINE" = 0 ]; then
-  [ -f libpsibuild.sh ] && { rm libpsibuild.sh || die "delete error"; }
+if [ -f ./libpsibuild.sh ]; then
+  case "`git remote -v 2>/dev/null`" in
+    *maintenance.git*) echo "We are in repo. libpsibuild update disabled";;
+    *) [ "$WORK_OFFLINE" = 0 ] || { rm libpsibuild.sh || die "delete error"; }
+      ;;
+  esac
+fi
+if [ ! -f ./libpsibuild.sh ]; then
+  echo "Getting new version of libpsibuild.sh"
   wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh" || die "Failed to update libpsibuild";
 fi
 . ./libpsibuild.sh
