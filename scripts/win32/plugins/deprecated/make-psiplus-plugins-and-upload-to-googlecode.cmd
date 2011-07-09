@@ -1,40 +1,15 @@
 @echo off
 setlocal
 set GIT=%GITDIR%\bin\git.exe
-@echo Cloning Psi+ Plugins sources
 "%GIT%" clone https://github.com/psi-plus/plugins.git
-move /Y plugins\generic\attentionplugin psi\build\src\plugins\generic\attentionplugin
-move /Y plugins\generic\autoreplyplugin psi\build\src\plugins\generic\autoreplyplugin
-move /Y plugins\generic\birthdayreminderplugin psi\build\src\plugins\generic\birthdayreminderplugin
-move /Y plugins\generic\captchaformsplugin psi\build\src\plugins\generic\captchaformsplugin
-move /Y plugins\generic\chessplugin psi\build\src\plugins\generic\chessplugin
-move /Y plugins\generic\cleanerplugin psi\build\src\plugins\generic\cleanerplugin
-move /Y plugins\generic\clientswitcherplugin psi\build\src\plugins\generic\clientswitcherplugin
-move /Y plugins\generic\conferenceloggerplugin psi\build\src\plugins\generic\conferenceloggerplugin
-move /Y plugins\generic\contentdownloaderplugin psi\build\src\plugins\generic\contentdownloaderplugin
-move /Y plugins\generic\extendedmenuplugin psi\build\src\plugins\generic\extendedmenuplugin
-move /Y plugins\generic\extendedoptionsplugin psi\build\src\plugins\generic\extendedoptionsplugin
-move /Y plugins\generic\gmailserviceplugin psi\build\src\plugins\generic\gmailserviceplugin
-move /Y plugins\generic\gomokugameplugin psi\build\src\plugins\generic\gomokugameplugin
-move /Y plugins\generic\historykeeperplugin psi\build\src\plugins\generic\historykeeperplugin
-move /Y plugins\generic\icqdieplugin psi\build\src\plugins\generic\icqdieplugin
-move /Y plugins\generic\imageplugin psi\build\src\plugins\generic\imageplugin
-move /Y plugins\generic\jabberdiskplugin psi\build\src\plugins\generic\jabberdiskplugin
-move /Y plugins\generic\juickplugin psi\build\src\plugins\generic\juickplugin
-move /Y plugins\generic\pepchangenotifyplugin psi\build\src\plugins\generic\pepchangenotifyplugin
-move /Y plugins\generic\qipxstatusesplugin psi\build\src\plugins\generic\qipxstatusesplugin
-move /Y plugins\generic\screenshotplugin psi\build\src\plugins\generic\screenshotplugin
-move /Y plugins\generic\skinsplugin psi\build\src\plugins\generic\skinsplugin
-move /Y plugins\generic\stopspamplugin psi\build\src\plugins\generic\stopspamplugin
-move /Y plugins\generic\storagenotesplugin psi\build\src\plugins\generic\storagenotesplugin
-move /Y plugins\generic\translateplugin psi\build\src\plugins\generic\translateplugin
-move /Y plugins\generic\watcherplugin psi\build\src\plugins\generic\watcherplugin
-rd /S /Q plugins
+rd /S /Q psi\build\src\plugins\generic
+move /Y plugins\generic psi\build\src\plugins
+pause
 @echo Completed
 @echo Building Psi+ Plugins
 cd psi\build\src\plugins\generic\attentionplugin
-qmake attentionplugin.pro
-mingw32-make -f makefile.release
+call qmake attentionplugin.pro
+call mingw32-make -f makefile.release
 cd ..\autoreplyplugin
 call qmake autoreplyplugin.pro
 call mingw32-make -f makefile.release
@@ -169,9 +144,9 @@ copy translateplugin\changelog.txt "%PSIPLUSDIR%\plugins\changelogs\translateplu
 copy watcherplugin\release\watcherplugin.dll "%PSIPLUSDIR%\plugins\watcherplugin.dll" /Y
 copy watcherplugin\changelog.txt "%PSIPLUSDIR%\plugins\changelogs\watcherplugin.txt" /Y
 @echo Archiving Psi+ Plugins
-call 7z a -mx9 "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.5045-win32.7z" "%PSIPLUSDIR%\plugins\changelogs" "%PSIPLUSDIR%\plugins\*.dll"
+call 7z a -mx9 "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.5035-win32.7z" "%PSIPLUSDIR%\plugins\changelogs" "%PSIPLUSDIR%\plugins\*.dll"
 @echo Completed
 @echo Uploading archived Psi+ Plugins to Google Code
-call ..\..\..\..\..\googlecode_upload.py -p "psi-dev" -s "Psi+ Plugins || Qt 4.7.2" -l "Plugins,Windows,Archive" "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.5045-win32.7z"
+call ..\..\..\..\..\googlecode_upload.py -p "psi-dev" -s "Psi+ Plugins || Qt 4.7.2" -l "Plugins,Windows,Archive" "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.5035-win32.7z"
 @echo Completed
 pause & pause
