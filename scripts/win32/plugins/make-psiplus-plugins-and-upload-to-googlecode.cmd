@@ -36,84 +36,84 @@ cd psi\build\src\plugins\generic\attentionplugin
 qmake attentionplugin.pro
 mingw32-make -f makefile.release
 cd ..\autoreplyplugin
-call qmake autoreplyplugin.pro
-call mingw32-make -f makefile.release
+qmake autoreplyplugin.pro
+mingw32-make -f makefile.release
 cd ..\birthdayreminderplugin
-call qmake birthdayreminderplugin.pro
-call mingw32-make -f makefile.release
+qmake birthdayreminderplugin.pro
+mingw32-make -f makefile.release
 cd ..\captchaformsplugin
-call qmake captchaformsplugin.pro
-call mingw32-make -f makefile.release
+qmake captchaformsplugin.pro
+mingw32-make -f makefile.release
 cd ..\chessplugin
-call qmake chessplugin.pro
-call mingw32-make -f makefile.release
+qmake chessplugin.pro
+mingw32-make -f makefile.release
 cd ..\cleanerplugin
-call qmake cleanerplugin.pro
-call mingw32-make -f makefile.release
+qmake cleanerplugin.pro
+mingw32-make -f makefile.release
 cd ..\clientswitcherplugin
-call qmake clientswitcherplugin.pro
-call mingw32-make -f makefile.release
+qmake clientswitcherplugin.pro
+mingw32-make -f makefile.release
 cd ..\conferenceloggerplugin
-call qmake conferenceloggerplugin.pro
-call mingw32-make -f makefile.release
+qmake conferenceloggerplugin.pro
+mingw32-make -f makefile.release
 cd ..\contentdownloaderplugin
-call qmake contentdownloaderplugin.pro
-call mingw32-make -f makefile.release
+qmake contentdownloaderplugin.pro
+mingw32-make -f makefile.release
 cd ..\extendedmenuplugin
-call qmake extendedmenuplugin.pro
-call mingw32-make -f makefile.release
+qmake extendedmenuplugin.pro
+mingw32-make -f makefile.release
 cd ..\extendedoptionsplugin
-call qmake extendedoptionsplugin.pro
-call mingw32-make -f makefile.release
+qmake extendedoptionsplugin.pro
+mingw32-make -f makefile.release
 cd ..\gmailserviceplugin
-call qmake gmailserviceplugin.pro
-call mingw32-make -f makefile.release
+qmake gmailserviceplugin.pro
+mingw32-make -f makefile.release
 cd ..\gomokugameplugin
-call qmake gomokugameplugin.pro
-call mingw32-make -f makefile.release
+qmake gomokugameplugin.pro
+mingw32-make -f makefile.release
 cd ..\historykeeperplugin
-call qmake historykeeperplugin.pro
-call mingw32-make -f makefile.release
+qmake historykeeperplugin.pro
+mingw32-make -f makefile.release
 cd ..\icqdieplugin
-call qmake icqdieplugin.pro
-call mingw32-make -f makefile.release
+qmake icqdieplugin.pro
+mingw32-make -f makefile.release
 cd ..\imageplugin
-call qmake imageplugin.pro
-call mingw32-make -f makefile.release
+qmake imageplugin.pro
+mingw32-make -f makefile.release
 cd ..\jabberdiskplugin
-call qmake jabberdiskplugin.pro
-call mingw32-make -f makefile.release
+qmake jabberdiskplugin.pro
+mingw32-make -f makefile.release
 cd ..\juickplugin
-call qmake juickplugin.pro
-call mingw32-make -f makefile.release
+qmake juickplugin.pro
+mingw32-make -f makefile.release
 cd ..\pepchangenotifyplugin
-call qmake pepchangenotifyplugin.pro
-call mingw32-make -f makefile.release
+qmake pepchangenotifyplugin.pro
+mingw32-make -f makefile.release
 cd ..\qipxstatusesplugin
-call qmake qipxstatusesplugin.pro
-call mingw32-make -f makefile.release
+qmake qipxstatusesplugin.pro
+mingw32-make -f makefile.release
 cd ..\screenshotplugin
-call qmake screenshotplugin.pro
-call mingw32-make -f makefile.release
+qmake screenshotplugin.pro
+mingw32-make -f makefile.release
 cd ..\skinsplugin
-call qmake skinsplugin.pro
-call mingw32-make -f makefile.release
+qmake skinsplugin.pro
+mingw32-make -f makefile.release
 cd ..\stopspamplugin
-call qmake stopspamplugin.pro
-call mingw32-make -f makefile.release
+qmake stopspamplugin.pro
+mingw32-make -f makefile.release
 cd ..\storagenotesplugin
-call qmake storagenotesplugin.pro
-call mingw32-make -f makefile.release
+qmake storagenotesplugin.pro
+mingw32-make -f makefile.release
 cd ..\translateplugin
-call qmake translateplugin.pro
-call mingw32-make -f makefile.release
+qmake translateplugin.pro
+mingw32-make -f makefile.release
 cd ..\watcherplugin
-call qmake watcherplugin.pro
-call mingw32-make -f makefile.release
+qmake watcherplugin.pro
+mingw32-make -f makefile.release
 cd ..
 @echo Completed
 pause
-@echo Copying Psi+ Plugins to work dir
+@echo Copying Psi+ Plugins binaries to Psi+ plugins directory
 rd /S /Q "%PSIPLUSDIR%\plugins\changelogs"
 mkdir "%PSIPLUSDIR%\plugins\changelogs"
 copy attentionplugin\release\attentionplugin.dll "%PSIPLUSDIR%\plugins\attentionplugin.dll" /Y
@@ -169,9 +169,9 @@ copy translateplugin\changelog.txt "%PSIPLUSDIR%\plugins\changelogs\translateplu
 copy watcherplugin\release\watcherplugin.dll "%PSIPLUSDIR%\plugins\watcherplugin.dll" /Y
 copy watcherplugin\changelog.txt "%PSIPLUSDIR%\plugins\changelogs\watcherplugin.txt" /Y
 @echo Archiving Psi+ Plugins
-call 7z a -mx9 "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.5045-win32.7z" "%PSIPLUSDIR%\plugins\changelogs" "%PSIPLUSDIR%\plugins\*.dll"
+7z a -mx9 "%PSIPLUSDIR%\plugins\psi-plus-plugins-win32.7z" "%PSIPLUSDIR%\plugins\changelogs" "%PSIPLUSDIR%\plugins\*.dll"
 @echo Completed
 @echo Uploading archived Psi+ Plugins to Google Code
-call ..\..\..\..\..\googlecode_upload.py -p "psi-dev" -s "Psi+ Plugins || Qt 4.7.2" -l "Plugins,Windows,Archive" "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.5045-win32.7z"
+call ..\..\..\..\..\googlecode_upload.py -p "psi-dev" -s "Psi+ Plugins || Qt 4.7.2" -l "Plugins,Windows,Archive" "%PSIPLUSDIR%\plugins\psi-plus-plugins-win32.7z"
 @echo Completed
 pause & pause
