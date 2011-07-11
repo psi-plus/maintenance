@@ -169,9 +169,9 @@ copy translateplugin\changelog.txt "%PSIPLUSDIR%\plugins\changelogs\translateplu
 copy watcherplugin\release\watcherplugin.dll "%PSIPLUSDIR%\plugins\watcherplugin.dll" /Y
 copy watcherplugin\changelog.txt "%PSIPLUSDIR%\plugins\changelogs\watcherplugin.txt" /Y
 @echo Archiving Psi+ Plugins
-7z a -mx9 "%PSIPLUSDIR%\plugins\psi-plus-plugins-win32.7z" "%PSIPLUSDIR%\plugins\changelogs" "%PSIPLUSDIR%\plugins\*.dll"
+7z a -mx9 "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.5057.3-win32.7z" "%PSIPLUSDIR%\plugins\changelogs" "%PSIPLUSDIR%\plugins\*.dll"
 @echo Completed
 @echo Uploading archived Psi+ Plugins to Google Code
-call ..\..\..\..\..\googlecode_upload.py -p "psi-dev" -s "Psi+ Plugins || Qt 4.7.2" -l "Plugins,Windows,Archive" "%PSIPLUSDIR%\plugins\psi-plus-plugins-win32.7z"
+call ..\..\..\..\..\googlecode_upload.py -p "psi-dev" -s "Psi+ Plugins || Qt 4.7.2" -l "Plugins,Windows,Archive" "%PSIPLUSDIR%\plugins\psi-plus-plugins-0.15.5057.3-win32.7z"
 @echo Completed
 pause & pause
