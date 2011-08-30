@@ -33,7 +33,7 @@ GIT_REPO_PLUS=git://github.com/psi-plus/main.git
 GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
 
 LANGS_REPO_URI="git://pv.et-inf.fho-emden.de/git/psi-l10n"
-RU_LANG_REPO_URI="http://psi-ru.googlecode.com/svn/branches/psi-plus"
+RU_LANG_REPO_URI="git://github.com/Nikoli/psi-plus-ru.git"
 
 SVN_FETCH="${SVN_FETCH:-svn co --trust-server-cert --non-interactive}"
 SVN_UP="${SVN_UP:-svn up --trust-server-cert --non-interactive}"
@@ -414,6 +414,7 @@ git_fetch() {
   } || {
     forcesubmodule=1
     log "Checkout ${comment} .."
+    [ -d "${target}" ] && rm -rf "$target"
     git clone "${remote}" "$target" || die "git clone failed"
   }
   [ $WORK_OFFLINE = 0 -o $forcesubmodule = 1 ] && {
@@ -433,7 +434,7 @@ fetch_sources() {
     mkdir -p langs
     for l in $TRANSLATIONS; do
       if [ $l = ru ]; then
-        svn_fetch "${RU_LANG_REPO_URI}" "langs/$l" "$l langpack"
+        git_fetch "${RU_LANG_REPO_URI}" "langs/$l" "$l langpack"
       else
         git_fetch "${LANGS_REPO_URI}-$l" "langs/$l" "$l langpack"
       fi
