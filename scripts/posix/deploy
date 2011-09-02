@@ -3,6 +3,7 @@
 # Settings
 PATCHES_DIR="${PWD}/main/patches"
 ICONSETS_DIR="${PWD}/main/iconsets"
+MKPATCH="${PWD}/maintenance/scripts/posix/mkpatch"
 GIT_DIR="${PWD}/git"
 DEST_DIR="${PWD}/psi.orig"
 WORK_DIR="${PWD}/psi"
@@ -116,7 +117,7 @@ then
      [ "$rc" = 2 ] && die "can't continue"
      [ "$rc" = 1 ] && {
        echo "auto-fixing fuzz"
-       ./mkpatch > tmp || die "failed to fix patch"
+       "$MKPATCH" > tmp || die "failed to fix patch"
        mv tmp "$fp"
      }
      [ "${p}" = "${UP_TO}" ] && [ "$1" = "-e" ] && break
