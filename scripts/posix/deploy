@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Settings
-PATCHES_DIR="${PWD}/git-plus/main/patches"
-ICONSETS_DIR="${PWD}/git-plus/main/iconsets"
+PATCHES_DIR="${PWD}/main/patches"
+ICONSETS_DIR="${PWD}/main/iconsets"
 GIT_DIR="${PWD}/git"
 DEST_DIR="${PWD}/psi.orig"
 WORK_DIR="${PWD}/psi"
