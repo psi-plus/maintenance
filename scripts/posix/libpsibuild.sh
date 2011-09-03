@@ -212,8 +212,8 @@ CONTENT
   
   v=`git --version 2>/dev/null` || \
     die "You should install Git first. / Сначала установите Git"
-  v=`svn --version 2>/dev/null` || \
-    die "You should install subversion first. / Сначала установите subversion"
+  #v=`svn --version 2>/dev/null` || \
+  #  die "You should install subversion first. / Сначала установите subversion"
 
   # Make
   if [ ! -f "${MAKE}" ]; then
