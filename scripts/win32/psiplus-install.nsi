@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.7.2
+; Psi+ installation script, v0.7.3
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2011-08-28
+; Date: 2011-09-11
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.15.5106"
+!define PRODUCT_VERSION "0.15.5116"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.15.5106-win32-setup.exe"
+OutFile "setup\psi-plus-0.15.5116-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.15.5106.0"
+VIProductVersion "0.15.5116.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -173,7 +173,7 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\QtCore4.dll"
 	File "setup\QtGui4.dll"
 	File "setup\QtNetwork4.dll"
-	File "setup\QtSql4.dll"
+	Delete "$INSTDIR\QtSql4.dll"
 	File "setup\QtSvg4.dll"
 	File "setup\QtXml4.dll"
 	Delete "$INSTDIR\version.txt"
@@ -722,7 +722,6 @@ Section Uninstall
 	Delete "$INSTDIR\QtCore4.dll"
 	Delete "$INSTDIR\QtGui4.dll"
 	Delete "$INSTDIR\QtNetwork4.dll"
-	Delete "$INSTDIR\QtSql4.dll"
 	Delete "$INSTDIR\QtSvg4.dll"
 	Delete "$INSTDIR\QtXml4.dll"
 	Delete "$INSTDIR\aspell\data\dvorak.kbd"
