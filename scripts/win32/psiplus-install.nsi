@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.7.3
+; Psi+ installation script, v0.7.4
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2011-09-11
+; Date: 2011-09-26
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.15.5116"
+!define PRODUCT_VERSION "0.15.5119"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.15.5116-win32-setup.exe"
+OutFile "setup\psi-plus-0.15.5119-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.15.5116.0"
+VIProductVersion "0.15.5119.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -160,7 +160,7 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\libeay32.dll"
 	File "setup\libgcc_s_dw2-1.dll"
 	File "setup\libintl-3.dll"
-	File "setup\libssl32.dll"
+	Delete "$INSTDIR\libssl32.dll"
 	File "setup\mingwm10.dll"
 	File "setup\psi_ru.qm"
 	Delete "$INSTDIR\psi.exe"
@@ -176,6 +176,7 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	Delete "$INSTDIR\QtSql4.dll"
 	File "setup\QtSvg4.dll"
 	File "setup\QtXml4.dll"
+	File "setup\ssleay32.dll"
 	Delete "$INSTDIR\version.txt"
 	SetOutPath "$INSTDIR\aspell\data\"
 	File "setup\aspell\data\dvorak.kbd"
@@ -713,7 +714,6 @@ Section Uninstall
 	Delete "$INSTDIR\libeay32.dll"
 	Delete "$INSTDIR\libgcc_s_dw2-1.dll"
 	Delete "$INSTDIR\libintl-3.dll"
-	Delete "$INSTDIR\libssl32.dll"
 	Delete "$INSTDIR\mingwm10.dll"
 	Delete "$INSTDIR\psi_ru.qm"
 	Delete "$INSTDIR\psi-plus.exe"
@@ -724,6 +724,7 @@ Section Uninstall
 	Delete "$INSTDIR\QtNetwork4.dll"
 	Delete "$INSTDIR\QtSvg4.dll"
 	Delete "$INSTDIR\QtXml4.dll"
+	Delete "$INSTDIR\ssleay32.dll"
 	Delete "$INSTDIR\aspell\data\dvorak.kbd"
 	Delete "$INSTDIR\aspell\data\koi8-r.cmap"
 	Delete "$INSTDIR\aspell\data\koi8-r.cset"
