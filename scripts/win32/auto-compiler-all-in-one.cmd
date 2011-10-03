@@ -1,12 +1,14 @@
-REM auto-compiler-all-in-one-by-majik.cmd
+@ECHO OFF
+
+REM ------------------------------------------------------
+REM auto-compiler-all-in-one.cmd
 REM http://psi-dev.googlecode.com/
-REM Psi+ auto compiler 'all-in-one' script, v0.1.0
+REM Psi+ auto compiler 'all-in-one' script, v0.1.1
 REM Written by majik <maj@jabber.ru>
 REM Optimized by zet <mailto:vladimir.shelukhin@gmail.com>
-REM Date: 2011-10-01
-REM -----------------------------------------------------------------------------------------
+REM Date: 2011-10-03
+REM ------------------------------------------------------
 
-@ECHO OFF
 setlocal
 set GIT=%GITDIR%\bin\git.exe
 set TR=%GITDIR%\bin\tr.exe
