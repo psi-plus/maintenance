@@ -404,7 +404,7 @@ git_fetch() {
   local comment="$3"
   local curd=`pwd`
   local forcesubmodule=0
-  [ -d "${target}/.git" ] && {
+  [ -d "${target}/.git" ] && [ "$(cd "${target}" && git config --get remote.origin.url)" = "${remote}" ] && {
     [ $WORK_OFFLINE = 0 ] && {
       cd "${target}"
       [ -n "${comment}" ] && log "Update ${comment} .."
