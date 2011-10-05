@@ -33,7 +33,7 @@ GIT_REPO_PLUS=git://github.com/psi-plus/main.git
 GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
 
 LANGS_REPO_URI="git://pv.et-inf.fho-emden.de/git/psi-l10n"
-RU_LANG_REPO_URI="git://github.com/Nikoli/psi-plus-ru.git"
+RU_LANG_REPO_URI="git://github.com/ivan101/psi-plus-ru.git"
 
 SVN_FETCH="${SVN_FETCH:-svn co --trust-server-cert --non-interactive}"
 SVN_UP="${SVN_UP:-svn up --trust-server-cert --non-interactive}"
