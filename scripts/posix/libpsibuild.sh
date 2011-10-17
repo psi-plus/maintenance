@@ -134,7 +134,7 @@ check_env() {
   [ -n "${COMPILE_PREFIX}" ] && have_prefix=1
 
   case "`uname`" in
-  FreeBSD)
+  FreeBSD|Darwin)
     MAKEOPT=${MAKEOPT:--j$((`sysctl -n hw.ncpu`+1))}
     STAT_USER_ID='stat -f %u'
     STAT_USER_NAME='stat -f %Su'
