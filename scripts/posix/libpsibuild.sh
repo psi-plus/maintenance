@@ -134,13 +134,24 @@ check_env() {
   [ -n "${COMPILE_PREFIX}" ] && have_prefix=1
 
   case "`uname`" in
-  FreeBSD|Darwin)
+  FreeBSD)
     MAKEOPT=${MAKEOPT:--j$((`sysctl -n hw.ncpu`+1))}
     STAT_USER_ID='stat -f %u'
     STAT_USER_NAME='stat -f %Su'
     SED_INPLACE_ARG=".bak"
     COMPILE_PREFIX="${COMPILE_PREFIX-/usr/local}"
     CCACHE_BIN_DIR="${CCACHE_BIN_DIR:-/usr/local/libexec/ccache/}"
+    PLUGINS_PREFIXES="${PLUGINS_PREFIXES} unix"
+    ;;
+  Darwin)
+    MAKEOPT=${MAKEOPT:--j$((`sysctl -n hw.ncpu`+1))}
+    STAT_USER_ID='stat -f %u'
+    STAT_USER_NAME='stat -f %Su'
+    SED_INPLACE_ARG=".bak"
+    COMPILE_PREFIX="${COMPILE_PREFIX-/Applications}"
+    if [ -z "${CCACHE_BIN_DIR}" ]; then
+        CCACHE_BIN_DIR="$(echo /usr/local/Cellar/ccache/*/libexec)"
+    fi
     PLUGINS_PREFIXES="${PLUGINS_PREFIXES} unix"
     ;;
   SunOS)
