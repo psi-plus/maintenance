@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.7.5
+; Psi+ installation script, v0.7.6
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2011-10-02
+; Date: 2011-10-29
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.15.5122"
+!define PRODUCT_VERSION "0.15.5130"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.15.5122-win32-setup.exe"
+OutFile "setup\psi-plus-0.15.5130-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.15.5122.0"
+VIProductVersion "0.15.5130.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -540,6 +540,7 @@ Section "Psi+ Plugins" SectionPsiPlusPlugins
 	File "setup\plugins\storagenotesplugin.dll"
 	File "setup\plugins\translateplugin.dll"
 	File "setup\plugins\watcherplugin.dll"
+	File "setup\plugins\yandexnarodplugin.dll"
 
 SectionEnd
 
@@ -1007,6 +1008,7 @@ Section Uninstall
 	Delete "$INSTDIR\plugins\storagenotesplugin.dll"
 	Delete "$INSTDIR\plugins\translateplugin.dll"
 	Delete "$INSTDIR\plugins\watcherplugin.dll"
+	Delete "$INSTDIR\plugins\yandexnarodplugin.dll"
 
   ;Cleanup Psimedia+
   DeleteRegValue ${PRODUCT_UNINST_ROOT_KEY} "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "PSI_ENABLE_VIDEO"
