@@ -1,15 +1,21 @@
 # !/bin/bash
-
-echo "This script is MUST BE fixed to use git instead of svn"
-exit 1
-
 home=/home/$USER
-buildpsi=${home}/build_psi
-orig_src=${buildpsi}/psi-plus
-patches=${buildpsi}/patches
+buildpsi=${home}/psi
+orig_src=${buildpsi}/build
+patches=${buildpsi}/git-plus/patches
+psi_datadir=${home}/.local/share/Psi+
+psi_cachedir=${home}/.cache/Psi+
+psi_homeplugdir=${psi_datadir}/plugins
+config_file=${home}/.psibuild.cfg
+inst_suffix=tmp
+inst_path=${buildpsi}/${inst_suffix}
 isloop=1
-iswebkit=0
-logfile=${buildpsi}/psibuild.log
+# default options
+iswebkit=""
+use_iconsets="system clients activities moods affiliations roster"
+isoffline=0
+skip_invalid=0
+use_plugins="*"
 #
 qconfspath ()
 {
@@ -25,128 +31,117 @@ qconfspath ()
 #
 quit ()
 {
-  echo "===Log End===" >> ${logfile}
   isloop=0
 }
 #
-down_git ()
+read_options ()
 {
-  cd ${buildpsi}
-  echo "Downloading psi sources from git"
-  git clone git://git.psi-im.org/psi.git psi-plus
-  if [ -d "${orig_src}" ]
+  local pluginlist=""
+  if [ -f ${config_file} ]
   then
-    cd ${orig_src}
-    git submodule init
-    git submodule update
-  else
-    echo "Error in line 33: ${orig_src} directory not found"
-    echo "Error in line 33: ${orig_src} directory not found" >> ${logfile}
+    inc=0
+    while read -r line
+    do
+      case ${inc} in
+      "0" ) iswebkit=`echo ${line}`;;
+      "1" ) use_iconsets=`echo ${line}`;;
+      "2" ) isoffline=`echo ${line}`;;
+      "3" ) skip_invalid=`echo ${line}`;;
+      "4" ) pluginlist=`echo ${line}`;;
+      esac
+      let "inc+=1"
+    done < ${config_file}
+    if [ "$pluginlist" == "all" ]
+    then
+      use_plugins="*"
+    else
+      use_plugins=${pluginlist}
+    fi
+  fi
+
+}
+#
+set_options ()
+{
+  # OPTIONS / НАСТРОЙКИ
+  # build and store directory / каталог для сорсов и сборки
+  PSI_DIR="${buildpsi}" # leave empty for ${HOME}/psi on *nix or /c/psi on windows
+  # icons for downloads / иконки для скачивания
+  ICONSETS=${use_iconsets}
+  # do not update anything from repositories until required
+  # не обновлять ничего из репозиториев если нет необходимости
+  WORK_OFFLINE=${WORK_OFFLINE:-$isoffline}
+  # log of applying patches / лог применения патчей
+  PATCH_LOG="" # PSI_DIR/psipatch.log by default (empty for default)
+  # skip patches which applies with errors / пропускать глючные патчи
+  SKIP_INVALID_PATCH="${SKIP_INVALID_PATCH:-$skip_invalid}"
+  # configure options / опции скрипта configure
+  CONF_OPTS=${iswebkit}
+  # install root / каталог куда устанавливать (полезно для пакаджеров)
+  INSTALL_ROOT="${INSTALL_ROOT:-$inst_path}"
+  # bin directory of compiler cache (all compiler wrappers are there)
+  CCACHE_BIN_DIR="${CCACHE_BIN_DIR}"
+  # if system doesn't have qconf package set this variable to
+  # manually compiled qconf directory.
+  QCONFDIR="${QCONFDIR}"
+  # plugins to build
+  PLUGINS="${PLUGINS:-$use_plugins}"
+}
+#
+check_libpsibuild ()
+{
+  # checkout libpsibuild
+  cd ${home}
+  die() { echo "$@"; exit 1; }
+  if [ ! -f ./libpsibuild.sh -o "$WORK_OFFLINE" = 0 ]
+  then
+    [ -f libpsibuild.sh ] && { rm libpsibuild.sh || die "delete error"; }
+    wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh" || die "Failed to update libpsibuild";
   fi
 }
 #
-update_git ()
+run_libpsibuild ()
 {
-  echo "Updating psi sources from git"
-  if [ -d "${orig_src}" ]
+  if [ ! -z "$1" ]
   then
-    cd ${orig_src}
-    git submodule update
-    git pull
-    git submodule update
-  else
-    echo "Error in line 47: ${orig_src} directory not found"
-    echo "Error in line 47: ${orig_src} directory not found" >> ${logfile}
-  fi
-}
-#
-down_patches ()
-{
-  echo "Downloading Psi+ patches from svn"
-  cd ${buildpsi}
-  svn co http://psi-dev.googlecode.com/svn/trunk/patches/
-}
-#
-down_dicons ()
-{
-  if [ -d "${orig_src}" ]
-  then
-    cd ${orig_src}
-    echo "Downloading Psi+ default iconsets from svn"
-    svn export --force http://psi-dev.googlecode.com/svn/trunk/iconsets/system/default iconsets/system/default
-    svn export --force http://psi-dev.googlecode.com/svn/trunk/iconsets/roster/default iconsets/roster/default
-  else
-    echo "Error in line 68: ${orig_src} directory not found"
-    echo "Error in line 68: ${orig_src} directory not found" >> ${logfile}
-  fi
-}
-#
-down_plugins ()
-{
-  if [ -d "${orig_src}" ]
-  then
-    cd ${orig_src}
-    echo "Downloading Psi+ plugins from svn"
-    svn co http://psi-dev.googlecode.com/svn/trunk/plugins/generic/ src/plugins/generic
-  else
-    echo "Error in line 82: ${orig_src} directory not found"
-    echo "Error in line 82: ${orig_src} directory not found" >> ${logfile}
+    cmd=$1
+    cd ${home}
+    . ./libpsibuild.sh
+    check_env $CONF_OPTS
+    $cmd
   fi
 }
 #
 down_all ()
 {
-  down_git
-  down_patches
-  down_dicons
-  down_plugins
-  cd ${home}
+  echo "Downloading all psi+ sources needed to build"
+  run_libpsibuild fetch_all
 }
 #
-non_auto_src ()
+prepare_src ()
 {
-  local loop=1
-  while [ ${loop} = 1 ]
-  do
-    echo "Choose action TODO:"
-    echo "--[1] - Donwload psi sources from git"
-    echo "--[2] - Update psi sources from git"
-    echo "--[3] - Download psi+ patches from svn"
-    echo "--[4] - Download psi+ default iconsets from svn"
-    echo "--[5] - Download psi+ plugins from svn"
-    echo "--[0] - Do nothing"
-    read deistvo
-    case ${deistvo} in
-      "1" ) down_git;;
-      "2" ) update_git;;
-      "3" ) down_patches;;
-      "4" ) down_dicons;;
-      "5" ) down_plugins;;
-      "0" ) clear
-            loop=0;;
-    esac
-  done
+  echo "Downloading and preparing psi+ sources needed to build"
+  run_libpsibuild validate_plugins_list
+  run_libpsibuild fetch_all
+  run_libpsibuild prepare_all
 }
 #
 backup_tar ()
 {
   cd ${home}
-  tar -pczf build_psi.tar.gz build_psi
+  tar -pczf psi.tar.gz psi
 }
 #
 restore_tar ()
 {
   cd ${home}
-  if [ -f "build_psi.tar.gz" ]
+  if [ -f "psi.tar.gz" ]
   then
     if [ -d ${buildpsi} ]
     then
        rm -r -f ${buildpsi}
     fi
-    tar -xzf build_psi.tar.gz
-  else
-    echo "Error in line 111: No build_psi.tar.gz file found in ${home}"
-    echo "Error in line 111: No build_psi.tar.gz file found in ${home}" >> ${logfile}
+    tar -xzf psi.tar.gz
   fi
 }
 #
@@ -169,26 +164,10 @@ back_restore()
   done
 }
 #
-apply_patches ()
-{
-  if [ -d "${orig_src}" ]
-  then
-    cd ${orig_src}
-    echo "Patching..."
-    cat ${patches}/*.diff | patch -p1 
-    rev=`svnversion "${patches}"`
-    app_info=src/applicationinfo.cpp
-    sed "s/\(xxx\)/${rev}/" -i "${app_info}"
-  else
-    echo "Error in line 126: ${orig_src} directory not found"
-    echo "Error in line 126: ${orig_src} directory not found" >> ${logfile}
-  fi
-}
-#
 prepare_tar ()
 {
   echo "Preparing Psi+ source package to build RPM..."
-  rev=`svnversion "${patches}"`
+  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
   tar_name=psi-plus-0.15.${rev}
   new_src=${buildpsi}/${tar_name}
   local srcpath=/usr/src/packages/SOURCES
@@ -206,20 +185,18 @@ prepare_tar ()
       fi
     fi
     echo "Preparing completed"
-  else
-    echo "Error in line 148: ${new_src} directory not found"
-    echo "Error in line 148: ${new_src} directory not found" >> ${logfile}
   fi
 }
 #
 prepare_win ()
 {
   echo "Preparing Psi+ source package to build in OS Windows..."
-  rev=`svnversion "${patches}"`
+  prepare_src
+  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
   tar_name=psi-plus-0.15.${rev}-win
   new_src=${buildpsi}/${tar_name}
   local winpri=${new_src}/conf_windows.pri
-  local mainicon=${patches}/app.ico
+  local mainicon=${buildpsi}/git-plus/app.ico
   local file_pro=${new_src}/src/src.pro
   local ossl=${new_src}/third-party/qca/qca-ossl.pri
   cp -r ${orig_src} ${new_src}
@@ -232,28 +209,32 @@ prepare_win ()
     sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
     cp -f ${mainicon} ${new_src}/win32/
     makepsi='qconf
-configure --enable-plugins --qtdir=%QTDIR% --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%QTDIR%\..\mingw\include --with-aspell-lib=%QTDIR%\..\mingw\lib
+configure --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
 @echo ================================
 @echo Compiler is ready for fight! B-)
 @echo ================================
 pause
 mingw32-make
 pause
-move /Y src\release\psi.exe ..\psi.exe
+move /Y src\release\psi-plus.exe ..\psi-plus.exe
+pause
+compile-plugins -o ..\
 pause
 @goto exit
 
 :exit
 pause'
     makewebkitpsi='qconf
-configure --enable-plugins --enable-webkit --qtdir=%QTDIR% --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%QTDIR%\..\mingw\include --with-aspell-lib=%QTDIR%\..\mingw\lib
+configure --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
 @echo ================================
 @echo Compiler is ready for fight! B-)
 @echo ================================
 pause
 mingw32-make
 pause
-move /Y src\release\psi.exe ..\psi.exe
+move /Y src\release\psi-plus.exe ..\psi-plus.exe
+pause
+compile-plugins -o ..\
 pause
 @goto exit
 
@@ -263,156 +244,42 @@ pause'
     echo "${makewebkitpsi}" > ${new_src}/make-webkit-psiplus.cmd
     tar -pczf ${tar_name}.tar.gz ${tar_name}
     rm -r -f ${new_src}
-    echo "${buildpsi}/${tar_name}.tar.gz was created"
-    echo "---${buildpsi}/${tar_name}.tar.gz was created" >> ${logfile}
-  else
-    echo "Error in line 178: ${new_src} directory not found"
-    echo "Error in line 178: ${new_src} directory not found" >> ${logfile}
   fi
 }
 #
-compile_psi ()
+compile_psiplus ()
 {
-  echo "Enter install prefix if needed (Default /usr), or press Enter"
-  read prefix
-  if [ ! ${prefix} -o ${prefix} = "" ]
-  then
-    prefix=/usr
-  fi
-  cd ${orig_src}
-  qconfspath
-  if [ ${qconfpath} ]
-  then
-    ${qconfpath}/qconf
-  else
-    qconf
-  fi
-  if [ ${iswebkit} = 0 ]
-  then
-    sh ${orig_src}/configure --prefix=${prefix} --enable-plugins
-  else
-    sh ${orig_src}/configure --prefix=${prefix} --enable-plugins --enable-webkit
-  fi
-  cd ${orig_src}
-  make
-  iswebkit=0
-}
-#
-compile_psi_webkit ()
-{
-  iswebkit=1
-  compile_psi
+  set_options
+  run_libpsibuild prepare_workspace
+  prepare_src
+  run_libpsibuild compile_psi
 }
 #
 build_plugins ()
 {
-  if [ ! -d "${home}/.psi" ]
+  cd ${buildpsi}
+  if [ ! -d ${inst_path} ]
   then
-    cd ${home}
-    mkdir .psi
-    cd .psi
+    mkdir ${inst_suffix}
+  fi
+  prepare_src
+  run_libpsibuild compile_plugins
+  run_libpsibuild install_plugins
+  if [ ! -d ${psi_homeplugdir} ]
+  then
+    cd ${psi_datadir}
     mkdir plugins
   fi
-  plugs=${orig_src}/src/plugins/generic
-  cd ${plugs}
-  pluglist=`ls`
-  for plug in ${pluglist}
-  do
-    if [ -d ${plug} ]
-    then
-      cd ${plug}
-      if [ -f "Makefile" ]
-      then
-        make clean
-      fi
-      qmake
-      make
-      solib=`find *.so`
-      if [ ${#solib} ]
-      then
-        cp ${plugs}/${plug}/*.so ${home}/.psi/plugins
-      fi
-      cd ${plugs}
-    fi
-  done
-}
-#
-down_skins ()
-{ 
-  echo "Downloading Psi+ Skins and Themes"
+  cp ${inst_path}/usr/lib/psi-plus/plugins/* ${psi_homeplugdir}
+  rm -rf ${inst_path}
   cd ${home}
-  svn co http://psi-dev.googlecode.com/svn/trunk/skins/ .psi/skins
-  svn export --force http://psi-dev.googlecode.com/svn/trunk/themes/ .psi/themes
-}
-#
-down_sounds ()
-{
-  echo "Downloading Psi+ Sounds"
-  cd ${home}
-  svn co http://psi-dev.googlecode.com/svn/trunk/sound/ .psi/sound
-}
-#
-down_icons ()
-{
-  echo "Downloading All Psi+ Iconsets"
-  cd ${home}
-  svn co http://psi-dev.googlecode.com/svn/trunk/iconsets/ .psi/iconsets
-}
-#
-down_locale ()
-{
-  echo "Downloading Psi+ Russian localization files"
-  psiloc="psi_ru.qm"
-  qtloc="qt_ru.qm"
-  cd ${home}/.psi
-  if [ -f "${psiloc}" ]
-  then
-    rm -f ${psiloc}
-  fi
-  wget http://psi-ru.googlecode.com/svn/trunk/${psiloc}
-  if [ -f "${qtloc}" ]
-  then
-    rm -f ${qtloc}
-  fi  
-  wget http://psi-ru.googlecode.com/svn/trunk/qt/${qtloc}
-  cd ${home}
-}
-#
-down_add ()
-{
-  down_skins
-  down_sounds
-  down_icons
-  down_locale
-}
-#
-non_auto_add ()
-{
-  local loop=1
-  while [ ${loop} = 1 ]
-  do
-    echo "Choose action TODO:"
-    echo "--[1] - Donwload psi+ skins and themes"
-    echo "--[2] - Download psi+ sound files"
-    echo "--[3] - Download psi+ iconsets"
-    echo "--[4] - Download psi+ ru-locale files"
-    echo "--[0] - Do nothing"
-    read deistvo
-    case ${deistvo} in
-      "1" ) down_skins;;
-      "2" ) down_sounds;;
-      "3" ) down_icons;;
-      "4" ) down_locale;;
-      "0" ) clear
-            loop=0;;
-    esac
-  done
 }
 #
 build_deb_package ()
 {
     echo "Building Psi+ DEB package with checkinstall"
-    rev=`svnversion "${patches}"`
+    cd ${patches}
+    rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
     desc='Psi is a cross-platform powerful Jabber client (Qt, C++) designed for the Jabber power users.
 Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru.'
     cd ${orig_src}
@@ -461,8 +328,8 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru
 
 %build
 qconf
-./configure --prefix="%{_prefix}" --bindir="%{_bindir}" --datadir="%{_datadir}" --qtdir=$QTDIR --enable-plugins --enable-webkit --no-separate-debug-info
-%{__make} %{?_smp_mflags}                                                                                                               
+./configure --prefix="%{_prefix}" --bindir="%{_bindir}" --datadir="%{_datadir}" --qtdir=$QTDIR --enable-plugins --enable-webkit
+%{__make} %{?_smp_mflags}
 
 
 %install
@@ -474,7 +341,7 @@ qconf
 
 # Install the pixmap for the menu entry
 %{__install} -Dp -m0644 iconsets/system/default/logo_128.png \
-    %{buildroot}%{_datadir}/pixmaps/psi.png ||:               
+    %{buildroot}%{_datadir}/pixmaps/psi-plus.png ||:               
 
 
 %post
@@ -494,35 +361,34 @@ touch --no-create %{_datadir}/icons/hicolor || :
 %files
 %defattr(-, root, root, 0755)
 %doc COPYING README TODO
-%{_bindir}/psi
-%{_datadir}/psi/
-%{_datadir}/pixmaps/psi.png
-%{_datadir}/applications/psi.desktop
-%{_datadir}/icons/hicolor/*/apps/psi.png
-%exclude %{_datadir}/psi/COPYING
-%exclude %{_datadir}/psi/README
+%{_bindir}/psi-plus
+%{_bindir}/psi-plus.debug
+%{_datadir}/psi-plus/
+%{_datadir}/pixmaps/psi-plus.png
+%{_datadir}/applications/psi-plus.desktop
+%{_datadir}/icons/hicolor/*/apps/psi-plus.png
+%exclude %{_datadir}/psi-plus/COPYING
+%exclude %{_datadir}/psi-plus/README
 '
   tmp_spec=${buildpsi}/test.spec
-  usr_spec="/usr/src/packages/SPECS/psi.spec"
+  usr_spec="/usr/src/packages/SPECS/psi-plus.spec"
   echo "${specfile}" > ${tmp_spec}
   if [ ! -d "/usr/src/packages/SPECS" ]
   then
-    usr_spec=${buildpsi}/psi.spec
+    usr_spec=${buildpsi}/psi-plus.spec
   fi
   cp -f ${tmp_spec} ${usr_spec}
 }
 #
 set_spec_ver ()
 { 
-  echo "Parsing svn revision to psi.spec"
+  echo "Parsing svn revision to psi-plus.spec"
   if [ -f ${usr_spec} ]
   then
-    rev=`svnversion "${patches}"`
+    rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
     vers="0.15.${rev}"
     sed "s/0\.15\.\xxxx/${vers}/" -i "${usr_spec}"
-    echo "Do you want to build WebKit wersion of package [y/n]?"
-    read webk
-    if [ ${webk} = "n" ]
+    if [ -z ${iswebkit} ]
     then
       sed "s/--enable-webkit/ /" -i "${usr_spec}"
     fi
@@ -532,15 +398,12 @@ set_spec_ver ()
       local qconfcmd=${qconfpath}/qconf
       sed "s/qconf/${qconfcmd}/" -i "${usr_spec}"
     fi
-  else
-    echo "Error in line 419: ${usr_spec} file not found"
-    echo "Error in line 419: ${usr_spec} file not found" >> ${logfile}
   fi
 }
 #
 build_rpm_package ()
 {
-  rev=`svnversion "${patches}"`
+  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
   tar_name=psi-plus-0.15.${rev}
   sources=/usr/src/packages/SOURCES
   if [ -f "${sources}/${tar_name}.tar.gz" ]
@@ -548,7 +411,7 @@ build_rpm_package ()
     prepare_spec
     set_spec_ver
     echo "Building Psi+ RPM package"
-    if [ -f "/usr/src/packages/SPECS/psi.spec" ]
+    if [ -f "/usr/src/packages/SPECS/psi-plus.spec" ]
     then
       specpath=/usr/src/packages/SPECS
     else
@@ -561,8 +424,7 @@ build_rpm_package ()
     then
       if [ -f "${home}/.rpmmacros" ]
       then
-        rpmbuild -bb --sign psi.spec
-        rpmbuild -bs --sign psi.spec
+        rpmbuild -ba --clean --sign --rmspec --rmsource ${usr_spec}
       else
         local mess='Make sure that you have the .rpmmacros file in $HOME directory
 
@@ -582,12 +444,174 @@ uid and path you can get by running command:
         echo "${mess}"
       fi
     else
-      rpmbuild -bb psi.spec
-      rpmbuild -bs psi.spec
+      rpmbuild -ba --clean --sign --rmspec --rmsource ${usr_spec}
     fi
+  fi
+}
+#
+prepare_dev ()
+{
+psidev=$buildpsi/psidev
+orig=$psidev/git.orig
+new=$psidev/git
+rm -rf $orig
+rm -rf $new
+cd ${buildpsi}
+echo ${psidev}
+if [ ! -d ${psidev} ]
+then
+  mkdir $psidev
+fi
+if [ ! -d ${orig} ]
+then
+  mkdir $orig
+fi
+if [ ! -d ${new} ]
+then
+  mkdir $new
+fi
+cp -r git/* ${orig}
+cp -r git/* ${new}
+cd ${psidev}
+if [ ! -f deploy ]
+then
+  wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/deploy" || die "Failed to update deploy";
+fi
+if [ ! -f mkpatch ]
+then
+  wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/mkpatch" || die "Failed to update mkpatch";
+fi
+if [ ! -f psidiff.ignore ]
+then
+  wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/psidiff.ignore" || die "Failed to update psidiff.ignore";
+fi
+patchlist=`ls ${buildpsi}/git-plus/patches/ | grep diff`
+cd ${orig}
+echo "Enter maximum patch number to patch orig src"
+read patchnumber
+for patchfile in ${patchlist}
+  do
+    if [  ${patchfile:0:4} -lt ${patchnumber} ]
+    then
+      echo  ${patchfile}
+      patch -p1 < ${buildpsi}/git-plus/patches/${patchfile}
+    fi
+done
+cd ${new}
+echo "Enter maximum patch number to patch work src"
+read patchnumber
+for patchfile in ${patchlist}
+  do
+    if [  ${patchfile:0:4} -lt ${patchnumber} ]
+    then
+      echo  ${patchfile}
+      patch -p1 < ${buildpsi}/git-plus/patches/${patchfile}
+    fi
+done
+}
+#
+set_config ()
+{
+  local use_webkit="n"
+  if [ ! -z "$iswebkit" ]
+  then
+    use_webkit="y"
   else
-    echo "Error in line 447: No Psi+ *.tar.gz source package found in ${sources}"
-    echo "Error in line 447: No Psi+ *.tar.gz source package found in ${sources}" >> ${logfile}
+    use_webkit="n"
+  fi
+  local is_offline="n"
+  if [ "$isoffline" -eq 0 ]
+  then
+    is_offline="n"
+  else
+    is_offline="y"
+  fi
+  local skip_patches="n"
+  if [ "$skip_invalid" -eq 0 ]
+  then
+    skip_patches="n"
+  else
+    skip_patches="y"
+  fi
+  local loop=1
+  while [ ${loop} = 1 ]
+  do
+    echo "Choose action TODO:"
+    echo "--[1] - Set WebKit version to use (current: ${use_webkit})"
+    echo "--[2] - Set iconsets list needed to build"
+    echo "--[3] - Set Offline Mode (current: ${is_offline})"
+    echo "--[4] - Skip Invalid patches (current: ${skip_patches})"
+    echo "--[5] - Set list of plugins needed to build (for all use *)"
+    echo "--[6] - Print option values"
+    echo "--[0] - Do nothing"
+    read deistvo
+    case ${deistvo} in
+      "1" ) echo "Do you want use WebKit [y/n] ?"
+            read variable
+            if [ "$variable" == "y" ]
+            then
+              iswebkit="--enable-webkit"
+              use_webkit="y"
+            else
+              iswebkit=""
+              use_webkit="n"
+            fi;;
+      "2" ) echo "Please enter iconsets separated by space"
+            read variable
+            if [ ! -z "$variable" ]
+            then
+              use_iconsets=${variable}
+            else
+              use_iconsets="system clients activities moods affiliations roster"
+            fi;;
+      "3" ) echo "Do you want use Offline Mode [y/n] ?"
+            read variable
+            if [ "$variable" == "y" ]
+            then
+              isoffline=1
+              is_offline="y"
+            else
+              isoffline=0
+              is_offline="n"
+            fi;;
+      "4" ) echo "Do you want to skip invalid patches when patching [y/n] ?"
+            read variable
+            if [ "$variable" == "y" ]
+            then
+              skip_invalid=1
+              skip_patches="y"
+            else
+              skip_invalid=0
+              skip_patches="n"
+            fi;;
+      "5" ) echo "Please enter plugins needed to build separated by space (* for all)"
+            read variable
+            if [ ! -z "$variable" ]
+            then
+              use_plugins=${variable}
+            else
+              use_plugins=""
+            fi;;
+      "6" ) echo "==Options=="
+            echo "WebKit = ${use_webkit}"
+            echo "Iconsets = ${use_iconsets}"
+            echo "Offline Mode = ${is_offline}"
+            echo "Skip Invalid Patches = ${skip_patches}"
+            echo "Plugins = ${use_plugins}"
+            echo "===========";;
+      "0" ) clear
+            loop=0;;
+    esac
+  done
+  echo "$iswebkit" > ${config_file}
+  echo "$use_iconsets" >> ${config_file}
+  echo "$isoffline" >> ${config_file}
+  echo "$skip_invalid" >> ${config_file}
+  if [ "$use_plugins" == "*" ]
+  then
+    echo "all" >> ${config_file}
+  else
+    echo "$use_plugins" >> ${config_file}
   fi
 }
 #
@@ -595,17 +619,15 @@ print_menu ()
 {
   local menu_text='Choose action TODO!
 [1] - Download All needed source files to build psi+
----[11] - Manual download
----[12] - Backup/Restore sources to/from tar.gz
-[2] - Apply patches
-[3] - Prepare psi+ source package to build in OS Windows
-[4] - Build psi+ binary
----[41] - Build psi+ Webkit binary
-[5] - Build and install All psi+ plugins (except psimedia)
-[6] - Install All Skins, Sounds, Icons, and Ru-locales
----[61] - Manual download
-[7] - Build DEB package with checkinstall
-[8] - Build openSUSE RPM-package
+---[11] - Backup/Restore sources to/from tar.gz
+[2] - Prepare psi+ sources
+---[21] - Prepare psi+ source package to build in OS Windows
+[3] - Build psi+ binary
+---[31] - Build and install psi+ plugins
+[4] - Build Debian package with checkinstall
+[5] - Build openSUSE RPM-package
+[6] - Set libpsibuild options
+[7] - Prepare psi+ sources for development
 [9] - Get help on additional actions
 [0] - Exit'
   echo "${menu_text}"
@@ -615,12 +637,7 @@ get_help ()
 {
 echo "---------------HELP-----------------------"
 echo "[u] - update and backup sources into tar.gz"
-echo "[br] - build rpm package from backup with update"
-echo "[pw] - prepare ms-windows package from backup with update"
-echo "[b] - build psi+ binary from backup with update"
-echo "[bwk] - build psi+ webkit binary from backup with update"
-echo "[124] - Download all sources and build psi+ binary"
-echo "[1241] - Download all sources and build psi+ webkit binary"
+echo "[up] - Download all sources and build psi+ binary"
 echo "-------------------------------------------"
 echo "Press Enter to continue..."
 read
@@ -631,70 +648,34 @@ choose_action ()
   read vibor
   case ${vibor} in
     "1" ) down_all;;
-    "11" ) non_auto_src;;
-    "12" ) back_restore;;
-    "2" ) apply_patches;;
-    "3" ) prepare_win;;
-    "4" ) compile_psi;;
-    "41" ) compile_psi_webkit;;
-    "5" ) build_plugins;;
-    "6" ) down_add;;
-    "61" ) non_auto_add;;
-    "7" ) build_deb_package;;
-    "8" ) prepare_tar
+    "11" ) back_restore;;
+    "2" ) prepare_src;;
+    "21" ) prepare_win;;
+    "3" ) compile_psiplus;;
+    "31" ) build_plugins;;
+    "4" ) build_deb_package;;
+    "5" ) prepare_tar
               build_rpm_package;;
+    "6" ) set_config;;
+    "7" ) prepare_dev;;
     "9" ) get_help;;
     "u" ) restore_tar
-              update_git
-              down_patches
-              down_dicons
-              down_plugins
               backup_tar;;
-    "br" ) restore_tar
-              update_git
-              down_patches
-              down_dicons
-              down_plugins
-              apply_patches
-              prepare_tar
-              build_rpm_package;;
-    "pw" ) restore_tar
-              update_git
-              down_patches
-              down_dicons
-              down_plugins
-              apply_patches
-              prepare_win;;
-    "b" ) restore_tar
-              update_git
-              down_patches
-              down_dicons
-              down_plugins
-              apply_patches
-              compile_psi;;
-    "bwk" ) restore_tar
-              update_git
-              down_patches
-              down_dicons
-              down_plugins
-              apply_patches
-              compile_psi_webkit;;
-    "124" ) down_all
-              apply_patches
-              compile_psi;;
-    "1241" ) down_all
-              apply_patches
-              compile_psi_webkit;;
+    "up" ) prepare_src
+              compile_psiplus;;
     "0" ) quit;;
   esac
 }
 #
 cd ${home}
+check_libpsibuild
 if [ ! -d "${buildpsi}" ]
-  then
-    mkdir build_psi
+then
+  set_config
 fi
-echo "===Log started===" > ${logfile}
+read_options
+set_options
+run_libpsibuild prepare_workspace
 clear
 #
 while [ ${isloop} = 1 ]
