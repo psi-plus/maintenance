@@ -139,5 +139,5 @@ conf="--disable-growl --disable-bundled-qca --debug --prefix=/usr --no-separate-
 
 ( cd "${WORK_DIR}"; ./configure $conf )
 
-for proj in psi.pro.user*; do cp "$proj" "${WORK_DIR}"; done
+for proj in psi.pro.user*; do cp "$proj" "${WORK_DIR}" 2>/dev/null; done
 
