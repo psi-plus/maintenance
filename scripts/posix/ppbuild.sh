@@ -371,6 +371,7 @@ touch --no-create %{_datadir}/icons/hicolor || :
 #
 build_rpm_package ()
 {
+  prepare_src
   rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
   tar_name=psi-plus-0.15.${rev}
   sources=${rpmsrc}
