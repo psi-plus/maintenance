@@ -159,14 +159,15 @@ prepare_tar ()
   if [ -d ${new_src} ]
   then
     cd ${buildpsi}
-    tar -pczf ${tar_name}.tar.gz ${tar_name}
+    tar -sczf ${tar_name}.tar.gz ${tar_name}
     rm -r -f ${new_src}
     if [ -d ${rpmsrc} ]
     then
-      if [ ! -f "${rpmsrc}/${tar_name}.tar.gz" ]
+      if [ -f "${rpmsrc}/${tar_name}.tar.gz" ]
       then
-        cp -u ${buildpsi}/${tar_name}.tar.gz ${rpmsrc}
+        rm -f ${rpmsrc}/${tar_name}.tar.gz
       fi
+      cp -f ${buildpsi}/${tar_name}.tar.gz ${rpmsrc}
     fi
     echo "Preparing completed"
   fi
@@ -372,6 +373,7 @@ touch --no-create %{_datadir}/icons/hicolor || :
 build_rpm_package ()
 {
   prepare_src
+  prepare_tar
   rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
   tar_name=psi-plus-0.15.${rev}
   sources=${rpmsrc}
@@ -379,8 +381,12 @@ build_rpm_package ()
   then
     prepare_spec
     echo "Building Psi+ RPM package"
-    cd ${specpath}
+    cd ${rpmspec}
     rpmbuild -ba --clean --rmspec --rmsource ${usr_spec}
+    rpm_ready=`find $HOME/rpmbuild/RPMS | grep psi-plus`
+    rpm_src_ready=`find $HOME/rpmbuild/SRPMS | grep psi-plus`
+    cp -f ${rpm_ready} ${buildpsi}
+    cp -f ${rpm_src_ready} ${buildpsi}
   fi
 }
 #
@@ -813,8 +819,7 @@ choose_action ()
     "3" ) compile_psiplus;;
     "31" ) build_plugins;;
     "4" ) build_deb_package;;
-    "5" ) prepare_tar
-              build_rpm_package;;
+    "5" ) build_rpm_package;;
     "6" ) set_config;;
     "7" ) prepare_dev;;
     "8" ) otr_deb;;
