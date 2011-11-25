@@ -27,7 +27,7 @@ TRANSLATIONS="${TRANSLATIONS}"
 [ "`uname -m`" = "x86_64" ] && [ -d /usr/lib64 ] && SYSLIBDIRNAME=${SYSLIBDIRNAME:-lib64} || SYSLIBDIRNAME=${SYSLIBDIRNAME:-lib}
 
 # official repository / репозиторий официальной Psi
-GIT_REPO_PSI=git://git.psi-im.org/psi.git
+GIT_REPO_PSI=git://github.com/psi-im/psi.git
 
 GIT_REPO_PLUS=git://github.com/psi-plus/main.git
 GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
