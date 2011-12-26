@@ -39,7 +39,7 @@ diff -urN src/src/applicationinfo.cpp work/src/applicationinfo.cpp
  #define PROG_STORAGE_NS "http://psi-im.org/storage"
  #ifdef Q_WS_MAC
 -#define PROG_APPCAST_URL "http://psi-im.org/appcast/psi-mac.xml"
-+#define PROG_APPCAST_URL "http://psih.ath.cx/~bvp/files/psi-plus-mac.xml"
++#define PROG_APPCAST_URL "http://psi-plus.droppages.com/psi-plus-mac.xml"
  #else
  #define PROG_APPCAST_URL ""
  #endif
