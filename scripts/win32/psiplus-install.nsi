@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.7.8
+; Psi+ installation script, v0.7.9
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2011-12-25
+; Date: 2012-01-07
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.15.5160"
+!define PRODUCT_VERSION "0.15.5177"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.15.5160-win32-setup.exe"
+OutFile "setup\psi-plus-0.15.5177-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -32,12 +32,12 @@ BrandingText "Copyright © 2008-2012 ${COMPANY_NAME}"
 ; -----------------------------------------------------------------------------
 ; Version Information
 VIAddVersionKey  "CompanyName"     "${COMPANY_NAME}"
-VIAddVersionKey  "LegalCopyright"  "© 2008-2011 ${COMPANY_NAME}"
+VIAddVersionKey  "LegalCopyright"  "© 2008-2012 ${COMPANY_NAME}"
 VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.15.5160.0"
+VIProductVersion "0.15.5177.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -234,6 +234,7 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\iconsets\clients\fingerprint-22.jisp"
 	File "setup\iconsets\clients\fingerprint.jisp"
 	SetOutPath "$INSTDIR\iconsets\emoticons\"
+	File "setup\iconsets\emoticons\Android12.jisp"
 	File "setup\iconsets\emoticons\Android.jisp"
 	File "setup\iconsets\emoticons\bombus2psi.jisp"
 	File "setup\iconsets\emoticons\GTalk-smiles.jisp"
@@ -773,6 +774,7 @@ Section Uninstall
 	Delete "$INSTDIR\iconsets\affiliations\white-affiliations.jisp"
 	Delete "$INSTDIR\iconsets\clients\fingerprint-22.jisp"
 	Delete "$INSTDIR\iconsets\clients\fingerprint.jisp"
+	Delete "$INSTDIR\iconsets\emoticons\Android12.jisp"
 	Delete "$INSTDIR\iconsets\emoticons\Android.jisp"
 	Delete "$INSTDIR\iconsets\emoticons\bombus2psi.jisp"
 	Delete "$INSTDIR\iconsets\emoticons\GTalk-smiles.jisp"
