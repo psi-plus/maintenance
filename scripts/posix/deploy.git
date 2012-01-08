@@ -87,7 +87,10 @@ then
   cd "${WORK_DIR}"
   for p in $PATCHES; do
      [ "${p}" = "${UP_TO}" ] && [ "$1" = "-e" ] && commit_tree "before ${p}"
-     git apply -p1 "${PATCHES_DIR}/${p}" || die "Failed to apply ${p}"
+     git apply -p1 "${PATCHES_DIR}/${p}" || {
+       commit_tree "before broken patch ${p}"
+       die "Failed to apply ${p}";
+     }
      [ "${p}" = "${UP_TO}" ] && [ "$1" != "-e" ] && commit_tree "upto ${p}"
      [ "${p}" = "${UP_TO}" ] && break;
   done
