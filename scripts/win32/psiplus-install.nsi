@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.7.9
+; Psi+ installation script, v0.8.0
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2012-01-07
+; Date: 2012-01-15
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.15.5177"
+!define PRODUCT_VERSION "0.15.5183"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.15.5177-win32-setup.exe"
+OutFile "setup\psi-plus-0.15.5183-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.15.5177.0"
+VIProductVersion "0.15.5183.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -294,8 +294,9 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\iconsets\roster\Lamps_red.jisp"
 	File "setup\iconsets\roster\linux.jisp"
 	File "setup\iconsets\roster\maj-mail3.jisp"
-	File "setup\iconsets\roster\mrim2006.jisp"
-	File "setup\iconsets\roster\mrim2008.jisp"
+	Delete "$INSTDIR\iconsets\roster\mrim2006.jisp"
+	Delete "$INSTDIR\iconsets\roster\mrim2008.jisp"
+	File "setup\iconsets\roster\mrim2012.jisp"
 	File "setup\iconsets\roster\muc.jisp"
 	File "setup\iconsets\roster\nuvola-roster.jisp"
 	File "setup\iconsets\roster\nuvola-smtp.jisp"
@@ -832,8 +833,7 @@ Section Uninstall
 	Delete "$INSTDIR\iconsets\roster\Lamps_red.jisp"
 	Delete "$INSTDIR\iconsets\roster\linux.jisp"
 	Delete "$INSTDIR\iconsets\roster\maj-mail3.jisp"
-	Delete "$INSTDIR\iconsets\roster\mrim2006.jisp"
-	Delete "$INSTDIR\iconsets\roster\mrim2008.jisp"
+	Delete "$INSTDIR\iconsets\roster\mrim2012.jisp"
 	Delete "$INSTDIR\iconsets\roster\muc.jisp"
 	Delete "$INSTDIR\iconsets\roster\nuvola-roster.jisp"
 	Delete "$INSTDIR\iconsets\roster\nuvola-smtp.jisp"
