@@ -1,6 +1,6 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.8.0
+; Psi+ installation script, v0.8.1
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
 ; Date: 2012-01-15
 
@@ -133,6 +133,7 @@ InstType Typical
 InstType Full
 
 ; -----------------------------------------------------------------------------
+
 ;Function DisplayAdditionalTasksPage
 ;  !insertmacro MUI_HEADER_TEXT "Select Additional Tasks" "Which additional tasks should be done?"
 ;  !insertmacro MUI_INSTALLOPTIONS_DISPLAY "AdditionalTasksPage.ini"
@@ -142,6 +143,8 @@ InstType Full
 ;Installer Sections
 
 Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
+
+	KillProcDLL::KillProc "psi-plus.exe"
 
 	; Set Section properties
 	SectionIn 1 2 RO
@@ -690,6 +693,8 @@ SectionEnd
 ; =============================================================================
 ;Uninstall section
 Section Uninstall
+	
+	KillProcDLL::KillProc "psi-plus.exe"
 
 	;Remove Psi+ items from registry...
 	DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "SOFTWARE\${PRODUCT_NAME}"
