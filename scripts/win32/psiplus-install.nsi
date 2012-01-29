@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.8.2
+; Psi+ installation script, v0.8.3
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2012-01-22
+; Date: 2012-01-29
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.15.5185"
+!define PRODUCT_VERSION "0.15.5189"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.15.5185-win32-setup.exe"
+OutFile "setup\psi-plus-0.15.5189-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.15.5185.0"
+VIProductVersion "0.15.5189.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -94,7 +94,7 @@ XPStyle on
 ;!define MUI_FINISHPAGE_RUN "$INSTDIR\psi-plus.exe"
 ;!define MUI_FINISHPAGE_RUN_TEXT "&Run Psi+"
 ;!define MUI_FINISHPAGE_RUN_NOTCHECKED
-!define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\changelog_cp1251.txt"
+!define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\changelog.txt"
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "&Show Changelog"
 !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 !define MUI_FINISHPAGE_LINK "Psi+ Project Website"
@@ -154,7 +154,7 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	SetOutPath "$INSTDIR\"
 	File "setup\app.ico"
 	File "setup\changelog.txt"
-	File "setup\changelog_cp1251.txt"
+	Delete "$INSTDIR\changelog_cp1251.txt"
 	File "setup\copying.txt"
 	File "setup\copying-psi.txt"
 	File "setup\iconv.dll"
@@ -714,7 +714,6 @@ Section Uninstall
 	Delete "$INSTDIR\Psi+ Website.url"
 	Delete "$INSTDIR\app.ico"
 	Delete "$INSTDIR\changelog.txt"
-	Delete "$INSTDIR\changelog_cp1251.txt"
 	Delete "$INSTDIR\copying.txt"
 	Delete "$INSTDIR\copying-psi.txt"
 	Delete "$INSTDIR\iconv.dll"
