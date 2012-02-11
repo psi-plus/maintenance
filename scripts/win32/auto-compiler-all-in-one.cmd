@@ -3,10 +3,10 @@
 REM ------------------------------------------------------
 REM auto-compiler-all-in-one.cmd
 REM http://psi-dev.googlecode.com/
-REM Psi+ auto compiler 'all-in-one' script, v0.1.2
+REM Psi+ auto compiler 'all-in-one' script, v0.1.3
 REM Written by majik <maj@jabber.ru>
 REM Optimized by zet <mailto:vladimir.shelukhin@gmail.com>
-REM Date: 2011-11-17
+REM Date: 2012-02-11
 REM ------------------------------------------------------
 
 setlocal
@@ -35,7 +35,7 @@ SET MakePlugins=0
 SET UploadPlugins=0
 SET MakePluginsDebug=0
 SET UploadPluginsDebug=0
-SET vOpenSSL=1.0.0e
+SET vOpenSSL=1.0.0g
 SET GoogleUser=yourlogin
 SET GooglePass=yourpass
 REM End of configuring, now you can try using script
@@ -67,7 +67,7 @@ IF NOT EXIST psi (
 	ECHO Found Psi sources
 	)
 
-REM Check/clone Psi+ sources
+REM Check/Clone Psi+ sources
 ECHO Check Psi+ sources
 ECHO :Checking Psi+ sources>> logs.txt
 IF NOT EXIST PsiPlus (
@@ -203,7 +203,7 @@ IF %MakeClassic%==1 (
 	ECHO Configuring Psi+ Classic release version
 	ECHO :Configuring Psi+ Classic release version>> logs.txt
 	CD PsiPlusWorkdir
-	call qconf.cmd
+	CALL qconf.cmd
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !qconf failed>> logs.txt & GOTO :exit
 	configure ^
 	--enable-plugins ^
@@ -238,8 +238,8 @@ IF %UploadClassic%==1 (
 	ECHO Uploading Psi+ Classic release version to GoogleCode
 	ECHO :Uploading Psi+ Classic release version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user yourlogin ^
-	--password yourpass ^
+	--user %GoogleUser% ^
+	--password %GooglePass% ^
 	--project psi-dev ^
 	--summary "Psi+ Classic Nightly Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL%" ^
 	--labels "Windows,Classic,NightlyBuild,Archive" "psi-plus-%vPsiPlusMajor%.%vPsiPlusMinor%-win32.7z"
@@ -252,7 +252,7 @@ IF %MakeClassicDebug%==1 (
 	ECHO :Configuring Psi+ Webkit debug version>> logs.txt
 	CD PsiPlusWorkdir
 	mingw32-make distclean
-	qconf
+	CALL qconf.cmd
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !qconf failed>> logs.txt & GOTO :exit
 	configure ^
 	--debug ^
@@ -288,8 +288,8 @@ IF %UploadClassicDebug%==1 (
 	ECHO Uploading Psi+ Classic debug version to GoogleCode
 	ECHO :uploading Psi+ Classic debug version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user yourlogin ^
-	--password yourpass ^
+	--user %GoogleUser% ^
+	--password %GooglePass% ^
 	--project psi-dev ^
 	--summary "Psi+ Classic Debug Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || FOR DEBUG ONLY!!!" ^
 	--labels "Classic,Debug,Windows,Archive" "psi-plus-%vPsiPlusMajor%.%vPsiPlusMinor%-debug-win32.7z"
@@ -302,7 +302,7 @@ IF %MakeWebkit%==1 (
 	ECHO :Configuring Psi+ Webkit release version>> logs.txt
 	CD PsiPlusWorkdir
 	mingw32-make distclean
-	qconf
+	CALL qconf.cmd
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !QConf failed>> logs.txt & GOTO :exit
 	configure ^
 	--enable-plugins ^
@@ -339,8 +339,8 @@ IF %UploadWebkit%==1 (
 	ECHO Uploading Psi+ Webkit release version to GoogleCode
 	ECHO :Uploading Psi+ Webkit release version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user yourlogin ^
-	--password yourpass ^
+	--user %GoogleUser% ^
+	--password %GooglePass% ^
 	--project psi-dev ^
 	--summary "Psi+ WebKit Nightly Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || see the file README.TXT inside the archive" ^
 	--labels "Windows,WebKit,NightlyBuild,Archive" "psi-plus-%vPsiPlusMajor%.%vPsiPlusMinor%-webkit-win32.7z"
@@ -353,7 +353,7 @@ IF %MakeWebkitDebug%==1 (
 	ECHO :Configuring Psi+ Webkit debug version>> logs.txt
 	CD PsiPlusWorkdir
 	mingw32-make distclean
-	qconf
+	CALL qconf.cmd
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !QConf failed>> logs.txt & GOTO :exit
 	configure ^
 	--debug ^
@@ -390,8 +390,8 @@ IF %UploadWebkitDebug%==1 (
 	ECHO Uploading Psi+ Webkit debug version to GoogleCode
 	ECHO :Uploading Psi+ Webkit debug version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user yourlogin ^
-	--password yourpass ^
+	--user %GoogleUser% ^
+	--password %GooglePass% ^
 	--project psi-dev ^
 	--summary "Psi+ WebKit Debug Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || FOR DEBUG ONLY!!!" ^
 	--labels "WebKit,Debug,Windows,Archive" "psi-plus-%vPsiPlusMajor%.%vPsiPlusMinor%-webkit-debug-win32.7z"
@@ -418,8 +418,8 @@ IF %UploadPlugins%==1 (
 	ECHO Uploading Psi+ Plugins release versions to GoogleCode
 	ECHO :Uploading Psi+ Plugins release versions to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user yourlogin ^
-	--password yourpass ^
+	--user %GoogleUser% ^
+	--password %GooglePass% ^
 	--project psi-dev ^
 	--summary "Psi+ Plugins || %date% %currentTime% MSD || Qt %vQt%" ^
 	--labels "Plugins,Windows,Archive" "psi-plus-plugins-%vPsiPlusMajor%.%vPlugins%-win32.7z"
@@ -446,8 +446,8 @@ IF %UploadPluginsDebug%==1 (
 	ECHO Uploading Psi+ plugins debug versions to GoogleCode
 	ECHO :Uploading Psi+ plugins debug versions to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user yourlogin ^
-	--password yourpass ^
+	--user %GoogleUser% ^
+	--password %GooglePass% ^
 	--project psi-dev ^
 	--summary "Psi+ Plugins Debug || %date% %currentTime% MSD || Qt %vQt% || FOR DEBUG ONLY!!!" ^
 	--labels "Debug,Plugins,Windows,Archive" "psi-plus-plugins-%vPsiPlusMajor%.%vPlugins%-debug-win32.7z"
