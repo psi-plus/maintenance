@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.8.3
+; Psi+ installation script, v0.8.4
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2012-01-29
+; Date: 2012-02-12
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.15.5189"
+!define PRODUCT_VERSION "0.15.5195"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.15.5189-win32-setup.exe"
+OutFile "setup\psi-plus-0.15.5195-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.15.5189.0"
+VIProductVersion "0.15.5195.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -344,6 +344,7 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\imageformats\qjpeg4.dll"
 	File "setup\imageformats\qmng4.dll"
 	File "setup\imageformats\qsvg4.dll"
+	File "setup\imageformats\qtga4.dll"
 	File "setup\imageformats\qtiff4.dll"
 	SetOutPath "$INSTDIR\skins\"
 	File "setup\skins\default_skin.png"
@@ -880,6 +881,7 @@ Section Uninstall
 	Delete "$INSTDIR\imageformats\qjpeg4.dll"
 	Delete "$INSTDIR\imageformats\qmng4.dll"
 	Delete "$INSTDIR\imageformats\qsvg4.dll"
+	Delete "$INSTDIR\imageformats\qtga4.dll"
 	Delete "$INSTDIR\imageformats\qtiff4.dll"
 	Delete "$INSTDIR\skins\default_skin.png"
 	Delete "$INSTDIR\skins\default_skin.skn"
