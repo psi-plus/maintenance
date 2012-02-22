@@ -1,6 +1,5 @@
-diff -urN src/mac/Info.plist work/mac/Info.plist
---- src/mac/Info.plist	2010-04-28 18:01:10.000000000 +0400
-+++ work/mac/Info.plist	2010-05-03 01:43:37.000000000 +0400
+--- psi.orig/mac/Info.plist
++++ psi/mac/Info.plist
 @@ -7,23 +7,25 @@
  	<key>CFBundleExecutable</key>
  	<string>psi</string>
@@ -31,24 +30,22 @@ diff -urN src/mac/Info.plist work/mac/Info.plist
  	<key>CSResourcesFileMapped</key>
  	<true/>
  </dict>
-diff -urN src/src/applicationinfo.cpp work/src/applicationinfo.cpp
---- src/src/applicationinfo.cpp	2010-05-03 01:46:30.000000000 +0400
-+++ work/src/applicationinfo.cpp	2010-05-02 22:33:40.000000000 +0400
-@@ -34,7 +34,7 @@
- #define PROG_OPTIONS_NS "http://psi-im.org/options"
+--- psi.orig/src/applicationinfo.cpp
++++ psi/src/applicationinfo.cpp
+@@ -36,7 +36,7 @@
  #define PROG_STORAGE_NS "http://psi-im.org/storage"
+ #define PROG_FILECACHE_NS "http://psi-im.org/filecache"
  #ifdef Q_WS_MAC
 -#define PROG_APPCAST_URL "http://psi-im.org/appcast/psi-mac.xml"
 +#define PROG_APPCAST_URL "http://psi-plus.droppages.com/psi-plus-mac.xml"
  #else
  #define PROG_APPCAST_URL ""
  #endif
-diff -urN src/src/mainwin.cpp work/src/mainwin.cpp
---- src/src/mainwin.cpp	2010-05-03 16:05:24.000000000 +0400
-+++ work/src/mainwin.cpp	2010-05-03 16:03:30.000000000 +0400
-@@ -79,6 +79,11 @@
- #include "rosteravatarframe.h"
- #include "avatars.h"
+--- psi.orig/src/mainwin.cpp
++++ psi/src/mainwin.cpp
+@@ -89,6 +89,11 @@
+ #include <x11windowsystem.h>
+ #endif
  
 +#include "AutoUpdater/AutoUpdater.h"
 +#ifdef HAVE_SPARKLE
@@ -58,7 +55,7 @@ diff -urN src/src/mainwin.cpp work/src/mainwin.cpp
  using namespace XMPP;
  
  static const QString showStatusMessagesOptionPath = "options.ui.contactlist.status-messages.show";
-@@ -496,6 +501,7 @@
+@@ -536,6 +541,7 @@ MainWin::MainWin(bool _onTop, bool _asTo
  	d->getAction("help_online_home")->addTo (helpMenu);
  	d->getAction("help_online_forum")->addTo (helpMenu);
  	d->getAction("help_psi_muc")->addTo (helpMenu);
@@ -66,7 +63,7 @@ diff -urN src/src/mainwin.cpp work/src/mainwin.cpp
  	d->getAction("help_report_bug")->addTo (helpMenu);
  	QMenu* diagMenu = new QMenu(tr("Diagnostics"), this);
  	helpMenu->addMenu(diagMenu);
-@@ -641,6 +647,7 @@
+@@ -718,6 +724,7 @@ void MainWin::registerAction( IconAction
  		{ "help_online_home", activated, this, SLOT( actOnlineHomeActivated() ) },
  		{ "help_online_forum", activated, this, SLOT( actOnlineForumActivated() ) },
  		{ "help_psi_muc",     activated, this, SLOT( actJoinPsiMUCActivated() ) },
@@ -74,7 +71,7 @@ diff -urN src/src/mainwin.cpp work/src/mainwin.cpp
  		{ "help_report_bug",  activated, this, SLOT( actBugReportActivated() ) },
  		{ "help_about",       activated, this, SLOT( actAboutActivated() ) },
  		{ "help_about_qt",    activated, this, SLOT( actAboutQtActivated() ) },
-@@ -901,6 +908,7 @@
+@@ -972,6 +979,7 @@ void MainWin::buildOptionsMenu()
  	        << "help_report_bug"
  	        << "diagnostics"
  	        << "separator"
@@ -82,8 +79,8 @@ diff -urN src/src/mainwin.cpp work/src/mainwin.cpp
  	        << "help_about"
  	        << "help_about_qt";
  
-@@ -1010,6 +1018,16 @@
- 	account->actionJoin("psi-dev@conference.jabber.ru");
+@@ -1097,6 +1105,16 @@ void MainWin::actAboutQtActivated ()
+ 	QMessageBox::aboutQt(this);
  }
  
 +void MainWin::actCheckUpdateActivated()
@@ -96,13 +93,12 @@ diff -urN src/src/mainwin.cpp work/src/mainwin.cpp
 +	delete autoUpdater;
 +}
 +
- void MainWin::actBugReportActivated ()
+ void MainWin::actAboutPsiMediaActivated ()
  {
- 	DesktopUtil::openUrl("http://forum.psi-im.org/forum/2");
-diff -urN src/src/mainwin.h work/src/mainwin.h
---- src/src/mainwin.h	2010-05-03 16:00:37.000000000 +0400
-+++ work/src/mainwin.h	2010-05-03 15:57:49.000000000 +0400
-@@ -123,6 +123,7 @@
+ 	QString creditText = PsiMedia::creditText();
+--- psi.orig/src/mainwin.h
++++ psi/src/mainwin.h
+@@ -133,6 +133,7 @@ private slots:
  	void actOnlineHomeActivated ();
  	void actOnlineForumActivated ();
  	void actJoinPsiMUCActivated();
@@ -110,12 +106,11 @@ diff -urN src/src/mainwin.h work/src/mainwin.h
  	void actBugReportActivated ();
  	void actAboutActivated ();
  	void actAboutQtActivated ();
-diff -urN src/src/psiactionlist.cpp work/src/psiactionlist.cpp
---- src/src/psiactionlist.cpp	2010-05-03 16:00:22.000000000 +0400
-+++ work/src/psiactionlist.cpp	2010-05-03 16:07:33.000000000 +0400
-@@ -355,6 +355,9 @@
- 		IconAction *actPsiMUC = new IconAction (tr("Join Psi+ Discussion Room (Online)"), tr("&Join Psi+ Discussion Room (Online)"), 0, this);
- 		actOnlineHome->setWhatsThis (tr("Join Psi+ Discussion Room (Online)"));
+--- psi.orig/src/psiactionlist.cpp
++++ psi/src/psiactionlist.cpp
+@@ -387,6 +387,9 @@ void PsiActionList::Private::createMainW
+ 		IconAction *actPsiMUC = new IconAction (tr("Join Psi Discussion Room (Online)"), tr("&Join Psi Discussion Room (Online)"), 0, this);
+ 		actOnlineHome->setWhatsThis (tr("Join Psi Discussion Room (Online)"));
  
 +		IconAction *actCheckUpdate = new IconAction (tr("Check for Updates..."), tr("&Check for Updates..."), 0, this);
 +		actCheckUpdate->setWhatsThis (tr("Check for Updates..."));
@@ -123,7 +118,7 @@ diff -urN src/src/psiactionlist.cpp work/src/psiactionlist.cpp
  		IconAction *actBugReport = new IconAction (tr("Report a Bug (Online)"), tr("Report a &Bug (Online)"), 0, this);
  		actBugReport->setWhatsThis (tr("Report a Bug (Online)"));
  
-@@ -383,6 +386,7 @@
+@@ -415,6 +418,7 @@ void PsiActionList::Private::createMainW
  			{ "help_report_bug",       actBugReport       },
  			{ "help_about",            actAbout           },
  			{ "help_about_qt",         actAboutQt         },
