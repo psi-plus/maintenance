@@ -85,12 +85,12 @@
  
 +void MainWin::actCheckUpdateActivated()
 +{
-+	AutoUpdater* autoUpdater;
 +#ifdef HAVE_SPARKLE
++	AutoUpdater* autoUpdater;
 +	autoUpdater = new SparkleAutoUpdater(ApplicationInfo::getAppCastURL());
-+#endif
 +	autoUpdater->checkForUpdates();
 +	delete autoUpdater;
++#endif
 +}
 +
  void MainWin::actAboutPsiMediaActivated ()
