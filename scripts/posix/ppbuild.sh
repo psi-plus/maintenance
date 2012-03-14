@@ -671,6 +671,19 @@ update_resources ()
   git pull
 }
 #
+install_locales ()
+{
+  cd ${buildpsi}
+  run_libpsibuild fetch_sources
+  if [ -d "langs" ]
+  then
+    lrelease "${buildpsi}/langs/ru/psi_ru.ts"
+    lrelease "${buildpsi}/langs/ru/qt/qt_ru.ts"
+    cp -rf ${buildpsi}/langs/ru/psi_ru.qm ${psi_datadir}/
+    cp -rf ${buildpsi}/langs/ru/qt/qt_ru.qm ${psi_datadir}/
+  fi 
+}
+#
 set_config ()
 {
   local use_webkit="n"
@@ -802,6 +815,7 @@ get_help ()
   echo "[is] - Install skins to $HOME/.local/share/Psi+"
   echo "[iz] - Install sounds to to $HOME/.local/share/Psi+"
   echo "[it] - Install themes to $HOME/.local/share/Psi+"
+  echo "[il] - Install locales to $HOME/.local/share/Psi+"
   echo "[ur] - Update resources"
   echo "[up] - Download all sources and build psi+ binary"
   echo "-------------------------------------------"
@@ -832,6 +846,7 @@ choose_action ()
     "ur" ) update_resources;;
     "up" ) prepare_src
               compile_psiplus;;
+    "il" ) install_locales;;
     "0" ) quit;;
   esac
 }
