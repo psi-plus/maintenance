@@ -43,6 +43,7 @@ case "${INSTALL_ROOT}" in /*) ;; *) INSTALL_ROOT="$(pwd)/${INSTALL_ROOT}"; ;; es
 # convert PSI_DIR to absolute path
 [ -n "${PSI_DIR}" ] && case "${PSI_DIR}" in /*) ;; *) PSI_DIR="$(pwd)/${PSI_DIR}"; ;; esac
 
+[ -n "${PLUGINS_PREFIXES}" ] && plugprefset=1
 PLUGINS_PREFIXES="${PLUGINS_PREFIXES:-generic}" # will be updated later while detecting platform specific settings
 #######################
 # FUNCTIONS / ФУНКЦИИ #
@@ -141,7 +142,7 @@ check_env() {
     SED_INPLACE_ARG=".bak"
     COMPILE_PREFIX="${COMPILE_PREFIX-/usr/local}"
     CCACHE_BIN_DIR="${CCACHE_BIN_DIR:-/usr/local/libexec/ccache/}"
-    PLUGINS_PREFIXES="${PLUGINS_PREFIXES} unix"
+    [ -z "${plugprefset}" ] && PLUGINS_PREFIXES="${PLUGINS_PREFIXES} unix"
     ;;
   Darwin)
     MAKEOPT=${MAKEOPT:--j$((`sysctl -n hw.ncpu`+1))}
@@ -152,7 +153,7 @@ check_env() {
     if [ -z "${CCACHE_BIN_DIR}" ]; then
         CCACHE_BIN_DIR="$(echo /usr/local/Cellar/ccache/*/libexec)"
     fi
-    PLUGINS_PREFIXES="${PLUGINS_PREFIXES} unix"
+    [ -z "${plugprefset}" ] && PLUGINS_PREFIXES="${PLUGINS_PREFIXES} unix"
     ;;
   SunOS)
     CPUS=`/usr/sbin/psrinfo | grep on-line | wc -l | tr -d ' '`
@@ -164,7 +165,7 @@ check_env() {
     STAT_USER_NAME='stat -c %U'
     SED_INPLACE_ARG=".bak"
     COMPILE_PREFIX="${COMPILE_PREFIX-/usr/local}"
-    PLUGINS_PREFIXES="${PLUGINS_PREFIXES} unix"
+    [ -z "${plugprefset}" ] && PLUGINS_PREFIXES="${PLUGINS_PREFIXES} unix"
     ;;
   MINGW32*)
     local qtpath=`qmake -query QT_INSTALL_PREFIX 2>/dev/null`
@@ -212,7 +213,7 @@ CONTENT
         [ -x "${d}/gcc" ] && { CCACHE_BIN_DIR="${d}"; break; }
       done
     fi
-    PLUGINS_PREFIXES="${PLUGINS_PREFIXES} unix"
+    [ -z "${plugprefset}" ] && PLUGINS_PREFIXES="${PLUGINS_PREFIXES} unix"
     ;;
   esac
    
