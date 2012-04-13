@@ -464,7 +464,7 @@ otr_deb ()
   data=`LANG=en date +'%a, %d %b %Y %T %z'`
   year=`date +'%Y'`
   cd $otrdebdir
-  debver=`grep -Po '\d\.\d\.\d+' src/PsiOtrPlugin.cpp`
+  debver=`grep -Po '\d\.\d\.\d+' src/psiotrplugin.cpp`
 #
 control='Source: psi-plus-otrplugin
 Section: libs
