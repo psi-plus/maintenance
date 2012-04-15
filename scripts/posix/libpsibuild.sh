@@ -18,7 +18,7 @@ ICONSETS="${ICONSETS:-system clients activities moods affiliations roster}"
 CCACHE_BIN_DIR="${CCACHE_BIN_DIR}"
 
 # available translations
-LANGS="ar be bg br ca cs da de ee el eo es et fi fr hr hu it ja mk nl pl pt pt_BR ru se sk sl sr sr@latin sv sw uk ur_PK vi zh_CN zh_TW"
+LANGS="be bg ca cs de en eo es et fi fr hu it ja mk nl pl pt pt_BR ru sk sl sr@latin sv sw uk ur_PK vi zh_CN zh_TW"
 
 # selected translations (space-separated, leave empty to autodetect by $LANG)
 TRANSLATIONS="${TRANSLATIONS}"
@@ -32,8 +32,7 @@ GIT_REPO_PSI=git://github.com/psi-im/psi.git
 GIT_REPO_PLUS=git://github.com/psi-plus/main.git
 GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
 
-LANGS_REPO_URI="git://pv.et-inf.fho-emden.de/git/psi-l10n"
-RU_LANG_REPO_URI="git://github.com/ivan101/psi-plus-ru.git"
+LANGS_REPO_URI="git://github.com/tehnick/psi-plus-i18n.git"
 
 SVN_FETCH="${SVN_FETCH:-svn co --trust-server-cert --non-interactive}"
 SVN_UP="${SVN_UP:-svn up --trust-server-cert --non-interactive}"
@@ -443,14 +442,9 @@ fetch_sources() {
 
   local actual_translations=""
   [ -n "$TRANSLATIONS" ] && {
-    mkdir -p langs
+    git_fetch "${LANGS_REPO_URI}" "langs" "language packs"
     for l in $TRANSLATIONS; do
-      if [ $l = ru ]; then
-        git_fetch "${RU_LANG_REPO_URI}" "langs/$l" "$l langpack"
-      else
-        git_fetch "${LANGS_REPO_URI}-$l" "langs/$l" "$l langpack"
-      fi
-      [ -n "${LRELEASE}" -o -f "langs/$l/psi_$l.qm" ] && actual_translations="${actual_translations} $l"
+      [ -n "${LRELEASE}" -o -f "langs/translations/psi_$l.qm" ] && actual_translations="${actual_translations} $l"
     done
     actual_translations="$(echo $actual_translations)"
     [ -z "${actual_translations}" ] && warning "Translations not found"
@@ -590,14 +584,14 @@ $MAKE  INSTALL_ROOT=\"${INSTALL_ROOT}\" install || die \"Failed to install Psi+\
   if [ -n "${datadir}" ]; then
     cd "${PSI_DIR}"
     for l in $TRANSLATIONS; do
-      f="langs/$l/psi_$l"
-      [ $l = ru ] && qtf="langs/$l/qt/qt_$l" || qtf="langs/$l/qt_$l"
+      f="langs/translations/psi_$l"
+      #qtf="langs/$l/qt_$l"
       [ -n "${LRELEASE}" -a -f "${f}.ts" ] && "${LRELEASE}" "${f}.ts" 2> /dev/null
-      [ -n "${LRELEASE}" -a -f "${qtf}.ts" ] && "${LRELEASE}" "${qtf}.ts" 2> /dev/null
+      #[ -n "${LRELEASE}" -a -f "${qtf}.ts" ] && "${LRELEASE}" "${qtf}.ts" 2> /dev/null
       [ -f "${f}.qm" ] && BATCH_CODE="${BATCH_CODE}
-cp \"${PSI_DIR}/${f}.qm\" \"${INSTALL_ROOT}${datadir}\""
-      [ -f "${qtf}.qm" ] && BATCH_CODE="${BATCH_CODE}
-cp \"${PSI_DIR}/${qtf}.qm\" \"${INSTALL_ROOT}${datadir}\""
+cp \"${PSI_DIR}/${f}.qm\" \"${INSTALL_ROOT}${datadir}/translations\""
+      #[ -f "${qtf}.qm" ] && BATCH_CODE="${BATCH_CODE}
+#cp \"${PSI_DIR}/${qtf}.qm\" \"${INSTALL_ROOT}${datadir}\""
     done
   fi
   [ "${batch_mode}" = 1 ] || exec_install_batch
