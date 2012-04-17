@@ -121,7 +121,7 @@ check_dir ()
   then
     if [ ! -d "$1" ]
     then
-      mkdir "$1"
+      mkdir -pv "$1"
     fi
   fi
 }
@@ -193,33 +193,53 @@ prepare_win ()
     sed "s/LIBS += -lgdi32 -lwsock32/LIBS += -lgdi32 -lwsock32 -leay32/" -i "${ossl}"
     sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
     cp -f ${mainicon} ${new_src}/win32/
-    makepsi='qconf
+    makepsi='set QMAKESPEC=win32-g++
+:: Paste to QTSDK variable your Qt SDK path
+set QTSDK=C:\QtSDK
+::
+set QTDIR=%QTSDK%\Desktop\Qt\4.8.0\mingw
+set OPENSSLDIR=%QTSDK%\OpenSSL
+set CCACHE_DIR=%QTSDK%\ccache
+set MINGWDIR=%QTSDK%\mingw
+set QCONFDIR=%QTSDK%\QConf
+set PLUGBUILDDIR=%QTSDK%\PBuilder
+set MAKE=%MINGWDIR%\bin\mingw32-make -j3
+%QCONFDIR%\qconf
 configure --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
-@echo ================================
-@echo Compiler is ready for fight! B-)
-@echo ================================
 pause
-mingw32-make
+@echo Runing mingw32-make
+%MINGWDIR%\bin\mingw32-make -j3
 pause
+copy /Y src\release\psi-plus.exe ..\psi-plus-portable.exe
 move /Y src\release\psi-plus.exe ..\psi-plus.exe
 pause
-compile-plugins -o ..\
+%PLUGBUILDDIR%\compile-plugins -j 3 -o ..\
 pause
 @goto exit
 
 :exit
 pause'
-    makewebkitpsi='qconf
+    makewebkitpsi='set QMAKESPEC=win32-g++
+:: Paste to QTSDK variable your Qt SDK path 
+set QTSDK=C:\QtSDK
+::
+set QTDIR=%QTSDK%\Desktop\Qt\4.8.0\mingw
+set OPENSSLDIR=%QTSDK%\OpenSSL
+set CCACHE_DIR=%QTSDK%\ccache
+set MINGWDIR=%QTSDK%\mingw
+set QCONFDIR=%QTSDK%\QConf
+set PLUGBUILDDIR=%QTSDK%\PBuilder
+set MAKE=%MINGWDIR%\bin\mingw32-make -j3
+%QCONFDIR%\qconf
 configure --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
-@echo ================================
-@echo Compiler is ready for fight! B-)
-@echo ================================
 pause
-mingw32-make
+@echo Runing mingw32-make
+%MINGWDIR%\bin\mingw32-make -j3
 pause
+copy /Y src\release\psi-plus.exe ..\psi-plus-portable.exe
 move /Y src\release\psi-plus.exe ..\psi-plus.exe
 pause
-compile-plugins -o ..\
+%PLUGBUILDDIR%\compile-plugins -j 3 -o ..\
 pause
 @goto exit
 
@@ -243,8 +263,9 @@ compile_psiplus ()
 build_plugins ()
 {
   cd ${buildpsi}
-  check_dir ${inst_path}
+  run_libpsibuild prepare_workspace
   prepare_src
+  check_dir ${inst_path}  
   run_libpsibuild compile_plugins
   run_libpsibuild install_plugins
   if [ ! -d ${psi_homeplugdir} ]
@@ -859,6 +880,7 @@ then
 fi
 read_options
 set_options
+echo "Cleaning builddir and preparing workspace..."
 run_libpsibuild prepare_workspace
 clear
 #
