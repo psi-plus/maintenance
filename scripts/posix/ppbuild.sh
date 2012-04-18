@@ -625,6 +625,92 @@ README'
   cp -f ../psi-plus-otrplugin_${debver}*.deb $buildpsi
 }
 #
+prepare_plugins_spec ()
+{
+specfile="
+Summary: ${summary}
+Name: ${progname}
+Version: ${rpmver}
+Release: 1
+License: GPL-2
+Group: ${group}
+URL: ${urlpath}
+Source0: ${package_name}
+BuildRequires: ${breq}
+Requires: psi-plus
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-build
+
+%description
+${desc}
+
+%prep
+%setup
+
+%build
+cd ${plugdir}
+qmake
+%{__make} %{?_smp_mflags} 
+
+%install
+cd ${plugdir}
+[ \"%{buildroot}\" != \"/\"] && rm -rf %{buildroot}
+%{__make} install INSTALL_ROOT=\"%{buildroot}\"
+
+%clean
+[ \"%{buildroot}\" != \"/\" ] && rm -rf %{buildroot}
+
+%files
+%defattr(-, root, root, 0755)
+%{_libdir}/psi-plus/plugins/${libfile}
+${docfiles}
+"
+echo "${specfile}" > ${rpmspec}/${progname}.spec
+}
+#
+otr_rpm ()
+{
+  progname="psi-plus-otrplugin"
+  prepare_src
+  cd $buildpsi
+  if [ -d $buildpsi/plugins/dev/otrplugin ]
+  then
+    cd $buildpsi/plugins
+    git pull
+  else
+    git clone git://github.com/psi-plus/plugins.git
+  fi
+  cd $buildpsi
+  #
+  otrorigdir=$buildpsi/plugins/dev/otrplugin
+  PREFIX="/usr"
+  rpmver=`grep -Po '\d\.\d\.\d+' ${otrorigdir}/src/psiotrplugin.cpp`
+  package_name="${progname}-${rpmver}.tar.gz"
+  summary="Off-The-Record-Messaging plugin for Psi"
+  breq="libotr-devel, libtidy-devel, libgcrypt-devel"
+  urlpath="https://github.com/psi-plus/plugins"
+  group="Applications/Internet"
+  desc="This is a Off-The-Record-Messaging plugin for the Psi+ instant messenger.
+ Psi+ (aka Psi-dev) is a collection of patches for Psi. Psi+ is available from
+ http://code.google.com/p/psi-dev/"
+  plugdir="dev/otrplugin"
+  libfile="libotrplugin.so"
+  docfiles="%doc $plugdir/README $plugdir/COPYING"
+  #
+  check_dir ${inst_path}/${progname}-${rpmver}/dev/otrplugin
+  cp -r $orig_src/src/plugins/*.pri ${inst_path}/${progname}-${rpmver}/
+  cp -r $orig_src/src/plugins/include ${inst_path}/${progname}-${rpmver}/
+  cp -r $otrorigdir/* ${inst_path}/${progname}-${rpmver}/dev/otrplugin/
+  cd ${inst_path}
+  tar -pczf $package_name ${progname}-${rpmver}
+  #
+  prepare_plugins_spec
+  cp -rf ${package_name} ${rpmsrc}/
+  rpmbuild -ba --clean --rmspec --rmsource ${rpmspec}/${progname}.spec
+  echo "Cleaning..."
+  cd $buildpsi
+  rm -rf ${inst_suffix}
+}
+#
 get_resources ()
 {
   cd ${buildpsi}
@@ -823,6 +909,7 @@ print_menu ()
 [6] - Set libpsibuild options
 [7] - Prepare psi+ sources for development
 [8] - Build otrplugin deb-package 
+---[81] - Build otrplugin openSUSE RPM-package
 [9] - Get help on additional actions
 [0] - Exit'
   echo "${menu_text}"
@@ -858,6 +945,7 @@ choose_action ()
     "6" ) set_config;;
     "7" ) prepare_dev;;
     "8" ) otr_deb;;
+    "81" ) otr_rpm;;
     "9" ) get_help;;
     "ia" ) install_resources;;
     "ii" ) install_iconsets;;
