@@ -261,6 +261,7 @@ IF %MakeClassicDebug%==1 (
 	CALL qconf.cmd
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !qconf failed>> logs.txt & GOTO :exit
 	configure ^
+	--debug ^
 	--enable-plugins ^
 	--with-openssl-inc=%OPENSSLDIR%\include ^
 	--with-openssl-lib=%OPENSSLDIR%\lib ^
@@ -366,6 +367,7 @@ IF %MakeWebkitDebug%==1 (
 	CALL qconf.cmd
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !QConf failed>> logs.txt & GOTO :exit
 	configure ^
+	--debug ^
 	--enable-plugins ^
 	--with-openssl-inc=%OPENSSLDIR%\include ^
 	--with-openssl-lib=%OPENSSLDIR%\lib ^
