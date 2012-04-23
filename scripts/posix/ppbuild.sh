@@ -197,7 +197,9 @@ prepare_win ()
 :: Paste to QTSDK variable your Qt SDK path
 set QTSDK=C:\QtSDK
 ::
-set QTDIR=%QTSDK%\Desktop\Qt\4.8.0\mingw
+set QTDIR=%QTSDK%\Desktop\Qt\4.8.1\mingw
+set PATH=%PATH%;%QTSDK%\Desktop\Qt\4.8.1\mingw\bin
+set ZLIBDIR=%QTSDK%\zlib-1.2.6-win\i386
 set OPENSSLDIR=%QTSDK%\OpenSSL
 set CCACHE_DIR=%QTSDK%\ccache
 set MINGWDIR=%QTSDK%\mingw
@@ -205,7 +207,7 @@ set QCONFDIR=%QTSDK%\QConf
 set PLUGBUILDDIR=%QTSDK%\PBuilder
 set MAKE=%MINGWDIR%\bin\mingw32-make -j3
 %QCONFDIR%\qconf
-configure --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
+configure --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
 pause
 @echo Runing mingw32-make
 %MINGWDIR%\bin\mingw32-make -j3
@@ -223,7 +225,9 @@ pause'
 :: Paste to QTSDK variable your Qt SDK path 
 set QTSDK=C:\QtSDK
 ::
-set QTDIR=%QTSDK%\Desktop\Qt\4.8.0\mingw
+set QTDIR=%QTSDK%\Desktop\Qt\4.8.1\mingw
+set PATH=%PATH%;%QTSDK%\Desktop\Qt\4.8.1\mingw\bin
+set ZLIBDIR=%QTSDK%\zlib-1.2.6-win\i386
 set OPENSSLDIR=%QTSDK%\OpenSSL
 set CCACHE_DIR=%QTSDK%\ccache
 set MINGWDIR=%QTSDK%\mingw
@@ -231,7 +235,7 @@ set QCONFDIR=%QTSDK%\QConf
 set PLUGBUILDDIR=%QTSDK%\PBuilder
 set MAKE=%MINGWDIR%\bin\mingw32-make -j3
 %QCONFDIR%\qconf
-configure --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
+configure --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
 pause
 @echo Runing mingw32-make
 %MINGWDIR%\bin\mingw32-make -j3
