@@ -581,15 +581,16 @@ cd \"${PSI_DIR}/build\";
 $MAKE  INSTALL_ROOT=\"${INSTALL_ROOT}\" install || die \"Failed to install Psi+\""
   datadir=`grep PSI_DATADIR "${PSI_DIR}/build/conf.pri" 2>/dev/null`
   datadir="${datadir#*=}"
-  if [ -n "${datadir}" ]; then
-    cd "${PSI_DIR}"
+  if [ -n "${datadir}" -a -n "$TRANSLATIONS" ]; then
+    BATCH_CODE="${BATCH_CODE}
+mkdir -p \"${INSTALL_ROOT}${datadir}/translations\""
     for l in $TRANSLATIONS; do
-      f="langs/translations/psi_$l"
+      f="${PSI_DIR}/langs/translations/psi_$l"
       #qtf="langs/$l/qt_$l"
       [ -n "${LRELEASE}" -a -f "${f}.ts" ] && "${LRELEASE}" "${f}.ts" 2> /dev/null
       #[ -n "${LRELEASE}" -a -f "${qtf}.ts" ] && "${LRELEASE}" "${qtf}.ts" 2> /dev/null
       [ -f "${f}.qm" ] && BATCH_CODE="${BATCH_CODE}
-cp \"${PSI_DIR}/${f}.qm\" \"${INSTALL_ROOT}${datadir}/translations\""
+cp \"${f}.qm\" \"${INSTALL_ROOT}${datadir}/translations\""
       #[ -f "${qtf}.qm" ] && BATCH_CODE="${BATCH_CODE}
 #cp \"${PSI_DIR}/${qtf}.qm\" \"${INSTALL_ROOT}${datadir}\""
     done
@@ -639,12 +640,15 @@ $BATCH_CODE
 " > install.sh
   chmod +x install.sh
 
-  local ir_user=`$STAT_USER_NAME "${INSTALL_ROOT}"`
+  local real_root="${INSTALL_ROOT}"
+  while [ ! -e "$real_root" -a -n "$real_root" ]; do real_root=${real_root%/*}; done
+  [ -z "$real_root" ] && real_root=/
+  local ir_user=`$STAT_USER_NAME "${real_root}"`
   [ -z "${ir_user}" ] && die "Failed to detect destination directory's user name"
   if [ "${ir_user}" = "`id -un`" ]; then
     ./install.sh || die "install failed"
   else
-    log "owner of ${INSTALL_ROOT} is ${ir_user} and this is not you."
+    log "owner of ${real_root} is ${ir_user} and this is not you."
     priveleged_exec "./install.sh" "${ir_user}"
   fi
   reset_install_batch
