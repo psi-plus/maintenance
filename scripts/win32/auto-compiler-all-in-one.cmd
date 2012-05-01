@@ -3,10 +3,10 @@
 REM ------------------------------------------------------
 REM auto-compiler-all-in-one.cmd
 REM http://psi-dev.googlecode.com/
-REM Psi+ auto compiler 'all-in-one' script, v0.1.7
+REM Psi+ auto compiler 'all-in-one' script, v0.1.8
 REM Written by majik <maj@jabber.ru>
 REM Optimized by zet <mailto:vladimir.shelukhin@gmail.com>
-REM Date: 2012-04-19
+REM Date: 2012-05-01
 REM ------------------------------------------------------
 
 setlocal
@@ -323,6 +323,7 @@ IF %MakeWebkit%==1 (
 	--with-zlib-lib=%ZLIBDIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
+	--enable-webkit ^
 	--enable-whiteboarding
 	IF ERRORLEVEL 1 ECHO Configuring failed & CD .. & ECHO !Configuring failed>> logs.txt & GOTO :exit
 	REM Compiling Psi+ Webkit release version
@@ -377,6 +378,7 @@ IF %MakeWebkitDebug%==1 (
 	--with-zlib-lib=%ZLIBDIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
+	--enable-webkit ^
 	--enable-whiteboarding
 	IF ERRORLEVEL 1 ECHO Configuring failed & CD .. & ECHO !configuring failed>> logs.txt & GOTO :exit
 	REM Compiling Psi+ Webkit debug version
