@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.8.9
+; Psi+ installation script, v0.9.0
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2012-04-08
+; Date: 2012-05-20
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.15.5320"
+!define PRODUCT_VERSION "0.15.5335"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.15.5320-win32-setup.exe"
+OutFile "setup\psi-plus-0.15.5335-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.15.5320.0"
+VIProductVersion "0.15.5335.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -165,14 +165,14 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\libintl-3.dll"
 	Delete "$INSTDIR\libssl32.dll"
 	File "setup\mingwm10.dll"
-	File "setup\psi_ru.qm"
+	Delete "$INSTDIR\psi_ru.qm"
 	Delete "$INSTDIR\psi.exe"
 	File "setup\psi-plus.exe"
 	Delete "$INSTDIR\psi-portable.bat"
 	File "setup\psi-plus-portable.bat"
 	Delete "$INSTDIR\qca2.dll"
 	Delete "$INSTDIR\Qt3Support4.dll"
-	File "setup\qt_ru.qm"
+	Delete "$INSTDIR\qt_ru.qm"
 	File "setup\QtCore4.dll"
 	File "setup\QtGui4.dll"
 	File "setup\QtNetwork4.dll"
@@ -180,6 +180,7 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\QtSvg4.dll"
 	File "setup\QtXml4.dll"
 	File "setup\ssleay32.dll"
+	File "setup\zlib1.dll"
 	Delete "$INSTDIR\version.txt"
 	SetOutPath "$INSTDIR\aspell\data\"
 	File "setup\aspell\data\dvorak.kbd"
@@ -616,6 +617,49 @@ Section "Psimedia+" SectionPsimediaPlus
 
 SectionEnd
 
+Section "Psi+ Translations" SectionPsiPlusTranslations
+
+	; Set Section properties
+	SectionIn 1 2
+	SetOverwrite on
+
+	; Set Section Files and Shortcuts
+	SetOutPath "$INSTDIR\translations\"
+	File "setup\translations\psi_be.qm"
+	File "setup\translations\psi_bg.qm"
+	File "setup\translations\psi_ca.qm"
+	File "setup\translations\psi_cs.qm"
+	File "setup\translations\psi_de.qm"
+	File "setup\translations\psi_en.qm"
+	File "setup\translations\psi_eo.qm"
+	File "setup\translations\psi_es.qm"
+	File "setup\translations\psi_et.qm"
+	File "setup\translations\psi_fi.qm"
+	File "setup\translations\psi_fr.qm"
+	File "setup\translations\psi_hu.qm"
+	File "setup\translations\psi_it.qm"
+	File "setup\translations\psi_ja.qm"
+	File "setup\translations\psi_mk.qm"
+	File "setup\translations\psi_nl.qm"
+	File "setup\translations\psi_pl.qm"
+	File "setup\translations\psi_pt.qm"
+	File "setup\translations\psi_pt_BR.qm"
+	File "setup\translations\psi_ru.qm"
+	File "setup\translations\psi_sk.qm"
+	File "setup\translations\psi_sl.qm"
+	File "setup\translations\psi_sr@latin.qm"
+	File "setup\translations\psi_sv.qm"
+	File "setup\translations\psi_sw.qm"
+	File "setup\translations\psi_uk.qm"
+	File "setup\translations\psi_ur_PK.qm"
+	File "setup\translations\psi_vi.qm"
+	File "setup\translations\psi_zh_CN.qm"
+	File "setup\translations\psi_zh_TW.qm"
+	File "setup\translations\qt_ru.qm"
+
+SectionEnd
+
+
 ; Optional Start menu shortcut section
 Section "Start Menu Shortcuts" SectionStartMenuShortcuts
 	
@@ -685,6 +729,7 @@ SectionEnd
 	!insertmacro MUI_DESCRIPTION_TEXT ${SectionPsiPlusCoreComponents} "Psi+ core files (required)"
 	!insertmacro MUI_DESCRIPTION_TEXT ${SectionPsiPlusPlugins} "Psi+ Plugins libraries"
 	!insertmacro MUI_DESCRIPTION_TEXT ${SectionPsimediaPlus} "Psimedia+ libraries"
+	!insertmacro MUI_DESCRIPTION_TEXT ${SectionPsiPlusTranslations} "Psi+ Translations files"
   !insertmacro MUI_DESCRIPTION_TEXT ${SectionStartMenuShortcuts} "Psi+ Start Menu shortcuts"
 	!insertmacro MUI_DESCRIPTION_TEXT ${SectionDesktopShortcut} "Psi+ Desktop shortcut"
 	!insertmacro MUI_DESCRIPTION_TEXT ${SectionQuickLaunchShortcut} "Psi+ Quick Launch shortcut"
@@ -724,16 +769,15 @@ Section Uninstall
 	Delete "$INSTDIR\libgcc_s_dw2-1.dll"
 	Delete "$INSTDIR\libintl-3.dll"
 	Delete "$INSTDIR\mingwm10.dll"
-	Delete "$INSTDIR\psi_ru.qm"
 	Delete "$INSTDIR\psi-plus.exe"
 	Delete "$INSTDIR\psi-plus-portable.bat"
-	Delete "$INSTDIR\qt_ru.qm"
 	Delete "$INSTDIR\QtCore4.dll"
 	Delete "$INSTDIR\QtGui4.dll"
 	Delete "$INSTDIR\QtNetwork4.dll"
 	Delete "$INSTDIR\QtSvg4.dll"
 	Delete "$INSTDIR\QtXml4.dll"
 	Delete "$INSTDIR\ssleay32.dll"
+	Delete "$INSTDIR\zlib1.dll"
 	Delete "$INSTDIR\aspell\data\dvorak.kbd"
 	Delete "$INSTDIR\aspell\data\koi8-r.cmap"
 	Delete "$INSTDIR\aspell\data\koi8-r.cset"
@@ -1075,9 +1119,43 @@ Section Uninstall
 	Delete "$INSTDIR\gstreamer-0.10\libgstvolume.dll"
 	Delete "$INSTDIR\gstreamer-0.10\libgstvorbis.dll"
 
-  ;Remove remaining directories
+	;Cleanup Psi+ Translations
+	Delete "$INSTDIR\translations\psi_be.qm"
+	Delete "$INSTDIR\translations\psi_bg.qm"
+	Delete "$INSTDIR\translations\psi_ca.qm"
+	Delete "$INSTDIR\translations\psi_cs.qm"
+	Delete "$INSTDIR\translations\psi_de.qm"
+	Delete "$INSTDIR\translations\psi_en.qm"
+	Delete "$INSTDIR\translations\psi_eo.qm"
+	Delete "$INSTDIR\translations\psi_es.qm"
+	Delete "$INSTDIR\translations\psi_et.qm"
+	Delete "$INSTDIR\translations\psi_fi.qm"
+	Delete "$INSTDIR\translations\psi_fr.qm"
+	Delete "$INSTDIR\translations\psi_hu.qm"
+	Delete "$INSTDIR\translations\psi_it.qm"
+	Delete "$INSTDIR\translations\psi_ja.qm"
+	Delete "$INSTDIR\translations\psi_mk.qm"
+	Delete "$INSTDIR\translations\psi_nl.qm"
+	Delete "$INSTDIR\translations\psi_pl.qm"
+	Delete "$INSTDIR\translations\psi_pt.qm"
+	Delete "$INSTDIR\translations\psi_pt_BR.qm"
+	Delete "$INSTDIR\translations\psi_ru.qm"
+	Delete "$INSTDIR\translations\psi_sk.qm"
+	Delete "$INSTDIR\translations\psi_sl.qm"
+	Delete "$INSTDIR\translations\psi_sr@latin.qm"
+	Delete "$INSTDIR\translations\psi_sv.qm"
+	Delete "$INSTDIR\translations\psi_sw.qm"
+	Delete "$INSTDIR\translations\psi_uk.qm"
+	Delete "$INSTDIR\translations\psi_ur_PK.qm"
+	Delete "$INSTDIR\translations\psi_vi.qm"
+	Delete "$INSTDIR\translations\psi_zh_CN.qm"
+	Delete "$INSTDIR\translations\psi_zh_TW.qm"
+	Delete "$INSTDIR\translations\qt_ru.qm"
+
+	;Remove remaining directories
 	SetShellVarContext all
   RMDir /r "$SMPROGRAMS\Psi+"
+	RMDir "$INSTDIR\translations\"
 	RMDir "$INSTDIR\sound\"
 	RMDir "$INSTDIR\skins\universal\tkabber\"
 	RMDir "$INSTDIR\skins\universal\sky\"
