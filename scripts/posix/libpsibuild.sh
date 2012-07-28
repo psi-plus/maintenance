@@ -522,7 +522,15 @@ prepare_sources() {
          || log "skip invalid patch"
      fi
   done
-  sed -i${SED_INPLACE_ARG} "s/.xxx/.${rev}/"  src/applicationinfo.cpp
+
+  case "${CONF_OPTS}" in
+    *--enable-webkit*)
+      echo "0.15.${rev}-webkit (@@DATE@@)" > version
+      ;;
+    *)
+      echo "0.15.${rev} (@@DATE@@)" > version
+      ;;
+  esac
   sed -i${SED_INPLACE_ARG} \
     "s:target.path.*:target.path = ${PSILIBDIR}/psi-plus/plugins:" \
     src/plugins/psiplugin.pri
