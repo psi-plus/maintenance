@@ -183,23 +183,22 @@ prepare_win ()
   local winpri=${new_src}/conf_windows.pri
   local mainicon=${buildpsi}/git-plus/app.ico
   local file_pro=${new_src}/src/src.pro
-  local ossl=${new_src}/third-party/qca/qca-ossl.pri
   cp -r ${orig_src} ${new_src}
   if [ -d ${new_src} ]
   then
     cd ${buildpsi}
     sed "s/#CONFIG += qca-static/CONFIG += qca-static\nCONFIG += webkit/" -i "${winpri}"
     sed "s/#DEFINES += HAVE_ASPELL/DEFINES += HAVE_ASPELL/" -i "${winpri}"
-    sed "s/LIBS += -lgdi32 -lwsock32/LIBS += -lgdi32 -lwsock32 -leay32/" -i "${ossl}"
     sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
     cp -f ${mainicon} ${new_src}/win32/
     makepsi='set QMAKESPEC=win32-g++
-:: Paste to QTSDK variable your Qt SDK path
+:: Change the value of QTSDK variable by your real QtSDK path
 set QTSDK=C:\QtSDK
 ::
 set QTDIR=%QTSDK%\Desktop\Qt\4.8.1\mingw
+set QCADIR=%QtSDK%\qca
 set PATH=%PATH%;%QTSDK%\Desktop\Qt\4.8.1\mingw\bin
-set ZLIBDIR=%QTSDK%\zlib-1.2.6-win\i386
+set ZLIBDIR=%QTSDK%\zlib-1.2.7-win\i386
 set OPENSSLDIR=%QTSDK%\OpenSSL
 set CCACHE_DIR=%QTSDK%\ccache
 set MINGWDIR=%QTSDK%\mingw
@@ -207,7 +206,7 @@ set QCONFDIR=%QTSDK%\QConf
 set PLUGBUILDDIR=%QTSDK%\PBuilder
 set MAKE=%MINGWDIR%\bin\mingw32-make -j3
 %QCONFDIR%\qconf
-configure --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
+configure --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
 pause
 @echo Runing mingw32-make
 %MINGWDIR%\bin\mingw32-make -j3
@@ -222,20 +221,20 @@ pause
 :exit
 pause'
     makewebkitpsi='set QMAKESPEC=win32-g++
-:: Paste to QTSDK variable your Qt SDK path 
+:: Change the value of QTSDK variable by your real QtSDK path 
 set QTSDK=C:\QtSDK
 ::
 set QTDIR=%QTSDK%\Desktop\Qt\4.8.1\mingw
+set QCADIR=%QtSDK%\qca
 set PATH=%PATH%;%QTSDK%\Desktop\Qt\4.8.1\mingw\bin
-set ZLIBDIR=%QTSDK%\zlib-1.2.6-win\i386
-set OPENSSLDIR=%QTSDK%\OpenSSL
+set ZLIBDIR=%QTSDK%\zlib-1.2.7-win\i386
 set CCACHE_DIR=%QTSDK%\ccache
 set MINGWDIR=%QTSDK%\mingw
 set QCONFDIR=%QTSDK%\QConf
 set PLUGBUILDDIR=%QTSDK%\PBuilder
 set MAKE=%MINGWDIR%\bin\mingw32-make -j3
 %QCONFDIR%\qconf
-configure --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
+configure --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
 pause
 @echo Runing mingw32-make
 %MINGWDIR%\bin\mingw32-make -j3
@@ -259,6 +258,8 @@ pause'
 compile_psiplus ()
 {
   set_options
+  def_prefix="/usr"
+  INSTALL_ROOT="${INSTALL_ROOT:-$def_prefix}"
   run_libpsibuild prepare_workspace
   prepare_src
   run_libpsibuild compile_psi
@@ -784,14 +785,16 @@ update_resources ()
 #
 install_locales ()
 {
-  cd ${buildpsi}
+  tr_path=${buildpsi}/langs/translations
   run_libpsibuild fetch_sources
-  if [ -d "langs" ]
+  if [ -d "${tr_path}" ]
   then
-    lrelease "${buildpsi}/langs/ru/psi_ru.ts"
-    lrelease "${buildpsi}/langs/ru/qt/qt_ru.ts"
-    cp -rf ${buildpsi}/langs/ru/psi_ru.qm ${psi_datadir}/
-    cp -rf ${buildpsi}/langs/ru/qt/qt_ru.qm ${psi_datadir}/
+    filelist=`ls ${buildpsi}/langs/translations`
+    for langfile in ${filelist}
+    do
+       lrelease ${tr_path}/${langfile}
+       cp -rf ${tr_path}/${langfile/.ts}.qm ${psi_datadir}/
+    done 
   fi 
 }
 #
@@ -965,12 +968,12 @@ choose_action ()
 }
 #
 cd ${home}
+read_options
 check_libpsibuild
 if [ ! -f "${config_file}" ]
 then
   set_config
 fi
-read_options
 set_options
 echo "Cleaning builddir and preparing workspace..."
 run_libpsibuild prepare_workspace
