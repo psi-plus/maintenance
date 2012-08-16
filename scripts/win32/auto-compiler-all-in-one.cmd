@@ -3,10 +3,10 @@
 REM ------------------------------------------------------
 REM auto-compiler-all-in-one.cmd
 REM http://psi-dev.googlecode.com/
-REM Psi+ auto compiler 'all-in-one' script, v0.1.8
+REM Psi+ auto compiler 'all-in-one' script, v0.2.1
 REM Written by majik <maj@jabber.ru>
 REM Optimized by zet <mailto:vladimir.shelukhin@gmail.com>
-REM Date: 2012-05-01
+REM Date: 2012-08-15
 REM ------------------------------------------------------
 
 setlocal
@@ -16,6 +16,7 @@ set SED=%GITDIR%\bin\sed.exe
 set PATCH=%GITDIR%\bin\patch.exe
 set QMAKE=%QTDIR%\bin\qmake.exe
 set ZLIBDIR=%QTSDK%\zlib-1.2.6-win\i386
+set BUILDDATE=%date:~6,4%-%date:~3,2%-%date:~0,2%
 REM set MAKE=mingw32-make -j3
 
 REM Please configure script before use
@@ -37,7 +38,7 @@ SET MakePlugins=0
 SET UploadPlugins=0
 SET MakePluginsDebug=0
 SET UploadPluginsDebug=0
-SET vOpenSSL=1.0.1
+SET vOpenSSL=1.0.1c
 SET GoogleUser=yourlogin
 SET GooglePass=yourpass
 REM End of configuring, now you can try using script
@@ -84,12 +85,14 @@ IF NOT EXIST PsiPlus (
 	SET Update=1
 	FOR /f "tokens=2 delims=-" %%x IN ('%GIT% describe --tags') DO ECHO %%x > ..\vPsiPlusNew
 	CD plugins
+REM %GIT% pull
+REM %GIT% checkout new_juick
 	FOR /f "tokens=1 delims=-" %%x IN ('%GIT% describe --tags') DO ECHO %%x > ..\..\vPluginsNew
 	CD ..\..
 	) ELSE (
 	ECHO Found Psi+ sources
 	)
-rem pause
+
 REM Checking for first start
 IF %Update%==1 GOTO :preparing_and_patching
 
@@ -177,8 +180,8 @@ IF %Update%==1 (
 	CD PsiPlusWorkdir
 	COPY /Y ..\PsiPlus\app.ico win32\app.ico
 	REN iris\conf_win.pri.example conf_win.pri
-	MOVE /Y patches\9999-psiplus-application-info.diff 9999-psiplus-application-info.diff
-	%SED% "s/\(xxx\)/%vPsiPlusMinor%/" "9999-psiplus-application-info.diff">patches\9999-psiplus-application-info.diff
+	REM MOVE /Y patches\9999-psiplus-application-info.diff 9999-psiplus-application-info.diff
+	REM %SED% "s/\(xxx\)/%vPsiPlusMinor%/" "9999-psiplus-application-info.diff">patches\9999-psiplus-application-info.diff
 	DIR /B %patchdir%*.diff | SORT > series.txt
 	FOR /F %%v IN (series.txt) DO %PATCH% -p1 -r rejects < %patchdir%%%v
 	DEL series.txt
@@ -203,6 +206,8 @@ REM ============================================================================
 REM Compiling Psi+ Classic release version
 IF %MakeClassic%==1 (
 	REM Configuring Psi+ Classic release version
+	REM	ECHO %vPsiPlusMajor%.%vPsiPlusMinor% ^(@@DATE@@^) > PsiPlusWorkdir\version
+	ECHO %vPsiPlusMajor%.%vPsiPlusMinor% ^(%BUILDDATE%^) > PsiPlusWorkdir\version
 	ECHO Configuring Psi+ Classic release version
 	ECHO :Configuring Psi+ Classic release version>> logs.txt
 	CD PsiPlusWorkdir
@@ -210,12 +215,12 @@ IF %MakeClassic%==1 (
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !qconf failed>> logs.txt & GOTO :exit
 	configure ^
 	--enable-plugins ^
-	--with-openssl-inc=%OPENSSLDIR%\include ^
-	--with-openssl-lib=%OPENSSLDIR%\lib ^
 	--with-aspell-inc=%MINGWDIR%\include ^
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
 	--with-zlib-lib=%ZLIBDIR%\lib ^
+	--with-qca-inc=%QCA_DIR%\include ^
+	--with-qca-lib=%QCA_DIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
@@ -226,12 +231,12 @@ IF %MakeClassic%==1 (
 	ECHO :Compiling started: %TIME%>> ..\logs.txt
 	mingw32-make
 	CD ..
-	IF NOT EXIST PsiPlusWorkdir\src\release\psi-plus.exe ECHO !compiling failed: %TIME%>> logs.txt & ECHO Compiling failed, but will try again after next updating & GOTO :exit
+	IF NOT EXIST PsiPlusWorkdir\psi-plus.exe ECHO !compiling failed: %TIME%>> logs.txt & ECHO Compiling failed, but will try again after next updating & GOTO :exit
 	ECHO :Compiling completed: %TIME%>> logs.txt
 	REM Preparing for upload
 	ECHO Preparing for upload
 	ECHO :Archiving Psi+ Classic release version>> logs.txt
-	MOVE /Y PsiPlusWorkdir\src\release\psi-plus.exe psi-plus.exe
+	MOVE /Y PsiPlusWorkdir\psi-plus.exe psi-plus.exe
 	ECHO MOVE /Y psi-plus.exe psi-plus-portable.exe ^&^& DEL make-psi-plus-portable.bat>make-psi-plus-portable.bat
 	ECHO Archiving Psi+ Classic release version
 	7z a -mx9 "psi-plus-%vPsiPlusMajor%.%vPsiPlusMinor%-win32.7z" "make-psi-plus-portable.bat" "psi-plus.exe"
@@ -243,7 +248,7 @@ IF %UploadClassic%==1 (
 	ECHO Uploading Psi+ Classic release version to GoogleCode
 	ECHO :Uploading Psi+ Classic release version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user GoogleUser ^
+	--user vladimir.shelukhin ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ Classic Nightly Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL%" ^
@@ -254,8 +259,9 @@ REM ============================================================================
 REM Compiling Psi+ Classic debug version
 IF %MakeClassicDebug%==1 (
 	REM Configuring Psi+ Classic debug version
-	ECHO Configuring Psi+ Webkit debug version
-	ECHO :Configuring Psi+ Webkit debug version>> logs.txt
+	ECHO %vPsiPlusMajor%.%vPsiPlusMinor%-debug ^(%BUILDDATE%^) > PsiPlusWorkdir\version
+	ECHO Configuring Psi+ Classic debug version
+	ECHO :Configuring Psi+ Classic debug version>> logs.txt
 	CD PsiPlusWorkdir
 	mingw32-make distclean
 	CALL qconf.cmd
@@ -263,12 +269,12 @@ IF %MakeClassicDebug%==1 (
 	configure ^
 	--debug ^
 	--enable-plugins ^
-	--with-openssl-inc=%OPENSSLDIR%\include ^
-	--with-openssl-lib=%OPENSSLDIR%\lib ^
 	--with-aspell-inc=%MINGWDIR%\include ^
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
 	--with-zlib-lib=%ZLIBDIR%\lib ^
+	--with-qca-inc=%QCA_DIR%\include ^
+	--with-qca-lib=%QCA_DIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
@@ -279,12 +285,12 @@ IF %MakeClassicDebug%==1 (
 	ECHO :Compiling started: %TIME%>> logs.txt
 	mingw32-make
 	CD ..
-	IF NOT EXIST PsiPlusWorkdir\src\debug\psi-plus.exe ECHO !Compiling failed: %TIME%>> logs.txt & ECHO Compiling failed, but will try again after next update & GOTO :exit
+	IF NOT EXIST PsiPlusWorkdir\psi-plus.exe ECHO !Compiling failed: %TIME%>> logs.txt & ECHO Compiling failed, but will try again after next update & GOTO :exit
 	ECHO :Compiling completed: %TIME%>> logs.txt
 	REM Preparing for upload
 	ECHO Preparing for upload
 	ECHO :Archiving Psi+ Classic debug version>> logs.txt
-	MOVE /Y PsiPlusWorkdir\src\debug\psi-plus.exe psi-plus.exe
+	MOVE /Y PsiPlusWorkdir\psi-plus.exe psi-plus.exe
 	ECHO MOVE /Y psi-plus.exe psi-plus-portable.exe ^&^& DEL make-psi-plus-portable.bat>make-psi-plus-portable.bat
 	ECHO Archiving Psi+ Classic debug version
 	7z a -mx9 "psi-plus-%vPsiPlusMajor%.%vPsiPlusMinor%-debug-win32.7z" "make-psi-plus-portable.bat" "psi-plus.exe"
@@ -296,7 +302,7 @@ IF %UploadClassicDebug%==1 (
 	ECHO Uploading Psi+ Classic debug version to GoogleCode
 	ECHO :uploading Psi+ Classic debug version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user GoogleUser ^
+	--user vladimir.shelukhin ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ Classic Debug Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || FOR DEBUG ONLY!!!" ^
@@ -307,6 +313,7 @@ REM ============================================================================
 REM Compiling Psi+ Webkit release version
 IF %MakeWebkit%==1 (
 	REM Configuring Psi+ Webkit release version
+	ECHO %vPsiPlusMajor%.%vPsiPlusMinor%-webkit ^(%BUILDDATE%^) > PsiPlusWorkdir\version
 	ECHO Configuring Psi+ Webkit release version
 	ECHO :Configuring Psi+ Webkit release version>> logs.txt
 	CD PsiPlusWorkdir
@@ -314,16 +321,16 @@ IF %MakeWebkit%==1 (
 	CALL qconf.cmd
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !QConf failed>> logs.txt & GOTO :exit
 	configure ^
+	--enable-webkit ^
 	--enable-plugins ^
-	--with-openssl-inc=%OPENSSLDIR%\include ^
-	--with-openssl-lib=%OPENSSLDIR%\lib ^
 	--with-aspell-inc=%MINGWDIR%\include ^
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
 	--with-zlib-lib=%ZLIBDIR%\lib ^
+	--with-qca-inc=%QCA_DIR%\include ^
+	--with-qca-lib=%QCA_DIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
-	--enable-webkit ^
 	--enable-whiteboarding
 	IF ERRORLEVEL 1 ECHO Configuring failed & CD .. & ECHO !Configuring failed>> logs.txt & GOTO :exit
 	REM Compiling Psi+ Webkit release version
@@ -332,12 +339,12 @@ IF %MakeWebkit%==1 (
 	ECHO :Compiling started: %TIME%>> ..\logs.txt
 	mingw32-make
 	CD ..
-	IF NOT EXIST PsiPlusWorkdir\src\release\psi-plus.exe ECHO !Compiling failed: %TIME%>> logs.txt & ECHO Compiling failed, but will try again after next updating & GOTO :exit
+	IF NOT EXIST PsiPlusWorkdir\psi-plus.exe ECHO !Compiling failed: %TIME%>> logs.txt & ECHO Compiling failed, but will try again after next updating & GOTO :exit
 	ECHO :Compiling completed: %TIME%>> logs.txt
 	REM Preparing for upload
 	ECHO Preparing for upload
 	ECHO :Archiving Psi+ Webkit release version>> logs.txt
-	MOVE /Y PsiPlusWorkdir\src\release\psi-plus.exe psi-plus.exe
+	MOVE /Y PsiPlusWorkdir\psi-plus.exe psi-plus.exe
 	ECHO D | xcopy PsiPlusWorkdir\themes themes /E
 	ECHO MOVE /Y psi-plus.exe psi-plus-portable.exe ^&^& DEL make-psi-plus-portable.bat>make-psi-plus-portable.bat
 	ECHO Archiving Psi+ Webkit release version
@@ -350,7 +357,7 @@ IF %UploadWebkit%==1 (
 	ECHO Uploading Psi+ Webkit release version to GoogleCode
 	ECHO :Uploading Psi+ Webkit release version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user GoogleUser ^
+	--user vladimir.shelukhin ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ WebKit Nightly Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || see the file README.TXT inside the archive" ^
@@ -361,6 +368,7 @@ REM ============================================================================
 REM Compiling Psi+ Webkit debug version
 IF %MakeWebkitDebug%==1 (
 	REM Configuring Psi+ Webkit debug version
+	ECHO %vPsiPlusMajor%.%vPsiPlusMinor%-webkit-debug ^(%BUILDDATE%^) > PsiPlusWorkdir\version
 	ECHO Configuring Psi+ Webkit debug version
 	ECHO :Configuring Psi+ Webkit debug version>> logs.txt
 	CD PsiPlusWorkdir
@@ -369,16 +377,16 @@ IF %MakeWebkitDebug%==1 (
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !QConf failed>> logs.txt & GOTO :exit
 	configure ^
 	--debug ^
+	--enable-webkit ^
 	--enable-plugins ^
-	--with-openssl-inc=%OPENSSLDIR%\include ^
-	--with-openssl-lib=%OPENSSLDIR%\lib ^
 	--with-aspell-inc=%MINGWDIR%\include ^
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
 	--with-zlib-lib=%ZLIBDIR%\lib ^
+	--with-qca-inc=%QCA_DIR%\include ^
+	--with-qca-lib=%QCA_DIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
-	--enable-webkit ^
 	--enable-whiteboarding
 	IF ERRORLEVEL 1 ECHO Configuring failed & CD .. & ECHO !configuring failed>> logs.txt & GOTO :exit
 	REM Compiling Psi+ Webkit debug version
@@ -387,12 +395,12 @@ IF %MakeWebkitDebug%==1 (
 	ECHO :Compiling started: %TIME%>> ..\logs.txt
 	mingw32-make
 	CD ..
-	IF NOT EXIST PsiPlusWorkdir\src\debug\psi-plus.exe ECHO !Compiling failed: %TIME%>> logs.txt & ECHO Compiling failed, but will try again after next update & GOTO :exit
+	IF NOT EXIST PsiPlusWorkdir\psi-plus.exe ECHO !Compiling failed: %TIME%>> logs.txt & ECHO Compiling failed, but will try again after next update & GOTO :exit
 	ECHO :Compiling completed: %TIME%>> logs.txt
 	REM Preparing for upload
 	ECHO Preparing for upload
 	ECHO :Archiving Psi+ Webkit debug version>> logs.txt
-	MOVE /Y PsiPlusWorkdir\src\debug\psi-plus.exe psi-plus.exe
+	MOVE /Y PsiPlusWorkdir\psi-plus.exe psi-plus.exe
 	ECHO D | xcopy PsiPlusWorkdir\themes themes /E
 	ECHO MOVE /Y psi-plus.exe psi-plus-portable.exe ^&^& DEL make-psi-plus-portable.bat>make-psi-plus-portable.bat
 	ECHO Archiving Psi+ Webkit debug version
@@ -405,7 +413,7 @@ IF %UploadWebkitDebug%==1 (
 	ECHO Uploading Psi+ Webkit debug version to GoogleCode
 	ECHO :Uploading Psi+ Webkit debug version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user GoogleUser ^
+	--user vladimir.shelukhin ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ WebKit Debug Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || FOR DEBUG ONLY!!!" ^
@@ -434,7 +442,7 @@ IF %UploadPlugins%==1 (
 	ECHO Uploading Psi+ Plugins release versions to GoogleCode
 	ECHO :Uploading Psi+ Plugins release versions to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user GoogleUser ^
+	--user vladimir.shelukhin ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ Plugins || %date% %currentTime% MSD || Qt %vQt%" ^
@@ -463,7 +471,7 @@ IF %UploadPluginsDebug%==1 (
 	ECHO Uploading Psi+ plugins debug versions to GoogleCode
 	ECHO :Uploading Psi+ plugins debug versions to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user GoogleUser ^
+	--user vladimir.shelukhin ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ Plugins Debug || %date% %currentTime% MSD || Qt %vQt% || FOR DEBUG ONLY!!!" ^
