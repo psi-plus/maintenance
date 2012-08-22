@@ -211,8 +211,8 @@ pause
 @echo Runing mingw32-make
 %MINGWDIR%\bin\mingw32-make -j3
 pause
-copy /Y src\release\psi-plus.exe ..\psi-plus-portable.exe
-move /Y src\release\psi-plus.exe ..\psi-plus.exe
+copy /Y psi-plus.exe ..\psi-plus-portable.exe
+move /Y psi-plus.exe ..\psi-plus.exe
 pause
 %PLUGBUILDDIR%\compile-plugins -j 3 -o ..\
 pause
@@ -239,8 +239,8 @@ pause
 @echo Runing mingw32-make
 %MINGWDIR%\bin\mingw32-make -j3
 pause
-copy /Y src\release\psi-plus.exe ..\psi-plus-portable.exe
-move /Y src\release\psi-plus.exe ..\psi-plus.exe
+copy /Y psi-plus.exe ..\psi-plus-portable.exe
+move /Y psi-plus.exe ..\psi-plus.exe
 pause
 %PLUGBUILDDIR%\compile-plugins -j 3 -o ..\
 pause
