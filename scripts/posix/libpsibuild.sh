@@ -510,6 +510,7 @@ prepare_sources() {
 
   cd "${PSI_DIR}"
   rev=$(cd git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
+  rev_date=$(cd git-plus/; git log -n1 --date=short --pretty=format:"%ad")
   PATCHES=`ls -1 git-plus/patches/*diff 2>/dev/null`
   cd "${PSI_DIR}/build"
   [ -e "$PATCH_LOG" ] && rm "$PATCH_LOG"
@@ -525,10 +526,10 @@ prepare_sources() {
 
   case "${CONF_OPTS}" in
     *--enable-webkit*)
-      echo "0.15.${rev}-webkit (@@DATE@@)" > version
+      echo "0.15.${rev}-webkit (${rev_date})" > version
       ;;
     *)
-      echo "0.15.${rev} (@@DATE@@)" > version
+      echo "0.15.${rev} (${rev_date})" > version
       ;;
   esac
   sed -i${SED_INPLACE_ARG} \
