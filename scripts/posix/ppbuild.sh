@@ -12,7 +12,7 @@ inst_path=${buildpsi}/${inst_suffix}
 rpmbuilddir=${home}/rpmbuild
 rpmspec=${rpmbuilddir}/SPECS
 rpmsrc=${rpmbuilddir}/SOURCES
-isloop=1
+isloop=1 #do not change the value of this variable, this is a menu loop
 # default options
 iswebkit=""
 use_iconsets="system clients activities moods affiliations roster"
@@ -94,12 +94,26 @@ set_options ()
 check_libpsibuild ()
 {
   # checkout libpsibuild
+  libpsibuild_url="https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh"
   cd ${home}
   die() { echo "$@"; exit 1; }
-  if [ ! -f ./libpsibuild.sh -o "$WORK_OFFLINE" = 0 ]
+  if [ -f "${home}/libpsibuild.sh" -a "$isoffline" = 0 ]
   then
-    [ -f libpsibuild.sh ] && { rm libpsibuild.sh || die "delete error"; }
-    wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh" || die "Failed to update libpsibuild";
+    echo "**libpsibuild.sh library updates check**"; echo ""
+    wget --output-document="libpsibuild.sh.new" --no-check-certificate ${libpsibuild_url};
+    if [ -f "${home}/libpsibuild.sh" ]
+    then
+      if [ "`diff -q libpsibuild.sh libpsibuild.sh.new`" ]
+      then
+        echo "**libpsibuild.sh library has been updated**"; echo "";
+        mv -f ${home}/libpsibuild.sh.new ${home}/libpsibuild.sh
+      else
+        echo "**you have the last version of libpsibuild.sh library**"; echo "";
+        rm -f ${home}/libpsibuild.sh.new
+      fi
+    else
+      wget --no-check-certificate ${libpsibuild_url} || die "Failed to update libpsibuild";
+    fi
   fi
 }
 #
@@ -180,16 +194,18 @@ prepare_win ()
   rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
   tar_name=psi-plus-0.15.${rev}-win
   new_src=${buildpsi}/${tar_name}
-  local winpri=${new_src}/conf_windows.pri
+  #local winpri=${new_src}/conf_windows.pri #removed as unused
   local mainicon=${buildpsi}/git-plus/app.ico
   local file_pro=${new_src}/src/src.pro
+  local ver_file=${new_src}/version
   cp -r ${orig_src} ${new_src}
   if [ -d ${new_src} ]
   then
     cd ${buildpsi}
-    sed "s/#CONFIG += qca-static/CONFIG += qca-static\nCONFIG += webkit/" -i "${winpri}"
-    sed "s/#DEFINES += HAVE_ASPELL/DEFINES += HAVE_ASPELL/" -i "${winpri}"
+    #sed "s/#CONFIG += qca-static/CONFIG += qca-static\nCONFIG += webkit/" -i "${winpri}"
+    #sed "s/#DEFINES += HAVE_ASPELL/DEFINES += HAVE_ASPELL/" -i "${winpri}"
     sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
+    sed "s/\(@@DATE@@\)/"`date +"%Y-%m-%d"`"/" -i "${ver_file}"
     cp -f ${mainicon} ${new_src}/win32/
     makepsi='set QMAKESPEC=win32-g++
 :: Change the value of QTSDK variable by your real QtSDK path
@@ -783,19 +799,22 @@ update_resources ()
   git pull
 }
 #
-install_locales ()
+build_locales ()
 {
-  tr_path=${buildpsi}/langs/translations
+  local tr_path=${buildpsi}/langs/translations
   run_libpsibuild fetch_sources
   if [ -d "${tr_path}" ]
   then
-    filelist=`ls ${buildpsi}/langs/translations`
-    for langfile in ${filelist}
-    do
-       lrelease ${tr_path}/${langfile}
-       cp -rf ${tr_path}/${langfile/.ts}.qm ${psi_datadir}/
-    done 
+    rm -f ${tr_path}/*.qm 
+    lrelease ${tr_path}/*.ts 
   fi 
+}
+#
+install_locales ()
+{
+  local tr_path=${buildpsi}/langs/translations
+  build_locales
+  cp -rf ${tr_path}/*.qm ${psi_datadir}/
 }
 #
 set_config ()
@@ -931,6 +950,7 @@ get_help ()
   echo "[iz] - Install sounds to to $HOME/.local/share/Psi+"
   echo "[it] - Install themes to $HOME/.local/share/Psi+"
   echo "[il] - Install locales to $HOME/.local/share/Psi+"
+  echo "[bl] - Just build locale files without installing"
   echo "[ur] - Update resources"
   echo "[up] - Download all sources and build psi+ binary"
   echo "-------------------------------------------"
@@ -963,6 +983,7 @@ choose_action ()
     "up" ) prepare_src
               compile_psiplus;;
     "il" ) install_locales;;
+    "bl" ) build_locales;;
     "0" ) quit;;
   esac
 }
