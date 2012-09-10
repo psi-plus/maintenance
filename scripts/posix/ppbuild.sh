@@ -12,7 +12,8 @@ inst_path=${buildpsi}/${inst_suffix}
 rpmbuilddir=${home}/rpmbuild
 rpmspec=${rpmbuilddir}/SPECS
 rpmsrc=${rpmbuilddir}/SOURCES
-isloop=1 #do not change the value of this variable, this is a menu loop
+isloop=1 #do not change the value of this variable, it's a menu loop
+psi_version="0.15"
 # default options
 iswebkit=""
 use_iconsets="system clients activities moods affiliations roster"
@@ -97,7 +98,7 @@ check_libpsibuild ()
   libpsibuild_url="https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh"
   cd ${home}
   die() { echo "$@"; exit 1; }
-  if [ -f "${home}/libpsibuild.sh" -a "$isoffline" = 0 ]
+  if [ "$isoffline" = 0 ]
   then
     echo "**libpsibuild.sh library updates check**"; echo ""
     wget --output-document="libpsibuild.sh.new" --no-check-certificate ${libpsibuild_url};
@@ -105,12 +106,12 @@ check_libpsibuild ()
     then
       if [ "`diff -q libpsibuild.sh libpsibuild.sh.new`" ]
       then
-        echo "**libpsibuild.sh library has been updated**"; echo "";
+        echo "**libpsibuild.sh library has been updated**"; echo ""
         mv -f ${home}/libpsibuild.sh.new ${home}/libpsibuild.sh
       else
-        echo "**you have the last version of libpsibuild.sh library**"; echo "";
+        echo "**you have the last version of libpsibuild.sh library**"; echo ""  
         rm -f ${home}/libpsibuild.sh.new
-      fi
+      fi      	
     else
       wget --no-check-certificate ${libpsibuild_url} || die "Failed to update libpsibuild";
     fi
