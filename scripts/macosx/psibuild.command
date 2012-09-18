@@ -11,41 +11,40 @@
 # In order to build Psi+ you must have next packages in your system
 # Для сборки Psi+ вам понадобятся следующие пакеты
 # git - vcs system / система контроля версий
-# gcc - compiler / компилятор
-# qt4 sdk from qt.nokia.com / qt4 sdk c qt.nokia.com
-# qca/QtCrypto - encryption libs / криптовальные либы
-# Growl framework / фрэймворк Growl
-# Sparkle framework / фреймворк Sparkle
+# 64-bit machine (even though universal binaries are produced)
+# Xcode
+# Qt built for 32-bit/64-bit x86 universal 
+# (Take a look here: https://github.com/psi-im/psideps/tree/master/qt)
+
+# QTDIR, pointing to a 32/64-bit x86 build of Qt.
+#   For example:
+#    QTDIR=/usr/local/Trolltech/Qt-4.8.2
+
 
 # OPTIONS / НАСТРОЙКИ
 
 # build and store directory / каталог для сорсов и сборки
 PSI_DIR="${HOME}/psi"
 
-# psimedia dir / каталог с psimedia
-PSI_MEDIA_DIR="${PSI_DIR}/psimedia-svn737-mac"
-
-# psi.app dir / каталог psi.app
-PSIAPP_DIR=""
+DEPS_DIR="${PSI_DIR}/deps"
 
 # icons for downloads / иконки для скачивания
 ICONSETS="system clients activities moods affiliations roster"
 
 # plugins list / список плагинов
-PLUGINS=""
-# PLUGINS=`ls ${PSI_DIR}/psi-dev/plugins/generic`
+PLUGINS=`ls ${PSI_DIR}/plugins/generic | grep -v "videostatusplugin"`
 
 # psi version / версия psi
 version="0.15"
-
-# svn version / версия svn
-rev=""
 
 # do not update anything from repositories until required
 WORK_OFFLINE=0
 
 # upload to googlecode
 UPLOAD=0
+
+# build psi deps useing psideps scripts
+BUILDDEPS=0
 
 # log of applying patches / лог применения патчей
 PATCH_LOG="${PSI_DIR}/psipatch.log"
@@ -57,27 +56,23 @@ SKIP_INVALID_PATCH=0
 LANGS="ar be bg br ca cs da de ee el eo es et fi fr hr hu it ja mk nl pl pt pt_BR ru se sk sl sr sr@latin sv sw uk ur_PK vi zh_CN zh_TW"
 
 # selected translations (space-separated, leave empty to autodetect by $LANG)
-TRANSLATIONS="${TRANSLATIONS}"
+TRANSLATIONS="${TRANSLATIONS} ru en"
 
 # official repository / репозиторий официальной Psi
 GIT_REPO_PSI=git://github.com/psi-im/psi.git
-
 GIT_REPO_PLUS=git://github.com/psi-plus/main.git
 GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
 GIT_REPO_MAINTENANCE=git://github.com/psi-plus/maintenance.git
 GIT_REPO_RESOURCES=git://github.com/psi-plus/resources.git
 
+# psideps
+GIT_REPO_PSIDEPS=git://github.com/psi-im/psideps.git
+
 LANGS_REPO_URI="git://pv.et-inf.fho-emden.de/git/psi-l10n"
 RU_LANG_REPO_URI="git://github.com/ivan101/psi-plus-ru.git"
 
-SVN_FETCH="${SVN_FETCH:-svn co --trust-server-cert --non-interactive}"
-SVN_UP="${SVN_UP:-svn up --trust-server-cert --non-interactive}"
-
 # enabling WebKit
 ENABLE_WEBKIT=0
-
-# using Xcode
-USING_XCODE=0
 
 # upload to GoogleCode
 UPLOAD=0
@@ -131,12 +126,9 @@ check_env() {
 	STAT_USER_NAME='stat -f %Su'
 	SED_INPLACE_ARG=".bak"
 
-	v=`svn --version 2>/dev/null` || die "You should install subversion first. / Сначала установите subversion"
 	v=`gmake --version 2>/dev/null`
 	v=`git --version 2>/dev/null` || \
 		die "You should install Git first. / Сначала установите Git"
-	#v=`svn --version 2>/dev/null` || \
-	#  die "You should install subversion first. / Сначала установите subversion"
 
 	# Make
 	if [ ! -f "${MAKE}" ]; then
@@ -222,6 +214,10 @@ check_env() {
 
 prepare_workspace() {
 	log "Init directories..."
+    if [ ! -d "${DEPS_DIR}" ]
+	then
+		mkdir "${DEPS_DIR}" || die "can't create work directory ${DEPS_DIR}"
+	fi
 	if [ ! -d "${PSI_DIR}" ]
 	then
 		mkdir "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"
@@ -235,55 +231,6 @@ prepare_workspace() {
 	[ -d "${PSI_DIR}"/build ] && die "can't delete old build directory ${PSI_DIR}/build"
 	mkdir "${PSI_DIR}"/build || die "can't create build directory ${PSI_DIR}/build"
 	log "\tCreated base directory structure"
-}
-
-# fetches defined set of something from psi-dev svn. ex: plugins or iconsets
-#
-# svn_fetch_set(name, remote_path, items, [sub_item_path])
-# name - a name of what you ar fetching. for example "plugin"
-# remote - a path relative to SVN_BATH_REPO
-# items - space separated items string
-# sub_item_path - checkout subdirectory of item with this relative path
-#
-# Example: svn_fetch_set("iconset", "iconsets", "system, mood", "default")
-svn_fetch_set() {
-  local name="$1"
-  local remote="$2"
-  local items="$3"
-  local subdir="$4"
-  local curd=`pwd`
-  cd "${PSI_DIR}"
-  [ -n "${remote}" ] || die "invalid remote path in set fetching"
-  if [ ! -d "${remote}" ]; then
-    mkdir -p "${remote}"
-  fi
-  cd "${remote}"
-
-  for item in ${items}; do
-    svn_fetch "${SVN_BASE_REPO}/${remote}/${item}/${subdir}" "$item" \
-              "${item} ${name}"
-  done
-  cd "${curd}"
-}
-
-# Checkout fresh copy or update existing from svn
-# Example: svn_fetch svn://host/uri/trunk my_target_dir "Something useful"
-svn_fetch() {
-  local remote="$1"
-  local target="$2"
-  local comment="$3"
-  [ -z "$target" ] && { target="${remote##*/}"; target="${target%%#*}"; }
-  [ -z "$target" ] && die "can't determine target dir"
-  if [ -d "$target" ]; then
-    [ $WORK_OFFLINE = 0 ] && {
-      [ -n "$comment" ] && log -n "Update ${comment} ... "
-      $SVN_UP "${target}" || die "${comment} update failed"
-    } || true
-  else
-    [ -n "$comment" ] && log "Checkout ${comment} .."
-    $SVN_FETCH "${remote}" "$target" \
-    || die "${comment} checkout failed"
-  fi
 }
 
 git_fetch() {
@@ -312,13 +259,16 @@ git_fetch() {
   cd "${curd}"
 }
 
+
 fetch_sources() {
 	cd "${PSI_DIR}"
 	git_fetch "${GIT_REPO_PSI}" git "Psi"
 	git_fetch "${GIT_REPO_PLUS}" git-plus "Psi+ additionals"
 	git_fetch "${GIT_REPO_MAINTENANCE}" maintenance "Psi+ maintenance"
 	git_fetch "${GIT_REPO_RESOURCES}" resources "Psi+ resources"
-
+    	git_fetch "${GIT_REPO_PLUGINS}" plugins "Psi+ plugins"
+    	git_fetch "${GIT_REPO_PSIDEPS}" psideps "psideps"
+    
 	local actual_translations=""
 	[ -n "$TRANSLATIONS" ] && {
 		mkdir -p langs
@@ -333,17 +283,39 @@ fetch_sources() {
 		actual_translations="$(echo $actual_translations)"
 		[ -z "${actual_translations}" ] && warning "Translations not found"
 	}
-  
+    
+    . ${PSI_DIR}/git/admin/build/package_info
+    if [ $BUILDDEPS = 0 ]; then
+        fetch_psi_deps
+    fi
 	cd "${PSI_DIR}"
+}
 
-	if [ ! -f psimedia-svn737-mac.tar.bz2 ]; then
-  	log "Downloading psimedia..."
-		curl -C http://psi-plus.droppages.com/psimedia/psimedia-svn737-mac.tar.bz2
-	fi
-	if [ ! -d ${PSI_MEDIA_DIR} ]; then
-  	log "Extracting psimedia..."
-		tar -xjf psimedia-svn737-mac.tar.bz2
-	fi
+fetch_psi_deps() {
+    log "Prepare Psi dependencies..."
+    cd "${DEPS_DIR}"
+    PSI_FETCH="${PSI_DIR}/git/admin/fetch.sh"
+    mkdir -p packages deps
+    if [ ! -f "packages/${growl_file}" ]
+    then
+        sh ${PSI_FETCH} ${growl_url} packages/${growl_file}
+        cd deps && unzip ../packages/${growl_file} && cd ..
+    fi
+    if [ ! -f "packages/${gstbundle_mac_file}" ]
+    then
+        sh ${PSI_FETCH} ${gstbundle_mac_url} packages/${gstbundle_mac_file}
+        cd deps && tar jxvf ../packages/${gstbundle_mac_file} && cd ..
+    fi
+    if [ ! -f "packages/${psimedia_mac_file}" ]
+    then
+        sh ${PSI_FETCH} ${psimedia_mac_url} packages/${psimedia_mac_file}
+        cd deps && tar jxvf ../packages/${psimedia_mac_file} && cd ..
+    fi
+    if [ ! -f "packages/${qca_mac_file}" ]
+    then
+        sh ${PSI_FETCH} ${qca_mac_url} packages/${qca_mac_file}
+        cd deps && tar jxvf ../packages/${qca_mac_file} && cd ..
+    fi
 }
 
 prepare_sources() {
@@ -359,7 +331,7 @@ prepare_sources() {
 	cd "${PSI_DIR}"
 	rev=$(cd git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
 	PATCHES=`ls -1 git-plus/patches/*diff | grep -v "0820-psi-dirty-check.diff" 2>/dev/null`
-	PATCHESMACOSX=`ls -1 maintenance/scripts/macosx/patches/*diff 2>/dev/null`
+	PATCHESMACOSX=`ls -1 git-plus/patches/mac/*diff 2>/dev/null`
 
 	cd "${PSI_DIR}/build"
 	[ -e "$PATCH_LOG" ] && rm "$PATCH_LOG"
@@ -401,76 +373,123 @@ prepare_sources() {
 		cp -a "${PSI_DIR}/plugins/generic/$name" \
 			"${PSI_DIR}/build/src/plugins/generic/$name"
 	done
+    
+    #copy_dev_plugins
 
-  cd ${PSI_DIR}/build
-  
+    cd ${PSI_DIR}/build
+
+    sed -i "" "s/QtDBus phonon/QtDBus QtWebKit phonon/" mac/Makefile
+    #cp mac/Info.plist.in mac/Info.plist
+    
 	if [ $ENABLE_WEBKIT != 0 ]; then
 		sed -i "" "s/.xxx/.${rev}/" src/applicationinfo.cpp
 		sed -i "" "s/configDif/configDir/" src/applicationinfo.cpp
+        sed -i "" "s/psi-plus.droppages.com/psi-dev.googlecode.com\/files/" src/applicationinfo.cpp
 		sed -i "" "s/psi-plus-mac.xml/psi-plus-wk-mac.xml/" src/applicationinfo.cpp
 		sed -i "" "s/.xxx/.${rev}-webkit/" mac/Makefile
-		sed -i "" "s/QtDBus phonon/QtDBus QtWebKit phonon/" mac/Makefile
-		sed -i "" "s/-devel/.${rev}-webkit/g" mac/Info.plist
+		#sed -i "" "s/-devel/.${rev}-webkit/g" mac/Info.plist.in
 	else
 		sed -i "" "s/.xxx/.${rev}/" src/applicationinfo.cpp
 		sed -i "" "s/configDif/configDir/" src/applicationinfo.cpp
+        sed -i "" "s/psi-plus.droppages.com/psi-dev.googlecode.com\/files/" src/applicationinfo.cpp
 		sed -i "" "s/.xxx/.${rev}/" mac/Makefile
-		sed -i "" "s/-devel/.${rev}/g" mac/Info.plist
+		#sed -i "" "s/-devel/.${rev}/g" mac/Info.plist.in
 	fi
-	sed -i "" "s/<string>psi<\/string>/<string>psi-plus<\/string>/g" mac/Info.plist
+	sed -i "" "s/<string>psi<\/string>/<string>psi-plus<\/string>/g" mac/Info.plist.in
 	sed -i "" "s/<\!--<dep type='sparkle'\/>-->/<dep type='sparkle'\/>/g" psi.qc
+    
+    sed -i "" "s/base\/psi.app/base\/psi-plus.app/" admin/build/prep_dist.sh
+    sed -i "" "s/base\/Psi.app/base\/Psi+.app/" admin/build/prep_dist.sh
+    sed -i "" "s/MacOS\/psi/MacOS\/psi-plus/" admin/build/prep_dist.sh
+    sed -i "" "s/QtXml QtGui/QtXml QtGui QtWebKit/" admin/build/prep_dist.sh
+    sed -i "" "s/.\/pack_dmg.sh/# .\/pack_dmg.sh/" admin/build/Makefile
 
 	cp -f "${PSI_DIR}/maintenance/scripts/macosx/application.icns" "${PSI_DIR}/build/mac/application.icns"
+   
+    if [ $BUILDDEPS = 1 ]; then
+        builddeps
+        cd /psidepsbase
+        mkdir -p deps packages
+        if [ ! -f "packages/${qca_mac_file}" ]; then
+            tar -cf packages/${qca_mac_file} qca/
+            cp -a qca/ deps/${qca_mac_dir}
+        fi
+        if [ ! -f "packages/${psimedia_mac_file}" ]; then
+            tar -cf packages/${psimedia_mac_file} psimedia/
+            cp -a psimedia/ deps/${psimedia_mac_dir}
+        fi
+        if [ ! -f "packages/${gstbundle_mac_file}" ]; then
+            tar -cf packages/${gstbundle_mac_file} gstbundle/
+            cp -a gstbundle/ deps/${gstbundle_mac_dir}
+        fi
+        log "Copy deps..." 
+        cd "${PSI_DIR}/build/admin/build"
+        mkdir -p packages deps 
+        cp -a "/psidepsbase/packages/" packages/
+        cp -a "/psidepsbase/deps/" deps/
+    else
+        log "Copy deps..." 
+        cd "${PSI_DIR}/build/admin/build"
+        mkdir -p packages deps
+        cp -a "${DEPS_DIR}/deps/" deps/
+        cp -a "${DEPS_DIR}/packages/" packages/
+        
+        #HACK!!! use our qca
+        #rm -rf "deps/qca-2.0.3-mac"
+        #mkdir -p "deps/qca-2.0.3-mac"
+        #cp -a /psidepsbase/qca/ "deps/qca-2.0.3-mac"
+    fi
+}
+
+copy_dev_plugins() {
+    PLUGINS_DEV=`ls ${PSI_DIR}/plugins/dev`
+    for name in ${PLUGINS_DEV}; do
+		mkdir -p `dirname "${PSI_DIR}/build/src/plugins/generic/$name"`
+		cp -a "${PSI_DIR}/plugins/dev/$name" \
+			"${PSI_DIR}/build/src/plugins/generic/$name"
+	done
+    PLUGINS="${PLUGINS} ${PLUGINS_DEV}"
+}
+
+builddeps() {
+    log "Build psi deps..."
+    if [ ! -d /psidepsbase ]; then
+        die "Create /psidepsbase directory with write access!"
+    fi
+    PSIDEPS="${PSI_DIR}/psideps/qca ${PSI_DIR}/psideps/gstbundle ${PSI_DIR}/psideps/psimedia"
+    for l in $PSIDEPS; do
+        cd "$l"        
+        $MAKE || die "Error while building ${l}"
+    done
 }
 
 src_compile() {
-	log "Compiling..."
-	cd ${PSI_DIR}/build
-	local CONF_OPTS
-	$QCONF
-	# for Xcode: cd src; qmake; make xcode; xcodebuild -sdk macosx10.5 -configuration Release
-	if [ $ENABLE_WEBKIT != 0 ]; then
+    log "All ready. Now run make..."
+    cd ${PSI_DIR}/build
+    qconf
+	cd ${PSI_DIR}/build/admin/build
+    if [ $ENABLE_WEBKIT != 0 ]; then
+        rev="${rev}"-webkit
 		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss --enable-webkit"
 	else
 		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss"
 	fi
-	./configure ${CONF_OPTS} || die "configure failed"
-	$MAKE $MAKEOPT sub-third-party-qca-all
-	$MAKE $MAKEOPT sub-iris-all
-	cd src
-	qmake
-	if [ $USING_XCODE != 0 ]; then
-	  PSIAPP_DIR="${PSI_DIR}/build/src/build/Release/psi-plus.app/Contents"
-	  $MAKE xcode || die "make failed"
-  	xcodebuild -sdk macosx10.5 -configuration Release
-	else
-	  PSIAPP_DIR="${PSI_DIR}/build/src/psi-plus.app/Contents"
-	  $MAKE $MAKEOPT || die "make failed"
-	fi
+
+    sed -i "" "s/.\/configure/.\/configure ${CONF_OPTS}/" build_package.sh
+    sed -i "" "s/.\/configure/.\/configure ${CONF_OPTS}/" devconfig.sh
+    $MAKE $MAKEOPT VERSION=${version}.${rev} || die "make failed"
 }
 
 plugins_compile() {
-#	cd ${PSI_DIR}/build
-	PLUGINS=`ls ${PSI_DIR}/plugins/generic | grep -v "videostatusplugin"`
 	log "List plugins for compiling..."
 	echo ${PLUGINS}
 	log "Compiling plugins..."
 	for pl in ${PLUGINS}; do
 		cd ${PSI_DIR}/build/src/plugins/generic/${pl} && log "Compiling ${pl} plugin." && $QMAKE && $MAKE $MAKEOPT || die "make ${pl} plugin failed"; done
-
-#	failed_plugins="" # global var
-#
-#	for name in ${PLUGINS}; do
-#		log "Compiling ${name} plugin.."
-#		cd "${PSI_DIR}/build/src/plugins/generic/$name"
-#		$QMAKE && $MAKE $MAKEOPT || {
-#			warning "Failed to make plugin ${name}! Skipping.."
-#			failed_plugins="${failed_plugins} ${name}"
-#		}
-#	done
 }
 
 copy_resources(){
+    PSIAPP_DIR="${PSI_DIR}/build/admin/build/dist/psi-${version}.${rev}-mac/Psi+.app/Contents"
 	log "Copying langpack, web, skins..."
 	cd "${PSIAPP_DIR}/Resources/"
 	for l in $TRANSLATIONS; do
@@ -480,10 +499,13 @@ copy_resources(){
 		[ -n "${LRELEASE}" -a -f "${qtf}.ts" ] && "${LRELEASE}" "${qtf}.ts" 2> /dev/null
 		[ -f "${f}.qm" ] && cp "${f}.qm" .
 		[ -f "${qtf}.qm" ] && cp "${qtf}.qm" .
-  done
+    done
 
-	cp "${PSI_DIR}/sign/dsa_pub.pem" dsa_pub.pem
-	cp -r ${PSI_DIR}/build/themes .
+    
+    if [ $ENABLE_WEBKIT != 0 ]; then
+        cp -r ${PSI_DIR}/build/themes .
+    fi
+    
 	cp -r ${PSI_DIR}/build/sound .
 	( cd ${PSI_DIR}/resources ; git archive --format=tar master ) | ( cd "${PSIAPP_DIR}/Resources" ; tar xf - )
 	log "Copying plugins..."
@@ -493,42 +515,55 @@ copy_resources(){
 	
 	for pl in ${PLUGINS}; do
 		cd ${PSI_DIR}/build/src/plugins/generic/${pl} && cp *.dylib ${PSIAPP_DIR}/Resources/plugins/; done
+        
+    #copy_otrplugin_deps
+    
+    log "Copying Sparkle..."
+    cp "${PSI_DIR}/sign/dsa_pub.pem" dsa_pub.pem
+    cp -a  "/Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
+}
 
-	log "Copying psimedia in bundle..."
-	cd ${PSI_MEDIA_DIR}
-
-	if [ ! -d ${PSIAPP_DIR}/Frameworks ]; then
-		mkdir -p "${PSIAPP_DIR}/Frameworks"
-	fi
-	cp Frameworks/*.dylib ${PSIAPP_DIR}/Frameworks
-	cp -r Frameworks/gstreamer-0.10 ${PSIAPP_DIR}/Frameworks
-
-	if [ ! -d ${PSIAPP_DIR}/Plugins ]; then
-		mkdir -p "${PSIAPP_DIR}/Plugins"
-	fi
-
-	cp Plugins/libgstprovider.dylib ${PSIAPP_DIR}/Plugins
+copy_otrplugin_deps() {
+    PSI_AP_TMP_DIR="${PSIAPP_DIR}/Frameworks"
+    PSI_AP_TMP_DIR2="${PSIAPP_DIR}/Resources/plugins"
+    cp -f "/usr/lib/libtidy.A.dylib" "${PSI_AP_TMP_DIR}/libtidy.A.dylib"
+    cp -f "/usr/local/lib/libintl.8.dylib" "${PSI_AP_TMP_DIR}/libintl.9.dylib"
+    cp -f "/usr/local/lib/libotr.2.2.0.dylib" "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
+    cp -f "/usr/local/lib/libgcrypt.11.dylib" "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
+    cp -f "/usr/local/lib/libgpg-error.0.dylib" "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
+    install_name_tool -change /usr/local/lib/libotr.2.dylib @executable_path/../Frameworks/libotr.2.2.0.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib" 
+    install_name_tool -change /usr/local/lib/libintl.8.dylib @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
+    install_name_tool -change /usr/local/lib/libgcrypt.11.dylib @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib"
+    install_name_tool -change /usr/lib/libtidy.A.dylib @executable_path/../Frameworks/libtidy.A.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib"
+    install_name_tool -change /usr/local/lib/libgcrypt.11.dylib @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
+    install_name_tool -change /usr/local/lib/libgpg-error.0.dylib @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
+    install_name_tool -change /usr/local/lib/libgpg-error.0.dylib @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
+    install_name_tool -change /usr/local/lib/libintl.8.dylib @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
+    install_name_tool -id @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
+    install_name_tool -id @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
+    install_name_tool -id @executable_path/../Frameworks/libtidy.A.dylib "${PSI_AP_TMP_DIR}/libtidy.A.dylib"
+    install_name_tool -id @executable_path/../Frameworks/libotr.2.2.0.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
+    install_name_tool -id @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libintl.8.dylib"
 }
 
 make_bundle() {
 	log "Making standalone bundle..."
-	cd ${PSI_DIR}/build/mac && make clean
-	cp -f "${PSI_DIR}/maintenance/scripts/macosx/template.dmg.bz2" "${PSI_DIR}/build/mac/template.dmg.bz2"
-	$MAKE $MAKEOPT && $MAKE $MAKEOPT dmg || die "make dmg failed"
-	open ${PSI_DIR}/build/mac
-	log "You can find bundle in ${PSI_DIR}/build/mac"
+    cd ${PSI_DIR}/build/admin/build
+    cp -f "${PSI_DIR}/maintenance/scripts/macosx/template.dmg.bz2" "template.dmg.bz2"
+	./pack_dmg.sh psi-plus-${version}.${rev}.dmg Psi+ dist/psi-${version}.${rev}-mac
+    cp -f psi-plus-${version}.${rev}.dmg ${PSI_DIR}/psi-plus-${version}.${rev}.dmg
+	log "You can find bundle in ${PSI_DIR}/psi-plus-${version}.${rev}.dmg"
 }
 
 make_appcast() {
 	cd ${PSI_DIR}
 	if [ $ENABLE_WEBKIT != 0 ]; then
 		APPCAST_FILE=psi-plus-wk-mac.xml
-		VERSION="${version}"."${rev}"-webkit
 	else
 		APPCAST_FILE=psi-plus-mac.xml
-		VERSION="${version}"."${rev}"
-	fi
-	ARCHIVE_FILENAME=`ls ${PSI_DIR}/build/mac | grep psi-plus`
+    fi
+	VERSION="${version}"."${rev}"
+	ARCHIVE_FILENAME=`ls ${PSI_DIR} | grep psi-plus`
 	
 	if [ $UPLOAD != 0 ]; then
 	  log "Uploading dmg on GoogleCode"
@@ -541,52 +576,29 @@ make_appcast() {
 
 	log "Making appcast file..."
 	DOWNLOAD_BASE_URL="http://psi-dev.googlecode.com/files"
+    APPCAST_LINK="${DOWNLOAD_BASE_URL}/${APPCAST_FILE}"
 
 	DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$ARCHIVE_FILENAME"
 	KEYCHAIN_PRIVKEY_NAME="Sparkle Private Key 1"
 
-	SIZE=`ls -lR ${PSI_DIR}/build/mac/disk/Psi\+.app | awk '{sum += $5} END{print sum}'`
+	SIZE=`ls -lR ${PSI_DIR}/build/admin/build/dist/psi-${version}.${rev}-mac/Psi\+.app | awk '{sum += $5} END{print sum}'`
 	PUBDATE=$(LC_TIME=en_US date +"%a, %d %b %G %T %z")
-	cd ${PSI_DIR}/build/mac/
 
 	osversionlong=`sw_vers -productVersion`
 	osvers=${osversionlong:3:1}
 
-	if [ $osvers -eq 5 ]
-	then
-	  SIGNATURE=$(
-		  openssl dgst -sha1 -binary < "$ARCHIVE_FILENAME" \
-			  | openssl dgst -dss1 -sign <(security find-generic-password -g -s "$KEYCHAIN_PRIVKEY_NAME" 2>&1 1>/dev/null | perl -pe '($_) = /"(.+)"/; s/\\012/\n/g') \
-			  | openssl enc -base64
-	  )
-	elif [ $osvers -eq 6 ]
-	then
-	  SIGNATURE=$(
-		  openssl dgst -sha1 -binary < "$ARCHIVE_FILENAME" \
-			  | openssl dgst -dss1 -sign <(security find-generic-password -g -s "$KEYCHAIN_PRIVKEY_NAME" 2>&1 1>/dev/null | perl -pe '($_) = /"(.+)"/; s/\\012/\n/g' | perl -MXML::LibXML -e 'print XML::LibXML->new()->parse_file("-")->findvalue(q(//string[preceding-sibling::key[1] = "NOTE"]))') \
-			  | openssl enc -base64
-	  )
-	else
-	  die "Unknown way of the signature"
-	fi
 
-	[ $SIGNATURE ] || { echo Unable to load signing private key with name "'$KEYCHAIN_PRIVKEY_NAME'"; false; }
-
-#	REVINFO=`wget -q -O- http://code.google.com/feeds/p/psi-dev/svnchanges/basic| awk 'BEGIN{RS="<title>"}
-#	/Revision/{
-#		gsub(/.*<title>|<\/title>.*/,"")
-#		print "\t<li>" $0
-#	}'`
-
-  cd ${PSI_DIR}/git-plus
+    cd ${PSI_DIR}/git-plus
 	REVINFO=`git log --since="4 weeks ago" --pretty=format:'<li>%s'`
+    
+    SIGNATURE=$( ruby "${PSI_DIR}/sign/sign_update.rb" "${PSI_DIR}/${ARCHIVE_FILENAME}" "${PSI_DIR}/sign/dsa_priv.pem" )
 
 cat > ${PSI_DIR}/${APPCAST_FILE} <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"  xmlns:dc="http://purl.org/dc/elements/1.1/">
 <channel>
     <title>Psi+ ChangeLog</title>
-    <link>http://psi-plus.droppages.com/psi-plus-mac.xml</link>
+    <link>$APPCAST_LINK</link>
     <description>Most recent changes with links to updates.</description>
     <language>en</language>
 		<item>
@@ -611,8 +623,6 @@ ${REVINFO}
 EOF
 
 	log "You can find appcast in ${PSI_DIR}/${APPCAST_FILE}"
-	cp ${PSI_DIR}/${APPCAST_FILE} ${HOME}/Dropbox/Sites/psi-plus.droppages.com/Public/
-	cp ${PSI_DIR}/build/mac/$ARCHIVE_FILENAME ${HOME}/Desktop/
 }
 
 #############
@@ -622,13 +632,13 @@ while [ "$1" != "" ]; do
 	case $1 in
 		-w | --webkit )		ENABLE_WEBKIT=1
 							;;
+        -b | --build-deps )	BUILDDEPS=1
+							;;
 		-off | --work-offline )		WORK_OFFLINE=1
 							;;
 		--upload )		UPLOAD=1
 							;;
-		-x | --xcode )    USING_XCODE=1
-		          ;;
-		-h | --help )		echo "usage: $0 [-w | --webkit] [-off | --work-offline] [--upload] | [-h]"
+		-h | --help )		echo "usage: $0 [-w | --webkit] [-b | --build-deps] [-off | --work-offline] [--upload] | [-h]"
 							exit
 							;;
 		* )					echo "usage: $0 [-w | --webkit] [-off | --work-offline] [--upload] | [-h]"
@@ -645,8 +655,8 @@ prepare_sources
 src_compile
 plugins_compile
 copy_resources
-finishtime=`date "+Finish time: %H:%M:%S"`
 make_bundle
-make_appcast
+#make_appcast
+finishtime=`date "+Finish time: %H:%M:%S"`
 echo $starttime
 echo $finishtime
