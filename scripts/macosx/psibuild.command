@@ -518,9 +518,9 @@ copy_resources(){
         
     #copy_otrplugin_deps
     
-    log "Copying Sparkle..."
-    cp "${PSI_DIR}/sign/dsa_pub.pem" dsa_pub.pem
-    cp -a  "/Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
+    #log "Copying Sparkle..."
+    #cp "${PSI_DIR}/sign/dsa_pub.pem" dsa_pub.pem
+    #cp -a  "/Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
 }
 
 copy_otrplugin_deps() {
