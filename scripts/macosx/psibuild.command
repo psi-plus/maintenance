@@ -10,8 +10,8 @@
 
 # In order to build Psi+ you must have next packages in your system
 # Для сборки Psi+ вам понадобятся следующие пакеты
-# git - vcs system / система контроля версий
 # 64-bit machine (even though universal binaries are produced)
+# git
 # Xcode
 # Qt built for 32-bit/64-bit x86 universal 
 # (Take a look here: https://github.com/psi-im/psideps/tree/master/qt)
@@ -43,8 +43,14 @@ WORK_OFFLINE=0
 # upload to googlecode
 UPLOAD=0
 
+#Sparkle staff
+SPARKLE=0
+
 # build psi deps useing psideps scripts
 BUILDDEPS=0
+
+# enabling WebKit
+ENABLE_WEBKIT=0
 
 # log of applying patches / лог применения патчей
 PATCH_LOG="${PSI_DIR}/psipatch.log"
@@ -71,11 +77,6 @@ GIT_REPO_PSIDEPS=git://github.com/psi-im/psideps.git
 LANGS_REPO_URI="git://pv.et-inf.fho-emden.de/git/psi-l10n"
 RU_LANG_REPO_URI="git://github.com/ivan101/psi-plus-ru.git"
 
-# enabling WebKit
-ENABLE_WEBKIT=0
-
-# upload to GoogleCode
-UPLOAD=0
 
 # configure options / опции скрипта configure
 CONF_OPTS=""
@@ -87,6 +88,7 @@ GCUSER="user"
 GCPASS="password"
 
 export QMAKESPEC="macx-g++"
+export PATH="$QTDIR/bin:$PATH"
 
 #######################
 # FUNCTIONS / ФУНКЦИИ #
@@ -128,7 +130,7 @@ check_env() {
 
 	v=`gmake --version 2>/dev/null`
 	v=`git --version 2>/dev/null` || \
-		die "You should install Git first. / Сначала установите Git"
+		die "You should install Git first. / Сначала установите Git (http://git-scm.com/download)"
 
 	# Make
 	if [ ! -f "${MAKE}" ]; then
@@ -179,10 +181,8 @@ check_env() {
 		for qc in qt-qconf qconf qconf-qt4; do
 			v=`$qc --version 2>/dev/null |grep affinix` && QCONF=$qc
 		done
-    [ -z "${QCONF}" ] && die "You should install "\
-      "qconf(http://delta.affinix.com/qconf/) / Сначала установите qconf"
-	fi
-	log "\tFound qconf tool: " $QCONF
+    	fi
+	[ ! -z "${QCONF}" ] && log "\tFound qconf tool: " $QCONF
 
 	local selected_langs=""
 	[ -z "${TRANSLATIONS}" ] && {
@@ -212,15 +212,34 @@ check_env() {
 	log "Environment is OK"
 }
 
+get_qconf() {
+	cd "${PSI_DIR}"
+	qconf_file=qconf-1.4.tar.bz2
+	qconf_dir="${PSI_DIR}/qconf-1.4"
+	if [ ! -f $qconf_file ]; then
+		log "Downloading qconf…"
+		curl -o $qconf_file http://delta.affinix.com/download/$qconf_file
+		tar jxvf $qconf_file
+		cd $qconf_dir
+		./configure && $MAKE $MAKEOPT || die "Can't build qconf!"
+	fi
+	if [ -f "$qconf_dir/qconf" ]; then
+		QCONF="$qconf_dir/qconf"
+	else
+		die "Can'find qconf!"
+	fi
+	log "Qconf is ready: $QCONF"
+}
+
 prepare_workspace() {
 	log "Init directories..."
-    if [ ! -d "${DEPS_DIR}" ]
-	then
-		mkdir "${DEPS_DIR}" || die "can't create work directory ${DEPS_DIR}"
-	fi
 	if [ ! -d "${PSI_DIR}" ]
 	then
 		mkdir "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"
+	fi
+	if [ ! -d "${DEPS_DIR}" ]
+	then
+		mkdir "${DEPS_DIR}" || die "can't create work directory ${DEPS_DIR}"
 	fi
 	rm -rf "${PSI_DIR}"/build
 
@@ -231,6 +250,8 @@ prepare_workspace() {
 	[ -d "${PSI_DIR}"/build ] && die "can't delete old build directory ${PSI_DIR}/build"
 	mkdir "${PSI_DIR}"/build || die "can't create build directory ${PSI_DIR}/build"
 	log "\tCreated base directory structure"
+
+	[ -z "${QCONF}" ] && get_qconf
 }
 
 git_fetch() {
@@ -284,10 +305,10 @@ fetch_sources() {
 		[ -z "${actual_translations}" ] && warning "Translations not found"
 	}
     
-    . ${PSI_DIR}/git/admin/build/package_info
-    if [ $BUILDDEPS = 0 ]; then
-        fetch_psi_deps
-    fi
+	. ${PSI_DIR}/git/admin/build/package_info
+	if [ $BUILDDEPS = 0 ]; then
+		fetch_psi_deps
+	fi
 	cd "${PSI_DIR}"
 }
 
@@ -374,87 +395,79 @@ prepare_sources() {
 			"${PSI_DIR}/build/src/plugins/generic/$name"
 	done
     
-    #copy_dev_plugins
+	#copy_dev_plugins
 
-    cd ${PSI_DIR}/build
+	cd ${PSI_DIR}/build
 
-    sed -i "" "s/QtDBus phonon/QtDBus QtWebKit phonon/" mac/Makefile
-    #cp mac/Info.plist.in mac/Info.plist
+	#sed -i "" "s/QtDBus phonon/QtDBus QtWebKit phonon/" mac/Makefile
+	#sed -i "" "s/.xxx/.${rev}/" src/applicationinfo.cpp
     
 	if [ $ENABLE_WEBKIT != 0 ]; then
-		sed -i "" "s/.xxx/.${rev}/" src/applicationinfo.cpp
-		sed -i "" "s/configDif/configDir/" src/applicationinfo.cpp
-        sed -i "" "s/psi-plus.droppages.com/psi-dev.googlecode.com\/files/" src/applicationinfo.cpp
 		sed -i "" "s/psi-plus-mac.xml/psi-plus-wk-mac.xml/" src/applicationinfo.cpp
-		sed -i "" "s/.xxx/.${rev}-webkit/" mac/Makefile
+		#sed -i "" "s/.xxx/.${rev}-webkit/" mac/Makefile
 		#sed -i "" "s/-devel/.${rev}-webkit/g" mac/Info.plist.in
-	else
-		sed -i "" "s/.xxx/.${rev}/" src/applicationinfo.cpp
-		sed -i "" "s/configDif/configDir/" src/applicationinfo.cpp
-        sed -i "" "s/psi-plus.droppages.com/psi-dev.googlecode.com\/files/" src/applicationinfo.cpp
-		sed -i "" "s/.xxx/.${rev}/" mac/Makefile
+	#else		
+		#sed -i "" "s/.xxx/.${rev}/" mac/Makefile
 		#sed -i "" "s/-devel/.${rev}/g" mac/Info.plist.in
 	fi
 	sed -i "" "s/<string>psi<\/string>/<string>psi-plus<\/string>/g" mac/Info.plist.in
 	sed -i "" "s/<\!--<dep type='sparkle'\/>-->/<dep type='sparkle'\/>/g" psi.qc
     
-    sed -i "" "s/base\/psi.app/base\/psi-plus.app/" admin/build/prep_dist.sh
-    sed -i "" "s/base\/Psi.app/base\/Psi+.app/" admin/build/prep_dist.sh
-    sed -i "" "s/MacOS\/psi/MacOS\/psi-plus/" admin/build/prep_dist.sh
-    sed -i "" "s/QtXml QtGui/QtXml QtGui QtWebKit/" admin/build/prep_dist.sh
-    sed -i "" "s/.\/pack_dmg.sh/# .\/pack_dmg.sh/" admin/build/Makefile
+	sed -i "" "s/base\/psi.app/base\/psi-plus.app/" admin/build/prep_dist.sh
+	sed -i "" "s/base\/Psi.app/base\/Psi+.app/" admin/build/prep_dist.sh
+	sed -i "" "s/MacOS\/psi/MacOS\/psi-plus/" admin/build/prep_dist.sh
+	sed -i "" "s/QtXml QtGui/QtXml QtGui QtWebKit/" admin/build/prep_dist.sh
+	sed -i "" "s/.\/pack_dmg.sh/# .\/pack_dmg.sh/" admin/build/Makefile
 
 	cp -f "${PSI_DIR}/maintenance/scripts/macosx/application.icns" "${PSI_DIR}/build/mac/application.icns"
    
-    if [ $BUILDDEPS = 1 ]; then
-        builddeps
-        cd /psidepsbase
-        mkdir -p deps packages
-        if [ ! -f "packages/${qca_mac_file}" ]; then
-            tar -cf packages/${qca_mac_file} qca/
-            cp -a qca/ deps/${qca_mac_dir}
-        fi
-        if [ ! -f "packages/${psimedia_mac_file}" ]; then
-            tar -cf packages/${psimedia_mac_file} psimedia/
-            cp -a psimedia/ deps/${psimedia_mac_dir}
-        fi
-        if [ ! -f "packages/${gstbundle_mac_file}" ]; then
-            tar -cf packages/${gstbundle_mac_file} gstbundle/
-            cp -a gstbundle/ deps/${gstbundle_mac_dir}
-        fi
-        log "Copy deps..." 
+	if [ $BUILDDEPS = 1 ]; then
+		builddeps
+		cd /psidepsbase
+		mkdir -p deps packages
+		if [ ! -f "packages/${qca_mac_file}" ]; then
+			tar -cf packages/${qca_mac_file} qca/
+			cp -a qca/ deps/${qca_mac_dir}
+		fi
+		if [ ! -f "packages/${psimedia_mac_file}" ]; then
+ 			tar -cf packages/${psimedia_mac_file} psimedia/
+			cp -a psimedia/ deps/${psimedia_mac_dir}
+		fi
+		if [ ! -f "packages/${gstbundle_mac_file}" ]; then
+			tar -cf packages/${gstbundle_mac_file} gstbundle/
+			cp -a gstbundle/ deps/${gstbundle_mac_dir}
+		fi
+		tmp_deps=/psidepsbase
+	else
+		tmp_deps=${DEPS_DIR}
+	fi
+
+	log "Copy deps..." 
         cd "${PSI_DIR}/build/admin/build"
         mkdir -p packages deps 
-        cp -a "/psidepsbase/packages/" packages/
-        cp -a "/psidepsbase/deps/" deps/
-    else
-        log "Copy deps..." 
-        cd "${PSI_DIR}/build/admin/build"
-        mkdir -p packages deps
-        cp -a "${DEPS_DIR}/deps/" deps/
-        cp -a "${DEPS_DIR}/packages/" packages/
-        
+        cp -a "${tmp_deps}/packages/" packages/
+        cp -a "${tmp_deps}/deps/" deps/
+
         #HACK!!! use our qca
         #rm -rf "deps/qca-2.0.3-mac"
         #mkdir -p "deps/qca-2.0.3-mac"
         #cp -a /psidepsbase/qca/ "deps/qca-2.0.3-mac"
-    fi
 }
 
 copy_dev_plugins() {
-    PLUGINS_DEV=`ls ${PSI_DIR}/plugins/dev`
-    for name in ${PLUGINS_DEV}; do
+	PLUGINS_DEV=`ls ${PSI_DIR}/plugins/dev`
+	for name in ${PLUGINS_DEV}; do
 		mkdir -p `dirname "${PSI_DIR}/build/src/plugins/generic/$name"`
 		cp -a "${PSI_DIR}/plugins/dev/$name" \
 			"${PSI_DIR}/build/src/plugins/generic/$name"
 	done
-    PLUGINS="${PLUGINS} ${PLUGINS_DEV}"
+	PLUGINS="${PLUGINS} ${PLUGINS_DEV}"
 }
 
 builddeps() {
     log "Build psi deps..."
     if [ ! -d /psidepsbase ]; then
-        die "Create /psidepsbase directory with write access!"
+        die "Create /psidepsbase directory with write access! sudo mkdir /psidepsbase && sudo chmod 777 /psidepsbase"
     fi
     PSIDEPS="${PSI_DIR}/psideps/qca ${PSI_DIR}/psideps/gstbundle ${PSI_DIR}/psideps/psimedia"
     for l in $PSIDEPS; do
@@ -464,20 +477,23 @@ builddeps() {
 }
 
 src_compile() {
-    log "All ready. Now run make..."
-    cd ${PSI_DIR}/build
-    qconf
+	log "All ready. Now run make..."
+	cd ${PSI_DIR}/build
+	${QCONF}
 	cd ${PSI_DIR}/build/admin/build
-    if [ $ENABLE_WEBKIT != 0 ]; then
-        rev="${rev}"-webkit
-		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss --enable-webkit"
+	if [ $SPARKLE = 0 ]; then
+		CONF_OPTS="--disable-sparkle"
+	fi
+	if [ $ENABLE_WEBKIT != 0 ]; then
+		rev="${rev}-webkit"
+		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss --enable-webkit $CONF_OPTS"
 	else
-		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss"
+		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss $CONF_OPTS"
 	fi
 
-    sed -i "" "s/.\/configure/.\/configure ${CONF_OPTS}/" build_package.sh
-    sed -i "" "s/.\/configure/.\/configure ${CONF_OPTS}/" devconfig.sh
-    $MAKE $MAKEOPT VERSION=${version}.${rev} || die "make failed"
+	sed -i "" "s/.\/configure/.\/configure ${CONF_OPTS}/" build_package.sh
+	sed -i "" "s/.\/configure/.\/configure ${CONF_OPTS}/" devconfig.sh
+	$MAKE $MAKEOPT VERSION=${version}.${rev} || die "make failed"
 }
 
 plugins_compile() {
@@ -488,8 +504,8 @@ plugins_compile() {
 		cd ${PSI_DIR}/build/src/plugins/generic/${pl} && log "Compiling ${pl} plugin." && $QMAKE && $MAKE $MAKEOPT || die "make ${pl} plugin failed"; done
 }
 
-copy_resources(){
-    PSIAPP_DIR="${PSI_DIR}/build/admin/build/dist/psi-${version}.${rev}-mac/Psi+.app/Contents"
+copy_resources() {
+	PSIAPP_DIR="${PSI_DIR}/build/admin/build/dist/psi-${version}.${rev}-mac/Psi+.app/Contents"
 	log "Copying langpack, web, skins..."
 	cd "${PSIAPP_DIR}/Resources/"
 	for l in $TRANSLATIONS; do
@@ -499,12 +515,12 @@ copy_resources(){
 		[ -n "${LRELEASE}" -a -f "${qtf}.ts" ] && "${LRELEASE}" "${qtf}.ts" 2> /dev/null
 		[ -f "${f}.qm" ] && cp "${f}.qm" .
 		[ -f "${qtf}.qm" ] && cp "${qtf}.qm" .
-    done
+	done
 
     
-    if [ $ENABLE_WEBKIT != 0 ]; then
-        cp -r ${PSI_DIR}/build/themes .
-    fi
+	if [ $ENABLE_WEBKIT != 0 ]; then
+		cp -r ${PSI_DIR}/build/themes .
+	fi
     
 	cp -r ${PSI_DIR}/build/sound .
 	( cd ${PSI_DIR}/resources ; git archive --format=tar master ) | ( cd "${PSIAPP_DIR}/Resources" ; tar xf - )
@@ -516,11 +532,22 @@ copy_resources(){
 	for pl in ${PLUGINS}; do
 		cd ${PSI_DIR}/build/src/plugins/generic/${pl} && cp *.dylib ${PSIAPP_DIR}/Resources/plugins/; done
         
-    #copy_otrplugin_deps
+	PSIPLUS_PLUGINS=`ls $PSIAPP_DIR/Resources/plugins`
+	QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtWebKit"
+	QT_FRAMEWORK_VERSION=4
+	for f in $(QT_FRAMEWORKS); do
+		for p in $(PSIPLUS_PLUGINS); do
+			install_name_tool -change "$f.framework/Versions/$QT_FRAMEWORK_VERSION/$f" "@executable_path/../Frameworks/$f.framework/Versions/$QT_FRAMEWORK_VERSION/$f" "$PSIAPP_DIR/Resources/plugins/$p"
+		done
+	done
+
+	#copy_otrplugin_deps
     
-    #log "Copying Sparkle..."
-    #cp "${PSI_DIR}/sign/dsa_pub.pem" dsa_pub.pem
-    #cp -a  "/Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
+	if [ $SPARKLE = 1 ]; then
+		log "Copying Sparkle..."
+		cp "${PSI_DIR}/sign/dsa_pub.pem" dsa_pub.pem
+		cp -a  "/Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
+	fi
 }
 
 copy_otrplugin_deps() {
@@ -548,10 +575,10 @@ copy_otrplugin_deps() {
 
 make_bundle() {
 	log "Making standalone bundle..."
-    cd ${PSI_DIR}/build/admin/build
-    cp -f "${PSI_DIR}/maintenance/scripts/macosx/template.dmg.bz2" "template.dmg.bz2"
+	cd ${PSI_DIR}/build/admin/build
+	cp -f "${PSI_DIR}/maintenance/scripts/macosx/template.dmg.bz2" "template.dmg.bz2"
 	./pack_dmg.sh psi-plus-${version}.${rev}.dmg Psi+ dist/psi-${version}.${rev}-mac
-    cp -f psi-plus-${version}.${rev}.dmg ${PSI_DIR}/psi-plus-${version}.${rev}.dmg
+	cp -f psi-plus-${version}.${rev}.dmg ${PSI_DIR}/psi-plus-${version}.${rev}.dmg
 	log "You can find bundle in ${PSI_DIR}/psi-plus-${version}.${rev}.dmg"
 }
 
@@ -561,7 +588,7 @@ make_appcast() {
 		APPCAST_FILE=psi-plus-wk-mac.xml
 	else
 		APPCAST_FILE=psi-plus-mac.xml
-    fi
+	fi
 	VERSION="${version}"."${rev}"
 	ARCHIVE_FILENAME=`ls ${PSI_DIR} | grep psi-plus`
 	
@@ -632,16 +659,18 @@ while [ "$1" != "" ]; do
 	case $1 in
 		-w | --webkit )		ENABLE_WEBKIT=1
 							;;
-        -b | --build-deps )	BUILDDEPS=1
+		-b | --build-deps )	BUILDDEPS=1
 							;;
 		-off | --work-offline )		WORK_OFFLINE=1
 							;;
 		--upload )		UPLOAD=1
 							;;
-		-h | --help )		echo "usage: $0 [-w | --webkit] [-b | --build-deps] [-off | --work-offline] [--upload] | [-h]"
+		--sparkle )		SPARKLE=1
+							;;
+		-h | --help )		echo "usage: $0 [-w | --webkit] [-b | --build-deps] [-off | --work-offline] [--upload] [--sparkle]| [-h]"
 							exit
 							;;
-		* )					echo "usage: $0 [-w | --webkit] [-off | --work-offline] [--upload] | [-h]"
+		* )					echo "usage: $0 [-w | --webkit] [-off | --work-offline] [--upload] [--sparkle] | [-h]"
 							exit 1
 	esac
 	shift
@@ -656,7 +685,9 @@ src_compile
 plugins_compile
 copy_resources
 make_bundle
-#make_appcast
+if [ $SPARKLE = 1 ]; then
+	make_appcast
+fi
 finishtime=`date "+Finish time: %H:%M:%S"`
 echo $starttime
 echo $finishtime
