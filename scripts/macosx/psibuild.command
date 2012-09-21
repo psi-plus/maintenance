@@ -535,8 +535,8 @@ copy_resources() {
 	PSIPLUS_PLUGINS=`ls $PSIAPP_DIR/Resources/plugins`
 	QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtWebKit"
 	QT_FRAMEWORK_VERSION=4
-	for f in $(QT_FRAMEWORKS); do
-		for p in $(PSIPLUS_PLUGINS); do
+	for f in ${QT_FRAMEWORKS}; do
+		for p in ${PSIPLUS_PLUGINS}; do
 			install_name_tool -change "$f.framework/Versions/$QT_FRAMEWORK_VERSION/$f" "@executable_path/../Frameworks/$f.framework/Versions/$QT_FRAMEWORK_VERSION/$f" "$PSIAPP_DIR/Resources/plugins/$p"
 		done
 	done
