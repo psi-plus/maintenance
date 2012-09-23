@@ -3,8 +3,8 @@
 REM ------------------------------------------------------
 REM auto-compiler-all-in-one.cmd
 REM http://psi-dev.googlecode.com/
-REM Psi+ auto compiler 'All-in-One' script, v0.2.2
-REM Written by majik <maj@jabber.ru>
+REM Psi+ auto compiler 'All-in-One' script, v0.2.3
+REM Written by majik <xmpp:maj@jabber.ru>
 REM Optimized by zet <mailto:vladimir.shelukhin@gmail.com>
 REM Date: 2012-09-24
 REM ------------------------------------------------------
@@ -220,8 +220,8 @@ IF %MakeClassic%==1 (
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
 	--with-zlib-lib=%ZLIBDIR%\lib ^
-	--with-qca-inc=%QCA_DIR%\include ^
-	--with-qca-lib=%QCA_DIR%\lib ^
+	--with-qca-inc=%QCADIR%\include ^
+	--with-qca-lib=%QCADIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
@@ -274,8 +274,8 @@ IF %MakeClassicDebug%==1 (
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
 	--with-zlib-lib=%ZLIBDIR%\lib ^
-	--with-qca-inc=%QCA_DIR%\include ^
-	--with-qca-lib=%QCA_DIR%\lib ^
+	--with-qca-inc=%QCADIR%\include ^
+	--with-qca-lib=%QCADIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
@@ -328,8 +328,8 @@ IF %MakeWebkit%==1 (
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
 	--with-zlib-lib=%ZLIBDIR%\lib ^
-	--with-qca-inc=%QCA_DIR%\include ^
-	--with-qca-lib=%QCA_DIR%\lib ^
+	--with-qca-inc=%QCADIR%\include ^
+	--with-qca-lib=%QCADIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
@@ -384,8 +384,8 @@ IF %MakeWebkitDebug%==1 (
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
 	--with-zlib-lib=%ZLIBDIR%\lib ^
-	--with-qca-inc=%QCA_DIR%\include ^
-	--with-qca-lib=%QCA_DIR%\lib ^
+	--with-qca-inc=%QCADIR%\include ^
+	--with-qca-lib=%QCADIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
