@@ -3,7 +3,7 @@
 REM ------------------------------------------------------
 REM auto-compiler-all-in-one.cmd
 REM http://psi-dev.googlecode.com/
-REM Psi+ auto compiler 'All-in-One' script, v0.2.3
+REM Psi+ auto compiler 'All-in-One' script, v0.2.4
 REM Written by majik <xmpp:maj@jabber.ru>
 REM Optimized by zet <mailto:vladimir.shelukhin@gmail.com>
 REM Date: 2012-09-24
@@ -15,8 +15,6 @@ set TR=%GITDIR%\bin\tr.exe
 set SED=%GITDIR%\bin\sed.exe
 set PATCH=%GITDIR%\bin\patch.exe
 set QMAKE=%QTDIR%\bin\qmake.exe
-rem set ZLIBDIR=%QTSDK%\zlib-1.2.6-win\i386
-set ZLIBDIR=%QTDIR%\zlib-1.2.7-win\i386
 set BUILDDATE=%date:~6,4%-%date:~3,2%-%date:~0,2%
 REM set MAKE=mingw32-make -j3
 
