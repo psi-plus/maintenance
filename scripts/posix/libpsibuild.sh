@@ -32,7 +32,7 @@ GIT_REPO_PSI=git://github.com/psi-im/psi.git
 GIT_REPO_PLUS=git://github.com/psi-plus/main.git
 GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
 
-LANGS_REPO_URI="git://github.com/tehnick/psi-plus-i18n.git"
+LANGS_REPO_URI="git://github.com/psi-plus/psi-plus-l10n.git"
 
 SVN_FETCH="${SVN_FETCH:-svn co --trust-server-cert --non-interactive}"
 SVN_UP="${SVN_UP:-svn up --trust-server-cert --non-interactive}"
