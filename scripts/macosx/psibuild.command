@@ -74,8 +74,8 @@ GIT_REPO_RESOURCES=git://github.com/psi-plus/resources.git
 # psideps
 GIT_REPO_PSIDEPS=git://github.com/psi-im/psideps.git
 
-LANGS_REPO_URI="git://pv.et-inf.fho-emden.de/git/psi-l10n"
-RU_LANG_REPO_URI="git://github.com/ivan101/psi-plus-ru.git"
+LANGS_REPO_URI="git://github.com/psi-plus/psi-plus-l10n.git"
+#RU_LANG_REPO_URI="git://github.com/ivan101/psi-plus-ru.git"
 
 
 # configure options / опции скрипта configure
@@ -231,6 +231,17 @@ get_qconf() {
 	log "Qconf is ready: $QCONF"
 }
 
+get_sparkle() {
+	cd $PSI_DIR
+	if [ ! -f sparkle.zip ]; then
+		log "Downloading sparkle..."
+		curl -o sparkle.zip http://sparkle.andymatuschak.org/files/Sparkle%201.5b6.zip
+		unzip -d sparkle/ sparkle.zip
+		echo "We need admin pathword for copying sparkle framework"
+		sudo cp -a sparkle/Sparkle.framework /Library/Frameworks
+	fi
+}
+
 prepare_workspace() {
 	log "Init directories..."
 	if [ ! -d "${PSI_DIR}" ]
@@ -289,16 +300,13 @@ fetch_sources() {
 	git_fetch "${GIT_REPO_RESOURCES}" resources "Psi+ resources"
     	git_fetch "${GIT_REPO_PLUGINS}" plugins "Psi+ plugins"
     	git_fetch "${GIT_REPO_PSIDEPS}" psideps "psideps"
+	git_fetch "${LANGS_REPO_URI}" translations "Psi+ translations"
     
 	local actual_translations=""
 	[ -n "$TRANSLATIONS" ] && {
 		mkdir -p langs
 		for l in $TRANSLATIONS; do
-			if [ $l = ru ]; then
-				git_fetch "${RU_LANG_REPO_URI}" "langs/$l" "$l langpack"
-			else
-				git_fetch "${LANGS_REPO_URI}-$l" "langs/$l" "$l langpack"
-			fi
+			cp -f "translations/translations/psi_$l.ts"  "langs/$l"
 			[ -n "${LRELEASE}" -o -f "langs/$l/psi_$l.qm" ] && actual_translations="${actual_translations} $l"
 		done
 		actual_translations="$(echo $actual_translations)"
@@ -306,8 +314,13 @@ fetch_sources() {
 	}
     
 	. ${PSI_DIR}/git/admin/build/package_info
+	PSI_FETCH="${PSI_DIR}/git/admin/fetch.sh"
 	if [ $BUILDDEPS = 0 ]; then
 		fetch_psi_deps
+	fi
+
+	if [ $SPARKLE = 1 ]; then
+		get_sparkle
 	fi
 	cd "${PSI_DIR}"
 }
@@ -315,7 +328,6 @@ fetch_sources() {
 fetch_psi_deps() {
     log "Prepare Psi dependencies..."
     cd "${DEPS_DIR}"
-    PSI_FETCH="${PSI_DIR}/git/admin/fetch.sh"
     mkdir -p packages deps
     if [ ! -f "packages/${growl_file}" ]
     then
@@ -426,17 +438,21 @@ prepare_sources() {
 		cd /psidepsbase
 		mkdir -p deps packages
 		if [ ! -f "packages/${qca_mac_file}" ]; then
-			tar -cf packages/${qca_mac_file} qca/
-			cp -a qca/ deps/${qca_mac_dir}
+			cp -a ${PSI_DIR}/psideps/qca/dist/${qca_mac_dir} deps/${qca_mac_dir}
+			tar -cf packages/${qca_mac_file} deps/${qca_mac_dir}
 		fi
 		if [ ! -f "packages/${psimedia_mac_file}" ]; then
- 			tar -cf packages/${psimedia_mac_file} psimedia/
-			cp -a psimedia/ deps/${psimedia_mac_dir}
+			cp -a ${PSI_DIR}/psideps/psimedia/dist/${psimedia_mac_dir} deps/${psimedia_mac_dir}
+ 			tar -cf packages/${psimedia_mac_file} deps/${psimedia_mac_dir}
 		fi
 		if [ ! -f "packages/${gstbundle_mac_file}" ]; then
-			tar -cf packages/${gstbundle_mac_file} gstbundle/
-			cp -a gstbundle/ deps/${gstbundle_mac_dir}
+			cp -a ${PSI_DIR}/psideps/gstbundle/dist/${gstbundle_mac_dir} deps/${gstbundle_mac_dir}
+			tar -cf packages/${gstbundle_mac_file} deps/${gstbundle_mac_dir}
 		fi
+		if [ ! -f "packages/${growl_file}" ]; then
+        		sh ${PSI_FETCH} ${growl_url} packages/${growl_file}
+        		cd deps && unzip ../packages/${growl_file} && cd ..
+    		fi
 		tmp_deps=/psidepsbase
 	else
 		tmp_deps=${DEPS_DIR}
@@ -447,11 +463,6 @@ prepare_sources() {
         mkdir -p packages deps 
         cp -a "${tmp_deps}/packages/" packages/
         cp -a "${tmp_deps}/deps/" deps/
-
-        #HACK!!! use our qca
-        #rm -rf "deps/qca-2.0.3-mac"
-        #mkdir -p "deps/qca-2.0.3-mac"
-        #cp -a /psidepsbase/qca/ "deps/qca-2.0.3-mac"
 }
 
 copy_dev_plugins() {
@@ -483,6 +494,8 @@ src_compile() {
 	cd ${PSI_DIR}/build/admin/build
 	if [ $SPARKLE = 0 ]; then
 		CONF_OPTS="--disable-sparkle"
+	#else
+	#	CONF_OPTS="--with-sparkle=${PSI_DIR}/sparkle"
 	fi
 	if [ $ENABLE_WEBKIT != 0 ]; then
 		rev="${rev}-webkit"
@@ -491,8 +504,8 @@ src_compile() {
 		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss $CONF_OPTS"
 	fi
 
-	sed -i "" "s/.\/configure/.\/configure ${CONF_OPTS}/" build_package.sh
-	sed -i "" "s/.\/configure/.\/configure ${CONF_OPTS}/" devconfig.sh
+	sed -i "" "s@./configure@& ${CONF_OPTS}@g" build_package.sh
+	sed -i "" "s@./configure@& ${CONF_OPTS}@g" devconfig.sh
 	$MAKE $MAKEOPT VERSION=${version}.${rev} || die "make failed"
 }
 
@@ -526,18 +539,19 @@ copy_resources() {
 	( cd ${PSI_DIR}/resources ; git archive --format=tar master ) | ( cd "${PSIAPP_DIR}/Resources" ; tar xf - )
 	log "Copying plugins..."
 	if [ ! -d ${PSIAPP_DIR}/Resources/plugins ]; then
-    	mkdir -p "${PSIAPP_DIR}/Resources/plugins"
+    		mkdir -p "${PSIAPP_DIR}/Resources/plugins"
 	fi
 	
 	for pl in ${PLUGINS}; do
 		cd ${PSI_DIR}/build/src/plugins/generic/${pl} && cp *.dylib ${PSIAPP_DIR}/Resources/plugins/; done
         
 	PSIPLUS_PLUGINS=`ls $PSIAPP_DIR/Resources/plugins`
+	echo "plugins: $PSIPLUS_PLUGINS"
 	QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtWebKit"
 	QT_FRAMEWORK_VERSION=4
 	for f in ${QT_FRAMEWORKS}; do
 		for p in ${PSIPLUS_PLUGINS}; do
-			install_name_tool -change "$f.framework/Versions/$QT_FRAMEWORK_VERSION/$f" "@executable_path/../Frameworks/$f.framework/Versions/$QT_FRAMEWORK_VERSION/$f" "$PSIAPP_DIR/Resources/plugins/$p"
+			install_name_tool -change "${QTDIR}/lib/${f}.framework/Versions/${QT_FRAMEWORK_VERSION}/${f}" "@executable_path/../Frameworks/${f}.framework/Versions/${QT_FRAMEWORK_VERSION}/${f}" "${PSIAPP_DIR}/Resources/plugins/${p}"
 		done
 	done
 
@@ -546,7 +560,7 @@ copy_resources() {
 	if [ $SPARKLE = 1 ]; then
 		log "Copying Sparkle..."
 		cp "${PSI_DIR}/sign/dsa_pub.pem" dsa_pub.pem
-		cp -a  "/Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
+		cp -a  "Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
 	fi
 }
 
@@ -590,7 +604,7 @@ make_appcast() {
 		APPCAST_FILE=psi-plus-mac.xml
 	fi
 	VERSION="${version}"."${rev}"
-	ARCHIVE_FILENAME=`ls ${PSI_DIR} | grep psi-plus`
+	ARCHIVE_FILENAME="psi-plus-${VERSION}.dmg
 	
 	if [ $UPLOAD != 0 ]; then
 	  log "Uploading dmg on GoogleCode"
@@ -603,9 +617,9 @@ make_appcast() {
 
 	log "Making appcast file..."
 	DOWNLOAD_BASE_URL="http://psi-dev.googlecode.com/files"
-    APPCAST_LINK="${DOWNLOAD_BASE_URL}/${APPCAST_FILE}"
+	APPCAST_LINK="${DOWNLOAD_BASE_URL}/${APPCAST_FILE}"
 
-	DOWNLOAD_URL="$DOWNLOAD_BASE_URL/$ARCHIVE_FILENAME"
+	DOWNLOAD_URL="${DOWNLOAD_BASE_URL}/${ARCHIVE_FILENAME}"
 	KEYCHAIN_PRIVKEY_NAME="Sparkle Private Key 1"
 
 	SIZE=`ls -lR ${PSI_DIR}/build/admin/build/dist/psi-${version}.${rev}-mac/Psi\+.app | awk '{sum += $5} END{print sum}'`
