@@ -604,7 +604,7 @@ make_appcast() {
 		APPCAST_FILE=psi-plus-mac.xml
 	fi
 	VERSION="${version}"."${rev}"
-	ARCHIVE_FILENAME="psi-plus-${VERSION}.dmg
+	ARCHIVE_FILENAME="psi-plus-${VERSION}.dmg"
 	
 	if [ $UPLOAD != 0 ]; then
 	  log "Uploading dmg on GoogleCode"
