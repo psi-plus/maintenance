@@ -52,6 +52,9 @@ BUILDDEPS=0
 # enabling WebKit
 ENABLE_WEBKIT=0
 
+# bundl dev/ plugins
+DEV_PLUGINS=0
+
 # log of applying patches / лог применения патчей
 PATCH_LOG="${PSI_DIR}/psipatch.log"
 
@@ -59,10 +62,10 @@ PATCH_LOG="${PSI_DIR}/psipatch.log"
 SKIP_INVALID_PATCH=0
 
 # available translations
-LANGS="ar be bg br ca cs da de ee el eo es et fi fr hr hu it ja mk nl pl pt pt_BR ru se sk sl sr sr@latin sv sw uk ur_PK vi zh_CN zh_TW"
+LANGS="ar be bg br ca cs da de en ee el eo es et fi fr hr hu it ja mk nl pl pt pt_BR ru se sk sl sr sr@latin sv sw uk ur_PK vi zh_CN zh_TW"
 
 # selected translations (space-separated, leave empty to autodetect by $LANG)
-TRANSLATIONS="${TRANSLATIONS} ru en"
+TRANSLATIONS="${TRANSLATIONS}"
 
 # official repository / репозиторий официальной Psi
 GIT_REPO_PSI=git://github.com/psi-im/psi.git
@@ -88,7 +91,7 @@ GCUSER="user"
 GCPASS="password"
 
 export QMAKESPEC="macx-g++"
-export PATH="$QTDIR/bin:$PATH"
+#export PATH="$QTDIR/bin:$PATH"
 
 #######################
 # FUNCTIONS / ФУНКЦИИ #
@@ -154,7 +157,7 @@ check_env() {
 	find_qt_util() {
 		local name=$1
 		result=""
-		for un in $name-qt4 qt4-${name} ${name}4 $name; do
+		for un in $QTDIR/bin/$name $QTDIR/bin/$name-qt4 $QTDIR/bin/qt4-${name} $QTDIR/bin/${name}4; do
 			[ -n "`$un -v 2>&1 |grep Qt`" ] && { result="$un"; break; }
 		done
 		if [ -z "${result}" ]; then
@@ -170,9 +173,9 @@ check_env() {
 	# qmake
 	find_qt_util qmake; QMAKE="${result}"
 	nonfatal=1 find_qt_util lrelease; LRELEASE="${result}"
-	find_qt_util moc; # we don't use it dirrectly but its required.
-	find_qt_util uic; # we don't use it dirrectly but its required.
-	find_qt_util rcc; # we don't use it dirrectly but its required.
+	#find_qt_util moc; # we don't use it dirrectly but its required.
+	#find_qt_util uic; # we don't use it dirrectly but its required.
+	#find_qt_util rcc; # we don't use it dirrectly but its required.
 
 	# QConf
 	if [ -n "${QCONFDIR}" -a -n "`PATH="${PATH}:${QCONFDIR}" qconf 2>/dev/null`" ]; then
@@ -306,7 +309,8 @@ fetch_sources() {
 	[ -n "$TRANSLATIONS" ] && {
 		mkdir -p langs
 		for l in $TRANSLATIONS; do
-			cp -f "translations/translations/psi_$l.ts"  "langs/$l"
+			mkdir -p "langs/$l"
+			cp -f "translations/translations/psi_$l.ts"  "langs/$l/psi_$l.ts"
 			[ -n "${LRELEASE}" -o -f "langs/$l/psi_$l.qm" ] && actual_translations="${actual_translations} $l"
 		done
 		actual_translations="$(echo $actual_translations)"
@@ -407,7 +411,9 @@ prepare_sources() {
 			"${PSI_DIR}/build/src/plugins/generic/$name"
 	done
     
-	#copy_dev_plugins
+	if [ $DEV_PLUGINS = 1 ]; then
+		copy_dev_plugins
+	fi
 
 	cd ${PSI_DIR}/build
 
@@ -428,41 +434,41 @@ prepare_sources() {
 	sed -i "" "s/base\/psi.app/base\/psi-plus.app/" admin/build/prep_dist.sh
 	sed -i "" "s/base\/Psi.app/base\/Psi+.app/" admin/build/prep_dist.sh
 	sed -i "" "s/MacOS\/psi/MacOS\/psi-plus/" admin/build/prep_dist.sh
-	sed -i "" "s/QtXml QtGui/QtXml QtGui QtWebKit/" admin/build/prep_dist.sh
+	sed -i "" "s/QtXml QtGui/QtXml QtGui QtWebKit QtSvg/" admin/build/prep_dist.sh
 	sed -i "" "s/.\/pack_dmg.sh/# .\/pack_dmg.sh/" admin/build/Makefile
 
 	cp -f "${PSI_DIR}/maintenance/scripts/macosx/application.icns" "${PSI_DIR}/build/mac/application.icns"
    
 	if [ $BUILDDEPS = 1 ]; then
 		builddeps
-		cd /psidepsbase
+		log "Copy deps..." 
+		cd "${PSI_DIR}/build/admin/build"
 		mkdir -p deps packages
-		if [ ! -f "packages/${qca_mac_file}" ]; then
-			cp -a ${PSI_DIR}/psideps/qca/dist/${qca_mac_dir} deps/${qca_mac_dir}
-			tar -cf packages/${qca_mac_file} deps/${qca_mac_dir}
-		fi
-		if [ ! -f "packages/${psimedia_mac_file}" ]; then
-			cp -a ${PSI_DIR}/psideps/psimedia/dist/${psimedia_mac_dir} deps/${psimedia_mac_dir}
- 			tar -cf packages/${psimedia_mac_file} deps/${psimedia_mac_dir}
-		fi
-		if [ ! -f "packages/${gstbundle_mac_file}" ]; then
-			cp -a ${PSI_DIR}/psideps/gstbundle/dist/${gstbundle_mac_dir} deps/${gstbundle_mac_dir}
-			tar -cf packages/${gstbundle_mac_file} deps/${gstbundle_mac_dir}
-		fi
+		cp -a ${PSI_DIR}/psideps/qca/dist/${qca_mac_dir} deps/${qca_mac_dir}
+		cp -f "${PSI_DIR}/psideps/qca/${qca_mac_file}" packages/${qca_mac_file}
+
+		cp -a ${PSI_DIR}/psideps/psimedia/dist/${psimedia_mac_dir} deps/${psimedia_mac_dir}
+ 		cp -f "${PSI_DIR}/psideps/psimedia/${psimedia_mac_file}" packages/${psimedia_mac_file}
+
+		cp -a ${PSI_DIR}/psideps/gstbundle/dist/${gstbundle_mac_dir} deps/${gstbundle_mac_dir}
+		cp -f "${PSI_DIR}/psideps/gstbundle/${gstbundle_mac_file}" packages/${gstbundle_mac_file}
+
+		cd $DEPS_DIR
+		mkdir -p deps packages
 		if [ ! -f "packages/${growl_file}" ]; then
         		sh ${PSI_FETCH} ${growl_url} packages/${growl_file}
         		cd deps && unzip ../packages/${growl_file} && cd ..
     		fi
-		tmp_deps=/psidepsbase
+		cd "${PSI_DIR}/build/admin/build"
+		cp -a ${DEPS_DIR}/deps/${growl_dir} deps/${growl_dir}
+		cp -f ${DEPS_DIR}/packages/${growl_file} packages/${growl_file}
 	else
-		tmp_deps=${DEPS_DIR}
-	fi
-
-	log "Copy deps..." 
-        cd "${PSI_DIR}/build/admin/build"
-        mkdir -p packages deps 
-        cp -a "${tmp_deps}/packages/" packages/
-        cp -a "${tmp_deps}/deps/" deps/
+		log "Copy deps..." 
+ 		cd "${PSI_DIR}/build/admin/build"
+   		mkdir -p packages deps 
+    		cp -a "${DEPS_DIR}/packages/" packages/
+     		cp -a "${DEPS_DIR}/deps/" deps/
+	fi	
 }
 
 copy_dev_plugins() {
@@ -521,20 +527,18 @@ copy_resources() {
 	PSIAPP_DIR="${PSI_DIR}/build/admin/build/dist/psi-${version}.${rev}-mac/Psi+.app/Contents"
 	log "Copying langpack, web, skins..."
 	cd "${PSIAPP_DIR}/Resources/"
+	mkdir -p translations/
+	cd translations/
 	for l in $TRANSLATIONS; do
 		f="${PSI_DIR}/langs/$l/psi_$l"
-		[ $l = ru ] && qtf="${PSI_DIR}/langs/$l/qt/qt_$l" || qtf="${PSI_DIR}/langs/$l/qt_$l"
+		qtf="${QTDIR}/translations/qt_$l"
 		[ -n "${LRELEASE}" -a -f "${f}.ts" ] && "${LRELEASE}" "${f}.ts" 2> /dev/null
-		[ -n "${LRELEASE}" -a -f "${qtf}.ts" ] && "${LRELEASE}" "${qtf}.ts" 2> /dev/null
+		#[ -n "${LRELEASE}" -a -f "${qtf}.ts" ] && "${LRELEASE}" "${qtf}.ts" 2> /dev/null
 		[ -f "${f}.qm" ] && cp "${f}.qm" .
 		[ -f "${qtf}.qm" ] && cp "${qtf}.qm" .
 	done
 
-    
-	if [ $ENABLE_WEBKIT != 0 ]; then
-		cp -r ${PSI_DIR}/build/themes .
-	fi
-    
+	cd "${PSIAPP_DIR}/Resources/"    
 	cp -r ${PSI_DIR}/build/sound .
 	( cd ${PSI_DIR}/resources ; git archive --format=tar master ) | ( cd "${PSIAPP_DIR}/Resources" ; tar xf - )
 	log "Copying plugins..."
@@ -546,8 +550,7 @@ copy_resources() {
 		cd ${PSI_DIR}/build/src/plugins/generic/${pl} && cp *.dylib ${PSIAPP_DIR}/Resources/plugins/; done
         
 	PSIPLUS_PLUGINS=`ls $PSIAPP_DIR/Resources/plugins`
-	echo "plugins: $PSIPLUS_PLUGINS"
-	QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtWebKit"
+	QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtWebKit QtSvg"
 	QT_FRAMEWORK_VERSION=4
 	for f in ${QT_FRAMEWORKS}; do
 		for p in ${PSIPLUS_PLUGINS}; do
@@ -555,44 +558,50 @@ copy_resources() {
 		done
 	done
 
-	#copy_otrplugin_deps
-    
+	if [ $DEV_PLUGINS = 1 ]; then
+		copy_otrplugin_deps
+	fi
+
 	if [ $SPARKLE = 1 ]; then
 		log "Copying Sparkle..."
 		cp "${PSI_DIR}/sign/dsa_pub.pem" dsa_pub.pem
-		cp -a  "Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
+		cp -a  "/Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
 	fi
 }
 
 copy_otrplugin_deps() {
-    PSI_AP_TMP_DIR="${PSIAPP_DIR}/Frameworks"
-    PSI_AP_TMP_DIR2="${PSIAPP_DIR}/Resources/plugins"
-    cp -f "/usr/lib/libtidy.A.dylib" "${PSI_AP_TMP_DIR}/libtidy.A.dylib"
-    cp -f "/usr/local/lib/libintl.8.dylib" "${PSI_AP_TMP_DIR}/libintl.9.dylib"
-    cp -f "/usr/local/lib/libotr.2.2.0.dylib" "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
-    cp -f "/usr/local/lib/libgcrypt.11.dylib" "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
-    cp -f "/usr/local/lib/libgpg-error.0.dylib" "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
-    install_name_tool -change /usr/local/lib/libotr.2.dylib @executable_path/../Frameworks/libotr.2.2.0.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib" 
-    install_name_tool -change /usr/local/lib/libintl.8.dylib @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
-    install_name_tool -change /usr/local/lib/libgcrypt.11.dylib @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib"
-    install_name_tool -change /usr/lib/libtidy.A.dylib @executable_path/../Frameworks/libtidy.A.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib"
-    install_name_tool -change /usr/local/lib/libgcrypt.11.dylib @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
-    install_name_tool -change /usr/local/lib/libgpg-error.0.dylib @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
-    install_name_tool -change /usr/local/lib/libgpg-error.0.dylib @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
-    install_name_tool -change /usr/local/lib/libintl.8.dylib @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
-    install_name_tool -id @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
-    install_name_tool -id @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
-    install_name_tool -id @executable_path/../Frameworks/libtidy.A.dylib "${PSI_AP_TMP_DIR}/libtidy.A.dylib"
-    install_name_tool -id @executable_path/../Frameworks/libotr.2.2.0.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
-    install_name_tool -id @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libintl.8.dylib"
+	PSI_AP_TMP_DIR="${PSIAPP_DIR}/Frameworks"
+	PSI_AP_TMP_DIR2="${PSIAPP_DIR}/Resources/plugins"
+	#cp -f "/usr/lib/libtidy.A.dylib" "${PSI_AP_TMP_DIR}/libtidy.A.dylib"
+	#cp -f "/usr/local/lib/libintl.8.dylib" "${PSI_AP_TMP_DIR}/libintl.9.dylib"
+	cp -f "/usr/local/lib/libotr.2.2.0.dylib" "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
+	cp -f "/usr/local/lib/libgcrypt.11.dylib" "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
+	cp -f "/usr/local/lib/libgpg-error.0.dylib" "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
+	install_name_tool -change /usr/local/lib/libotr.2.dylib @executable_path/../Frameworks/libotr.2.2.0.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib" 
+	install_name_tool -change /usr/local/lib/libgpg-error.0.dylib @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib"
+	install_name_tool -change /usr/local/lib/libgcrypt.11.dylib @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib"
+	#install_name_tool -change /usr/lib/libtidy.A.dylib @executable_path/../Frameworks/libtidy.A.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib"
+
+	#install_name_tool -change /usr/local/lib/libintl.8.dylib @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
+	install_name_tool -change /usr/local/lib/libgcrypt.11.dylib @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
+	install_name_tool -change /usr/local/lib/libgpg-error.0.dylib @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
+
+	install_name_tool -change /usr/local/lib/libgpg-error.0.dylib @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
+	#install_name_tool -change /usr/local/lib/libintl.8.dylib @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
+
+	install_name_tool -id @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
+	install_name_tool -id @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
+	#install_name_tool -id @executable_path/../Frameworks/libtidy.A.dylib "${PSI_AP_TMP_DIR}/libtidy.A.dylib"
+	install_name_tool -id @executable_path/../Frameworks/libotr.2.2.0.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
+	#install_name_tool -id @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libintl.8.dylib"
 }
 
 make_bundle() {
 	log "Making standalone bundle..."
 	cd ${PSI_DIR}/build/admin/build
 	cp -f "${PSI_DIR}/maintenance/scripts/macosx/template.dmg.bz2" "template.dmg.bz2"
-	./pack_dmg.sh psi-plus-${version}.${rev}.dmg Psi+ dist/psi-${version}.${rev}-mac
-	cp -f psi-plus-${version}.${rev}.dmg ${PSI_DIR}/psi-plus-${version}.${rev}.dmg
+	sh pack_dmg.sh "psi-plus-${version}.${rev}.dmg" "Psi+" "dist/psi-${version}.${rev}-mac"
+	cp -f psi-plus-${version}.${rev}.dmg ${PSI_DIR}/psi-plus-${version}.${rev}.dmg && rm -f psi-plus-${version}.${rev}.dmg
 	log "You can find bundle in ${PSI_DIR}/psi-plus-${version}.${rev}.dmg"
 }
 
@@ -675,16 +684,20 @@ while [ "$1" != "" ]; do
 							;;
 		-b | --build-deps )	BUILDDEPS=1
 							;;
-		-off | --work-offline )		WORK_OFFLINE=1
+		-off | --work-offline )	WORK_OFFLINE=1
 							;;
 		--upload )		UPLOAD=1
 							;;
 		--sparkle )		SPARKLE=1
 							;;
-		-h | --help )		echo "usage: $0 [-w | --webkit] [-b | --build-deps] [-off | --work-offline] [--upload] [--sparkle]| [-h]"
+		--with-translations )	TRANSLATIONS="$TRANSLATIONS $LANGS"
+							;;
+		--with-devplugins )	DEV_PLUGINS=1
+							;;
+		-h | --help )		echo "usage: $0 [-w | --webkit] [-b | --build-deps] [-off | --work-offline] [--upload] [--sparkle] [--with-devplugins] [--with-translations] | [-h]"
 							exit
 							;;
-		* )					echo "usage: $0 [-w | --webkit] [-off | --work-offline] [--upload] [--sparkle] | [-h]"
+		* )					echo "usage: $0 [-w | --webkit] [-b | --build-deps] [-off | --work-offline] [--upload] [--sparkle] [--with-devplugins] [--with-translations] | [-h]"
 							exit 1
 	esac
 	shift

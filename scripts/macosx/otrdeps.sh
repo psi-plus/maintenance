@@ -5,10 +5,10 @@
 #Run as root!!!
 
 
-OTR_FILE=libotr-4.0.0.tar.gz
+OTR_FILE=libotr-3.2.0.tar.gz
 GPGERROR_FILE=libgpg-error-1.9.tar.gz
 GCRYPT_FILE=libgcrypt-1.5.0.tar.gz
-OTR_DIR=libotr-4.0.0
+OTR_DIR=libotr-3.2.0
 GPGERROR_DIR=libgpg-error-1.9
 GCRYPT_DIR=libgcrypt-1.5.0
 OTR_URL="http://www.cypherpunks.ca/otr/$OTR_FILE"
@@ -17,7 +17,9 @@ GCRYPT_URL="ftp://ftp.gnupg.org/gcrypt/libgcrypt/$GCRYPT_FILE"
 
 OTRDEPS_DIR=/otrdeps
 
-mkdir -p $OTRDEPS_DIR || echo "Error creating $OTRDEPS_DIR! Run script as root!"; exit 1
+die() { echo "$@"; exit 1; }
+
+mkdir -p $OTRDEPS_DIR || die "Error creating $OTRDEPS_DIR! Run script as root!"
  
 cd $OTRDEPS_DIR
 if [ ! -f $GPGERROR_FILE ]; then
