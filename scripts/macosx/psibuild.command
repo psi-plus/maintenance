@@ -31,9 +31,6 @@ DEPS_DIR="${PSI_DIR}/deps"
 # icons for downloads / иконки для скачивания
 ICONSETS="system clients activities moods affiliations roster"
 
-# plugins list / список плагинов
-PLUGINS=`ls ${PSI_DIR}/plugins/generic | grep -v "videostatusplugin"`
-
 # psi version / версия psi
 version="0.15"
 
@@ -402,6 +399,8 @@ prepare_sources() {
 
 	log "Copying plugins..."
 	cd "${PSI_DIR}"
+	# plugins list / список плагинов
+	PLUGINS=`ls ${PSI_DIR}/plugins/generic | grep -v "videostatusplugin"`
 	( cd "${PSI_DIR}/plugins/generic" ; git archive --format=tar master ) | ( cd "${PSI_DIR}/build/src/plugins/generic" ; tar xf - )
 	[ -d "${PSI_DIR}/build/src/plugins/generic" ] || \
 		die "preparing plugins requires prepared psi+ sources"
