@@ -539,6 +539,7 @@ copy_resources() {
 
 	cd "${PSIAPP_DIR}/Resources/"    
 	cp -r ${PSI_DIR}/build/sound .
+	cp -r ${PSI_DIR}/build/themes .
 	( cd ${PSI_DIR}/resources ; git archive --format=tar master ) | ( cd "${PSIAPP_DIR}/Resources" ; tar xf - )
 	log "Copying plugins..."
 	if [ ! -d ${PSIAPP_DIR}/Resources/plugins ]; then
