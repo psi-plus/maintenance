@@ -58,11 +58,8 @@ PATCH_LOG="${PSI_DIR}/psipatch.log"
 # skip patches which applies with errors / пропускать глючные патчи
 SKIP_INVALID_PATCH=0
 
-# available translations
-LANGS="ar be bg br ca cs da de en ee el eo es et fi fr hr hu it ja mk nl pl pt pt_BR ru se sk sl sr sr@latin sv sw uk ur_PK vi zh_CN zh_TW"
-
-# selected translations (space-separated, leave empty to autodetect by $LANG)
-TRANSLATIONS="${TRANSLATIONS}"
+# bandl all translations
+ALL_TRANS=0
 
 # official repository / репозиторий официальной Psi
 GIT_REPO_PSI=git://github.com/psi-im/psi.git
@@ -302,6 +299,10 @@ fetch_sources() {
     	git_fetch "${GIT_REPO_PSIDEPS}" psideps "psideps"
 	git_fetch "${LANGS_REPO_URI}" translations "Psi+ translations"
     
+	if [ $ALL_TRANS = 1 ]; then
+		TRANSLATIONS=`ls ${PSI_DIR}/translations/translations | grep -v en | sed s/psi_// | sed s/.ts//`
+	fi
+
 	local actual_translations=""
 	[ -n "$TRANSLATIONS" ] && {
 		mkdir -p langs
@@ -690,7 +691,7 @@ while [ "$1" != "" ]; do
 							;;
 		--sparkle )		SPARKLE=1
 							;;
-		--with-translations )	TRANSLATIONS="$TRANSLATIONS $LANGS"
+		--with-translations )	ALL_TRANS=1
 							;;
 		--with-devplugins )	DEV_PLUGINS=1
 							;;
