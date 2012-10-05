@@ -516,11 +516,21 @@ src_compile() {
 }
 
 plugins_compile() {
+	cd "${PSI_DIR}/build/src/plugins"
+	echo "CONFIG += x86 x86_64" >> psiplugin.pri
+	echo "QMAKE_MAC_SDK=/Developer/SDKs/MacOSX10.5.sdk" >> psiplugin.pri
+	echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5" >> psiplugin.pri
 	log "List plugins for compiling..."
 	echo ${PLUGINS}
 	log "Compiling plugins..."
 	for pl in ${PLUGINS}; do
-		cd ${PSI_DIR}/build/src/plugins/generic/${pl} && log "Compiling ${pl} plugin." && $QMAKE && $MAKE $MAKEOPT || die "make ${pl} plugin failed"; done
+		if [ $pl = "otrplugin" ]; then
+			OTRDEPS_DIR=$PSI_DIR/otrdeps
+			sh $PSI_DIR/maintenance/scripts/macosx/otrdeps.sh $OTRDEPS_DIR ${PSI_DIR}/build/src/plugins/generic/${pl} 2>/dev/null || die "make ${pl} plugin failed"
+		else
+			cd ${PSI_DIR}/build/src/plugins/generic/${pl} && log "Compiling ${pl} plugin." && $QMAKE && $MAKE $MAKEOPT || die "make ${pl} plugin failed"
+		fi
+	done
 }
 
 copy_resources() {
@@ -560,7 +570,10 @@ copy_resources() {
 	done
 
 	if [ $DEV_PLUGINS = 1 ]; then
-		copy_otrplugin_deps
+		otr_deps=`ls $OTRDEPS_DIR/uni/lib | grep "dylib"`
+		for d in $otr_deps; do
+			cp -a "$OTRDEPS_DIR/uni/lib/$d" "${PSIAPP_DIR}/Frameworks/$d"
+		done
 	fi
 
 	if [ $SPARKLE = 1 ]; then
@@ -568,33 +581,6 @@ copy_resources() {
 		cp "${PSI_DIR}/sign/dsa_pub.pem" dsa_pub.pem
 		cp -a  "/Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
 	fi
-}
-
-copy_otrplugin_deps() {
-	PSI_AP_TMP_DIR="${PSIAPP_DIR}/Frameworks"
-	PSI_AP_TMP_DIR2="${PSIAPP_DIR}/Resources/plugins"
-	#cp -f "/usr/lib/libtidy.A.dylib" "${PSI_AP_TMP_DIR}/libtidy.A.dylib"
-	#cp -f "/usr/local/lib/libintl.8.dylib" "${PSI_AP_TMP_DIR}/libintl.9.dylib"
-	cp -f "/usr/local/lib/libotr.2.2.0.dylib" "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
-	cp -f "/usr/local/lib/libgcrypt.11.dylib" "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
-	cp -f "/usr/local/lib/libgpg-error.0.dylib" "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
-	install_name_tool -change /usr/local/lib/libotr.2.dylib @executable_path/../Frameworks/libotr.2.2.0.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib" 
-	install_name_tool -change /usr/local/lib/libgpg-error.0.dylib @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib"
-	install_name_tool -change /usr/local/lib/libgcrypt.11.dylib @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib"
-	#install_name_tool -change /usr/lib/libtidy.A.dylib @executable_path/../Frameworks/libtidy.A.dylib "${PSI_AP_TMP_DIR2}/libotrplugin.dylib"
-
-	#install_name_tool -change /usr/local/lib/libintl.8.dylib @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
-	install_name_tool -change /usr/local/lib/libgcrypt.11.dylib @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
-	install_name_tool -change /usr/local/lib/libgpg-error.0.dylib @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
-
-	install_name_tool -change /usr/local/lib/libgpg-error.0.dylib @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
-	#install_name_tool -change /usr/local/lib/libintl.8.dylib @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
-
-	install_name_tool -id @executable_path/../Frameworks/libgcrypt.11.dylib "${PSI_AP_TMP_DIR}/libgcrypt.11.dylib"
-	install_name_tool -id @executable_path/../Frameworks/libgpg-error.0.dylib "${PSI_AP_TMP_DIR}/libgpg-error.0.dylib"
-	#install_name_tool -id @executable_path/../Frameworks/libtidy.A.dylib "${PSI_AP_TMP_DIR}/libtidy.A.dylib"
-	install_name_tool -id @executable_path/../Frameworks/libotr.2.2.0.dylib "${PSI_AP_TMP_DIR}/libotr.2.2.0.dylib"
-	#install_name_tool -id @executable_path/../Frameworks/libintl.9.dylib "${PSI_AP_TMP_DIR}/libintl.8.dylib"
 }
 
 make_bundle() {
