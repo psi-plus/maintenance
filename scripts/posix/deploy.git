@@ -103,7 +103,7 @@ git add .
 ( cd "${WORK_DIR}"; "$QCONF"; )
 
 addopts=`case "${UP_TO}" in 0030*) echo "--enable-webkit"; ;; esac`
-conf="--disable-growl --disable-bundled-qca --debug --prefix=/usr --no-separate-debug-info --qtdir=/usr ${addopts}"
+conf="--disable-growl --debug --prefix=/usr --no-separate-debug-info --qtdir=/usr ${addopts}"
 [ -n "`( cd "${WORK_DIR}"; ./configure --help | grep enable-plugins)`" ] && conf="${conf} --enable-plugins"
 
 ( cd "${WORK_DIR}"; ./configure $conf )
