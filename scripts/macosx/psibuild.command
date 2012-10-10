@@ -588,7 +588,7 @@ make_bundle() {
 	cd ${PSI_DIR}/build/admin/build
 	cp -f "${PSI_DIR}/maintenance/scripts/macosx/template.dmg.bz2" "template.dmg.bz2"
 	sh pack_dmg.sh "psi-plus-${version}.${rev}.dmg" "Psi+" "dist/psi-${version}.${rev}-mac"
-	cp -f psi-plus-${version}.${rev}.dmg ${PSI_DIR}/psi-plus-${version}.${rev}.dmg && rm -f psi-plus-${version}.${rev}.dmg
+	cp -f psi-plus-${version}.${rev}.dmg "${PSI_DIR}/psi-plus-${version}.${rev}-macosx.dmg" && rm -f psi-plus-${version}.${rev}.dmg
 	log "You can find bundle in ${PSI_DIR}/psi-plus-${version}.${rev}.dmg"
 }
 
@@ -600,7 +600,7 @@ make_appcast() {
 		APPCAST_FILE=psi-plus-mac.xml
 	fi
 	VERSION="${version}"."${rev}"
-	ARCHIVE_FILENAME="psi-plus-${VERSION}.dmg"
+	ARCHIVE_FILENAME="psi-plus-${VERSION}-macosx.dmg"
 	
 	if [ $UPLOAD != 0 ]; then
 	  log "Uploading dmg on GoogleCode"

@@ -21,9 +21,9 @@ GPGERROR_URL="ftp://ftp.gnupg.org/gcrypt/libgpg-error/$GPGERROR_FILE"
 GCRYPT_DIR=libgcrypt-1.5.0
 GCRYPT_FILE=libgcrypt-1.5.0.tar.gz
 GCRYPT_URL="ftp://ftp.gnupg.org/gcrypt/libgcrypt/$GCRYPT_FILE"
-TIDY_DIR="tidy/tidy"
-TIDY_FILE=tidy.tar.gz
-TIDY_URL="http://tidy.cvs.sourceforge.net/viewvc/tidy/?view=tar"
+#TIDY_DIR="tidy/tidy"
+#TIDY_FILE=tidy.tar.gz
+#TIDY_URL="http://tidy.cvs.sourceforge.net/viewvc/tidy/?view=tar"
 
 export MACOSX_DEPLOYMENT_TARGET=10.5
 
@@ -38,7 +38,7 @@ build_lib() {
 	cd $OTRDEPS_DIR/$lib_dir
 	make clean >/dev/null
 	#CFLAGS="-I$OTRDEPS_DIR/$target_arch/include" LDFLAGS="-L$OTRDEPS_DIR/$target_arch/lib"
-	 CC="gcc -arch $target_arch" CXX="g++ -arch $target_arch" ./configure -q --host=$target_platform --prefix=$arch_prefix $3
+	CC="gcc -arch $target_arch" CXX="g++ -arch $target_arch" ./configure -q --host=$target_platform --prefix=$arch_prefix $3
 	make >/dev/null
 	make install >/dev/null
 }
@@ -89,16 +89,16 @@ if [ ! -f $OTR_FILE ]; then
 	cd $OTRDEPS_DIR
 fi
 
-if [ ! -f $TIDY_FILE ]; then
-	curl -o $TIDY_FILE $TIDY_URL
-	tar jxvf $TIDY_FILE
-	cd $TIDY_DIR
-	sh build/gnuauto/setup.sh >/dev/null
-	for a in $TARGET_ARCHES; do
-		build_lib $TIDY_DIR $a
-	done
-	cd $OTRDEPS_DIR
-fi
+#if [ ! -f $TIDY_FILE ]; then
+#	curl -o $TIDY_FILE $TIDY_URL
+#	tar jxvf $TIDY_FILE
+#	cd $TIDY_DIR
+#	sh build/gnuauto/setup.sh >/dev/null
+#	for a in $TARGET_ARCHES; do
+#		build_lib $TIDY_DIR $a
+#	done
+#	cd $OTRDEPS_DIR
+#fi
 
 mkdir -p uni
 cp -a i386/ uni/
