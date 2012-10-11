@@ -32,7 +32,7 @@ DEPS_DIR="${PSI_DIR}/deps"
 ICONSETS="system clients activities moods affiliations roster"
 
 # psi version / версия psi
-version="0.15"
+version="0.16"
 
 # do not update anything from repositories until required
 WORK_OFFLINE=0
@@ -234,7 +234,7 @@ get_sparkle() {
 		log "Downloading sparkle..."
 		curl -o sparkle.zip http://sparkle.andymatuschak.org/files/Sparkle%201.5b6.zip
 		unzip -d sparkle/ sparkle.zip
-		echo "We need admin pathword for copying sparkle framework"
+		echo "We need admin password for copying sparkle framework"
 		sudo cp -a sparkle/Sparkle.framework /Library/Frameworks
 	fi
 }
@@ -502,6 +502,7 @@ src_compile() {
 		CONF_OPTS="--disable-sparkle"
 	#else
 	#	CONF_OPTS="--with-sparkle=${PSI_DIR}/sparkle"
+	#	sed -i "" "s@qca_mac_dir/lib:@&$PSI_DIR/sparkle:@g" build_package.sh
 	fi
 	if [ $ENABLE_WEBKIT != 0 ]; then
 		rev="${rev}-webkit"
@@ -512,6 +513,8 @@ src_compile() {
 
 	sed -i "" "s@./configure@& ${CONF_OPTS}@g" build_package.sh
 	sed -i "" "s@./configure@& ${CONF_OPTS}@g" devconfig.sh
+	sed -i "" 's@echo "$(VERSION)@& (\@\@DATE\@\@)@g' Makefile
+	
 	$MAKE $MAKEOPT VERSION=${version}.${rev} || die "make failed"
 }
 
@@ -579,7 +582,7 @@ copy_resources() {
 	if [ $SPARKLE = 1 ]; then
 		log "Copying Sparkle..."
 		cp "${PSI_DIR}/sign/dsa_pub.pem" dsa_pub.pem
-		cp -a  "/Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
+		cp -a "/Library/Frameworks/Sparkle.framework" "${PSIAPP_DIR}/Frameworks/"
 	fi
 }
 
