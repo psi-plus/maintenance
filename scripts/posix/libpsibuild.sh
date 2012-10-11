@@ -17,6 +17,8 @@ ICONSETS="${ICONSETS:-system clients activities moods affiliations roster}"
 # bin directory of compiler cache util (leave empty to try autodetect)
 CCACHE_BIN_DIR="${CCACHE_BIN_DIR}"
 
+BUILD_MISSING_QCONF="${BUILD_MISSING_QCONF:-0}"
+
 # available translations
 LANGS="be bg ca cs de en eo es et fi fr hu it ja mk nl pl pt pt_BR ru sk sl sr@latin sv sw uk ur_PK vi zh_CN zh_TW"
 
@@ -34,8 +36,8 @@ GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
 
 LANGS_REPO_URI="git://github.com/psi-plus/psi-plus-l10n.git"
 
-SVN_FETCH="${SVN_FETCH:-svn co --trust-server-cert --non-interactive}"
-SVN_UP="${SVN_UP:-svn up --trust-server-cert --non-interactive}"
+SVN_FETCH="${SVN_FETCH:-git svn clone -r HEAD}"
+SVN_UP="${SVN_UP:-git_svn_pull}"
 
 # convert INSTALL_ROOT to absolute path
 case "${INSTALL_ROOT}" in /*) ;; *) INSTALL_ROOT="$(pwd)/${INSTALL_ROOT}"; ;; esac
@@ -106,7 +108,8 @@ log() { local opt; [ "$1" = "-n" ] && { opt="-n"; shift; }; echo $opt "*** $@"; 
 winpath2unix() {
   local path="$@"
   local drive=`echo "${path%%:*}" | tr '[A-Z]' '[a-z]'`
-  echo "/${drive}/${path#?:\\\\}"
+  path="${path#?:\\}"
+  echo "/${drive}/${path//\\//}"
 }
 
 check_env() {
@@ -169,24 +172,16 @@ check_env() {
   MINGW32*)
     local qtpath=`qmake -query QT_INSTALL_PREFIX 2>/dev/null`
     if [ -n "${qtpath}" ]; then
-      QTDIR=`winpath2unix "${qtpath}"`
+      export QTDIR=`winpath2unix "${qtpath}"`
       log "Qt found in PATH: ${QTDIR}"
       QTSDKPATH=$(cd "${QTDIR}"; cd ../../../../; pwd)
     else
-      echo "$(cat <<'CONTENT'
-#!/usr/bin/perl
-use strict; use warnings;
-binmode(STDOUT, ':raw:encoding(UTF-8)');
-for my $qfn (@ARGV) { open(my $fh, "<:raw:encoding(UTF-16)", $qfn) or die("Can't open \"$qfn\": $!\n"); print while <$fh>; }
-CONTENT
-)" > tmp_recode.pl #' generates perl utf16 to utf18 converter
-      regedit -e tmp_qtreg.bxt "HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\Qt SDK"
-      local QTSDKPATH=`perl.exe ./tmp_recode.pl tmp_qtreg.bxt | grep InstallLocation | sed 's:.*="\(.*\)":\1:'`
-      rm tmp_recode.pl tmp_qtreg.bxt
-      [ -z "${QTSDKPATH}" ] && die "Failed to detect QtSDK path"
-      QTSDKPATH=`winpath2unix "${QTSDKPATH}"`
-      local versions="$(echo `ls -r "${QTSDKPATH}"/Desktop/Qt/`)"
-      QTDIR="${QTSDKPATH}/Desktop/Qt/${versions%% *}/mingw"
+	  QTSDKPATH=`reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\Qt SDK" //s 2>/dev/null | grep InstallLocation | sed 's:.*REG_SZ\s*\(.*\)\s*:\1:'`
+      if [ -n "${QTSDKPATH}" ]; then
+	    QTSDKPATH=`winpath2unix "${QTSDKPATH}"`
+        local versions="$(echo `ls -r "${QTSDKPATH}"/Desktop/Qt/`)"
+        export QTDIR="${QTSDKPATH}/Desktop/Qt/${versions%% *}/mingw"
+	  fi
     fi
     if [ -n "`mingw32-make --version 2>/dev/null`" ]; then
       MAKE="`which mingw32-make.exe`"
@@ -194,11 +189,13 @@ CONTENT
     else
       MAKE="${QTSDKPATH}/mingw/bin/mingw32-make.exe"
       [ ! -f "${MAKE}" ] && die "QtSDK path detected but mingw not found"
+	  PATH="$(dirname ${MAKE}):${PATH}"
     fi
     QCONFDIR="${QCONFDIR:-/c/local/QConf}"
-    PATH="${QTDIR}/bin:$(dirname ${MAKE}):${PATH}"
+    PATH="${QTDIR}/bin:${PATH}"
     CONFIGURE="configure.exe"
     CONF_OPTS="${CONF_OPTS} --qtdir=${QTDIR}"
+	BUILD_MISSING_QCONF=1
     ;;
   *)
     MAKEOPT=${MAKEOPT:--j$((`cat /proc/cpuinfo | grep processor | wc -l`+1))}
@@ -272,13 +269,18 @@ CONTENT
   if [ -n "${QCONFDIR}" -a -n "`PATH="${PATH}:${QCONFDIR}" qconf 2>/dev/null`" ]; then
     QCONF="${QCONFDIR}/qconf"
   else
+    export PATH="${PATH}:${PSI_DIR}/qconf"
     for qc in qt-qconf qconf qconf-qt4; do
       v=`$qc --version 2>/dev/null |grep affinix` && QCONF=$qc
     done
-    [ -z "${QCONF}" ] && die "You should install "\
+    [ -z "${QCONF}" -a ! "${BUILD_MISSING_QCONF}" = 1 ] && die "You should install "\
       "qconf(http://delta.affinix.com/qconf/) / Сначала установите qconf"
   fi
-  log "Found qconf tool: " $QCONF
+  if [ -z "${QCONF}" -a "${BUILD_MISSING_QCONF}" = 1 ]; then
+    log "qconf tool will be built from source"
+  else
+    log "Found qconf tool: " $QCONF
+  fi
   
   # CCache
   case "`which gcc`" in
@@ -389,6 +391,13 @@ svn_fetch_set() {
   cd "${curd}"
 }
 
+git_svn_pull() {
+  cd "$@"
+  git svn fetch || die "git svn fetch failed"
+  git svn rebase || die "git svn rebase failed"
+  cd -
+}
+
 # Checkout fresh copy or update existing from svn
 # Example: svn_fetch svn://host/uri/trunk my_target_dir "Something useful"
 svn_fetch() {
@@ -435,6 +444,11 @@ git_fetch() {
   cd "${curd}"
 }
 
+fetch_build_deps_sources() {
+  cd "${PSI_DIR}"
+  [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "https://delta.affinix.com/svn/trunk/qconf"
+}
+
 fetch_sources() {
   cd "${PSI_DIR}"
   git_fetch "${GIT_REPO_PSI}" git "Psi"
@@ -473,6 +487,7 @@ fetch_plugins_sources() {
 }
 
 fetch_all() {
+  fetch_build_deps_sources
   fetch_sources
   fetch_plugins_sources
 }
@@ -555,6 +570,16 @@ prepare_all() {
   prepare_plugins_sources
 }
 
+compile_deps() {
+  if [ ! -f "${QCONF}" -a "${BUILD_MISSING_QCONF}" ]; then
+    cd "${PSI_DIR}/qconf"
+	./configure.exe || die "failed to configure qconf"
+	mingw32-make || die "failed to make qconf"
+	export PATH="${PATH}:$PWD"
+	QCONFDIR="${PWD}"
+  fi
+}
+
 compile_psi() {
   cd "${PSI_DIR}/build"
   $QCONF
@@ -577,6 +602,7 @@ compile_plugins() {
 }
 
 compile_all() {
+  compile_deps
   compile_psi
   compile_plugins
 }
