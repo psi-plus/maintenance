@@ -571,14 +571,13 @@ prepare_all() {
 }
 
 compile_deps() {
-  if [ "${BUILD_MISSING_QCONF}" ]; then
+  if [ ! -f "${QCONF}" -a "${BUILD_MISSING_QCONF}" ]; then
     cd "${PSI_DIR}/qconf"
 	./configure.exe || die "failed to configure qconf"
 	mingw32-make || die "failed to make qconf"
 	export PATH="${PATH}:$PWD"
 	QCONFDIR="${PWD}"
   fi
-  die "test completed"
 }
 
 compile_psi() {
