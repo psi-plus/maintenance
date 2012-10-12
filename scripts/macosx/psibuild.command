@@ -364,7 +364,7 @@ prepare_sources() {
 	)
 
 	cd "${PSI_DIR}"
-	rev=$(cd git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
+	rev=$(cd git-plus/; git describe --tags | cut -d - -f 2)
 	PATCHES=`ls -1 git-plus/patches/*diff | grep -v "0820-psi-dirty-check.diff" 2>/dev/null`
 	PATCHESMACOSX=`ls -1 git-plus/patches/mac/*diff 2>/dev/null`
 
