@@ -39,6 +39,8 @@ LANGS_REPO_URI="git://github.com/psi-plus/psi-plus-l10n.git"
 SVN_FETCH="${SVN_FETCH:-git svn clone -r HEAD}"
 SVN_UP="${SVN_UP:-git_svn_pull}"
 
+QCAVER=qca-2.0.3
+
 # convert INSTALL_ROOT to absolute path
 case "${INSTALL_ROOT}" in /*) ;; *) INSTALL_ROOT="$(pwd)/${INSTALL_ROOT}"; ;; esac
 # convert PSI_DIR to absolute path
@@ -128,6 +130,8 @@ check_env() {
       "--libdir="*)
         PSILIBDIR=${1#--libdir=}
         ;;
+      "--with-qca"*)
+	    HAS_QCA_CONF_PATH=1
     esac
     shift
   done
@@ -196,6 +200,7 @@ check_env() {
     CONFIGURE="configure.exe"
     CONF_OPTS="${CONF_OPTS} --qtdir=${QTDIR}"
 	BUILD_MISSING_QCONF=1
+	[ -z "${HAS_QCA_CONF_PATH}" ] && BUILD_MISSING_QCA=1
     ;;
   *)
     MAKEOPT=${MAKEOPT:--j$((`cat /proc/cpuinfo | grep processor | wc -l`+1))}
@@ -447,6 +452,10 @@ git_fetch() {
 fetch_build_deps_sources() {
   cd "${PSI_DIR}"
   [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "https://delta.affinix.com/svn/trunk/qconf"
+  [ "${BUILD_MISSING_QCA}" ] && {
+    [ ! -f "${QCAVER}.tar.bz2" ] && { curl -O https://delta.affinix.com/download/qca/2.0/${QCAVER}.tar.bz2 || die "failed to download qca"; }
+	tar xf "${QCAVER}.tar.bz2" || die "failed to unpack qca"
+  }
 }
 
 fetch_sources() {
@@ -528,7 +537,7 @@ prepare_sources() {
   PATCHES=`ls -1 git-plus/patches/*diff 2>/dev/null`
   cd "${PSI_DIR}/build"
   [ -e "$PATCH_LOG" ] && rm "$PATCH_LOG"
-  echo "$PATCHES" | while read p; do
+  for p in $PATCHES; do
      spatch "${PSI_DIR}/${p}"
      if [ "$?" != 0 ]
      then
@@ -577,6 +586,10 @@ compile_deps() {
 	mingw32-make || die "failed to make qconf"
 	export PATH="${PATH}:$PWD"
 	QCONFDIR="${PWD}"
+  fi
+  if  [ "${BUILD_MISSIG_QCA}" = 1 ]; then
+    cd "${PSI_DIR}/${QCAVER}"
+	./configure.exe || die "failed to cofigure qca"
   fi
 }
 
