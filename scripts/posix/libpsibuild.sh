@@ -36,7 +36,7 @@ GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
 
 LANGS_REPO_URI="git://github.com/psi-plus/psi-plus-l10n.git"
 
-SVN_FETCH="${SVN_FETCH:-git svn clone -r HEAD}"
+SVN_FETCH="${SVN_FETCH:-git_svn_clone}"
 SVN_UP="${SVN_UP:-git_svn_pull}"
 
 QCAVER=qca-2.0.3
@@ -396,6 +396,19 @@ svn_fetch_set() {
   cd "${curd}"
 }
 
+git_svn_clone() {
+  local rev="${1##*@}"
+  local repo
+  [ -z `echo "$rev" | grep -E "^[0-9]+$"` ] && {
+    rev=""
+	repo="$1"
+  } || {
+    rev="${rev}:"
+    repo="${1%@*}"
+  }
+  git svn clone -r "$rev"HEAD "$repo" "$2"
+}
+
 git_svn_pull() {
   cd "$@"
   git svn fetch || die "git svn fetch failed"
@@ -409,7 +422,7 @@ svn_fetch() {
   local remote="$1"
   local target="$2"
   local comment="$3"
-  [ -z "$target" ] && { target="${remote##*/}"; target="${target%%#*}"; }
+  [ -z "$target" ] && { target="${remote##*/}"; target="${target%%#*}"; target="${target%%@*}"; }
   [ -z "$target" ] && die "can't determine target dir"
   if [ -d "$target" ]; then
     [ $WORK_OFFLINE = 0 ] && {
@@ -451,7 +464,7 @@ git_fetch() {
 
 fetch_build_deps_sources() {
   cd "${PSI_DIR}"
-  [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "https://delta.affinix.com/svn/trunk/qconf"
+  [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "https://delta.affinix.com/svn/trunk/qconf@816"
   [ "${BUILD_MISSING_QCA}" ] && {
     [ ! -f "${QCAVER}.tar.bz2" ] && { curl -O https://delta.affinix.com/download/qca/2.0/${QCAVER}.tar.bz2 || die "failed to download qca"; }
 	tar xf "${QCAVER}.tar.bz2" || die "failed to unpack qca"
