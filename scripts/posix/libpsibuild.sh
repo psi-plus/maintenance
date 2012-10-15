@@ -414,7 +414,7 @@ git_svn_pull() {
   cd "$@"
   git svn fetch || die "git svn fetch failed"
   git svn rebase || die "git svn rebase failed"
-  cd -
+  cd - > /dev/null
 }
 
 # Checkout fresh copy or update existing from svn
@@ -465,7 +465,7 @@ git_fetch() {
 
 fetch_build_deps_sources() {
   cd "${PSI_DIR}"
-  [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "${QCONF_REPO}" "QConf"
+  [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "${QCONF_REPO}" qconf "QConf"
   [ "${BUILD_MISSING_QCA}" ] && svn_fetch "${QCA_REPO}" qca "QCA"
 }
 
