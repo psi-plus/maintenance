@@ -583,13 +583,15 @@ compile_deps() {
   if [ ! -f "${QCONF}" -a "${BUILD_MISSING_QCONF}" = 1 ]; then
     cd "${PSI_DIR}/qconf"
 	./configure.exe || die "failed to configure qconf"
-	mingw32-make || die "failed to make qconf"
+	$MAKE $MAKEOPT || die "failed to make qconf"
 	export PATH="${PATH}:$PWD"
 	QCONFDIR="${PWD}"
   fi
-  if  [ "${BUILD_MISSIG_QCA}" = 1 ]; then
+  if  [ "${BUILD_MISSING_QCA}" = 1 ]; then
     cd "${PSI_DIR}/${QCAVER}"
+	$QCONF
 	./configure.exe || die "failed to cofigure qca"
+	$MAKE $MAKEOPT || die "failed to make qca"
   fi
 }
 
