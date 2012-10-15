@@ -3,10 +3,10 @@
 REM ------------------------------------------------------
 REM auto-compiler-all-in-one.cmd
 REM http://psi-dev.googlecode.com/
-REM Psi+ auto compiler 'All-in-One' script, v0.2.4
+REM Psi+ auto compiler 'All-in-One' script, v0.2.5
 REM Written by majik <xmpp:maj@jabber.ru>
 REM Optimized by zet <mailto:vladimir.shelukhin@gmail.com>
-REM Date: 2012-09-24
+REM Date: 2012-10-15
 REM ------------------------------------------------------
 
 setlocal
@@ -156,7 +156,8 @@ REM Preparing and patching
 	FOR /f "tokens=4 delims=: " %%x IN ('%QMAKE% -v ^| findstr /C:"Using Qt version "') DO SET vQt=%%x
 	CD PsiPlus
 	FOR /f "tokens=1 delims=-" %%x IN ('%GIT% describe --tags') DO SET vPsiPlusMajor=%%x
-	FOR /f "tokens=2 delims=-" %%x IN ('%GIT% describe --tags') DO SET /A vPsiPlusMinor=%%x+5000
+REM	FOR /f "tokens=2 delims=-" %%x IN ('%GIT% describe --tags') DO SET /A vPsiPlusMinor=%%x+5000
+	FOR /f "tokens=2 delims=-" %%x IN ('%GIT% describe --tags') DO SET /A vPsiPlusMinor=%%x
 	CD plugins
 	FOR /f "tokens=2 delims=-" %%x IN ('%GIT% describe --tags') DO SET vPlugins=%vPsiPlusMinor%.%%x
 	CD ..\..
@@ -247,7 +248,7 @@ IF %UploadClassic%==1 (
 	ECHO Uploading Psi+ Classic release version to GoogleCode
 	ECHO :Uploading Psi+ Classic release version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user vladimir.shelukhin ^
+	--user GoogleUser ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ Classic Nightly Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL%" ^
@@ -301,7 +302,7 @@ IF %UploadClassicDebug%==1 (
 	ECHO Uploading Psi+ Classic debug version to GoogleCode
 	ECHO :uploading Psi+ Classic debug version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user vladimir.shelukhin ^
+	--user GoogleUser ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ Classic Debug Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || FOR DEBUG ONLY!!!" ^
@@ -356,7 +357,7 @@ IF %UploadWebkit%==1 (
 	ECHO Uploading Psi+ Webkit release version to GoogleCode
 	ECHO :Uploading Psi+ Webkit release version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user vladimir.shelukhin ^
+	--user GoogleUser ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ WebKit Nightly Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || see the file README.TXT inside the archive" ^
@@ -412,7 +413,7 @@ IF %UploadWebkitDebug%==1 (
 	ECHO Uploading Psi+ Webkit debug version to GoogleCode
 	ECHO :Uploading Psi+ Webkit debug version to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user vladimir.shelukhin ^
+	--user GoogleUser ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ WebKit Debug Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || FOR DEBUG ONLY!!!" ^
@@ -441,7 +442,7 @@ IF %UploadPlugins%==1 (
 	ECHO Uploading Psi+ Plugins release versions to GoogleCode
 	ECHO :Uploading Psi+ Plugins release versions to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user vladimir.shelukhin ^
+	--user GoogleUser ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ Plugins || %date% %currentTime% MSD || Qt %vQt%" ^
@@ -470,7 +471,7 @@ IF %UploadPluginsDebug%==1 (
 	ECHO Uploading Psi+ plugins debug versions to GoogleCode
 	ECHO :Uploading Psi+ plugins debug versions to GoogleCode>> logs.txt
 	CALL googlecode_upload.py ^
-	--user vladimir.shelukhin ^
+	--user GoogleUser ^
 	--password GooglePass ^
 	--project psi-dev ^
 	--summary "Psi+ Plugins Debug || %date% %currentTime% MSD || Qt %vQt% || FOR DEBUG ONLY!!!" ^
