@@ -36,10 +36,11 @@ GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
 
 LANGS_REPO_URI="git://github.com/psi-plus/psi-plus-l10n.git"
 
+QCONF_REPO="https://delta.affinix.com/svn/trunk/qconf@816"
+QCA_REPO="svn://anonsvn.kde.org/home/kde/trunk/kdesupport/qca@1311233"
+
 SVN_FETCH="${SVN_FETCH:-git_svn_clone}"
 SVN_UP="${SVN_UP:-git_svn_pull}"
-
-QCAVER=qca-2.0.3
 
 # convert INSTALL_ROOT to absolute path
 case "${INSTALL_ROOT}" in /*) ;; *) INSTALL_ROOT="$(pwd)/${INSTALL_ROOT}"; ;; esac
@@ -464,11 +465,8 @@ git_fetch() {
 
 fetch_build_deps_sources() {
   cd "${PSI_DIR}"
-  [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "https://delta.affinix.com/svn/trunk/qconf@816"
-  [ "${BUILD_MISSING_QCA}" ] && {
-    [ ! -f "${QCAVER}.tar.bz2" ] && { curl -O https://delta.affinix.com/download/qca/2.0/${QCAVER}.tar.bz2 || die "failed to download qca"; }
-	tar xf "${QCAVER}.tar.bz2" || die "failed to unpack qca"
-  }
+  [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "${QCONF_REPO}" "QConf"
+  [ "${BUILD_MISSING_QCA}" ] && svn_fetch "${QCA_REPO}" qca "QCA"
 }
 
 fetch_sources() {
@@ -595,25 +593,26 @@ prepare_all() {
 compile_deps() {
   if [ ! -f "${QCONF}" -a "${BUILD_MISSING_QCONF}" = 1 ]; then
     cd "${PSI_DIR}/qconf"
-	./configure.exe || die "failed to configure qconf"
-	$MAKE $MAKEOPT || die "failed to make qconf"
+	./${CONFIGURE} || die "failed to configure qconf"
+	"$MAKE" $MAKEOPT || die "failed to make qconf"
 	export PATH="${PATH}:$PWD"
 	QCONFDIR="${PWD}"
+	QCONF="${QCONFDIR}/qconf"
   fi
   if  [ "${BUILD_MISSING_QCA}" = 1 ]; then
-    cd "${PSI_DIR}/${QCAVER}"
-	$QCONF
-	./configure.exe || die "failed to cofigure qca"
-	$MAKE $MAKEOPT || die "failed to make qca"
+    cd "${PSI_DIR}/qca"
+	"$QCONF"
+	./${CONFIGURE} || die "failed to cofigure qca"
+	"$MAKE" $MAKEOPT || die "failed to make qca"
   fi
 }
 
 compile_psi() {
   cd "${PSI_DIR}/build"
-  $QCONF
+  "$QCONF"
   log "./${CONFIGURE} ${CONF_OPTS}"
   ./${CONFIGURE} ${CONF_OPTS} || die "configure failed"
-  $MAKE $MAKEOPT || die "make failed"
+  "$MAKE" $MAKEOPT || die "make failed"
 }
 
 compile_plugins() {
@@ -622,7 +621,7 @@ compile_plugins() {
   for name in ${PLUGINS}; do
     log "Compiling ${name} plugin.."
     cd  "${PSI_DIR}/build/src/plugins/$name"
-    $QMAKE "PREFIX=${COMPILE_PREFIX}" && $MAKE $MAKEOPT || {
+    "$QMAKE" "PREFIX=${COMPILE_PREFIX}" && "$MAKE" $MAKEOPT || {
       warning "Failed to make plugin ${name}! Skipping.."
       failed_plugins="${failed_plugins} ${name}"
     }
