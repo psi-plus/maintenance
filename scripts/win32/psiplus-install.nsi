@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.9.1
+; Psi+ installation script, v0.9.2
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2012-05-22
+; Date: 2012-10-21
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.15.5337"
+!define PRODUCT_VERSION "0.16.19"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.15.5337-win32-setup.exe"
+OutFile "setup\psi-plus-0.16.19-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.15.5337.0"
+VIProductVersion "0.16.19.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -170,7 +170,7 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\psi-plus.exe"
 	Delete "$INSTDIR\psi-portable.bat"
 	File "setup\psi-plus-portable.bat"
-	Delete "$INSTDIR\qca2.dll"
+	File "setup\qca2.dll"
 	Delete "$INSTDIR\Qt3Support4.dll"
 	Delete "$INSTDIR\qt_ru.qm"
 	File "setup\QtCore4.dll"
@@ -201,9 +201,9 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	SetOutPath "$INSTDIR\bearer\"
 	File "setup\bearer\qgenericbearer4.dll"
 	File "setup\bearer\qnativewifibearer4.dll"
-	Delete "$INSTDIR\crypto\qca-gnupg2.dll"
-	Delete "$INSTDIR\crypto\qca-ossl2.dll"
-	RMDir "$INSTDIR\crypto\"
+	SetOutPath "$INSTDIR\crypto\"
+	File "setup\crypto\qca-gnupg2.dll"
+	File "setup\crypto\qca-ossl2.dll"
 	SetOutPath "$INSTDIR\iconsets\activities\"
 	File "setup\iconsets\activities\psiplus-activities-16.jisp"
 	File "setup\iconsets\activities\psiplus-activities-22.jisp"
@@ -222,7 +222,9 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\iconsets\affiliations\balls-small-affiliations.jisp"
 	File "setup\iconsets\affiliations\black-affiliations.jisp"
 	File "setup\iconsets\affiliations\bombus-nostalgic-affiliations.jisp"
+	File "setup\iconsets\affiliations\futurama-robots-affiliations.jisp"
 	File "setup\iconsets\affiliations\kingdom-affiliations.jisp"
+	File "setup\iconsets\affiliations\lamps-affiliations.jisp"
 	File "setup\iconsets\affiliations\medals-affiliations.jisp"
 	File "setup\iconsets\affiliations\oxygen-affiliations-22.jisp"
 	File "setup\iconsets\affiliations\oxygen-affiliations.jisp"
@@ -626,6 +628,7 @@ Section "Psi+ Translations" SectionPsiPlusTranslations
 
 	; Set Section Files and Shortcuts
 	SetOutPath "$INSTDIR\translations\"
+	File "setup\translations\psi_ar.qm"
 	File "setup\translations\psi_be.qm"
 	File "setup\translations\psi_bg.qm"
 	File "setup\translations\psi_ca.qm"
@@ -637,6 +640,7 @@ Section "Psi+ Translations" SectionPsiPlusTranslations
 	File "setup\translations\psi_et.qm"
 	File "setup\translations\psi_fi.qm"
 	File "setup\translations\psi_fr.qm"
+	File "setup\translations\psi_he.qm"
 	File "setup\translations\psi_hu.qm"
 	File "setup\translations\psi_it.qm"
 	File "setup\translations\psi_ja.qm"
@@ -772,6 +776,7 @@ Section Uninstall
 	Delete "$INSTDIR\mingwm10.dll"
 	Delete "$INSTDIR\psi-plus.exe"
 	Delete "$INSTDIR\psi-plus-portable.bat"
+	Delete "$INSTDIR\qca2.dll"
 	Delete "$INSTDIR\QtCore4.dll"
 	Delete "$INSTDIR\QtGui4.dll"
 	Delete "$INSTDIR\QtNetwork4.dll"
@@ -795,6 +800,8 @@ Section Uninstall
 	Delete "$INSTDIR\aspell\dict\ru_RU.multi"
 	Delete "$INSTDIR\bearer\qgenericbearer4.dll"
 	Delete "$INSTDIR\bearer\qnativewifibearer4.dll"
+	Delete "$INSTDIR\crypto\qca-gnupg2.dll"
+	Delete "$INSTDIR\crypto\qca-ossl2.dll"
 	Delete "$INSTDIR\iconsets\activities\psiplus-activities-16.jisp"
 	Delete "$INSTDIR\iconsets\activities\psiplus-activities-22.jisp"
 	Delete "$INSTDIR\iconsets\activities\rederick-activities-16.jisp"
@@ -811,7 +818,9 @@ Section Uninstall
 	Delete "$INSTDIR\iconsets\affiliations\balls-small-affiliations.jisp"
 	Delete "$INSTDIR\iconsets\affiliations\black-affiliations.jisp"
 	Delete "$INSTDIR\iconsets\affiliations\bombus-nostalgic-affiliations.jisp"
+	Delete "$INSTDIR\iconsets\affiliations\futurama-robots-affiliations.jisp"
 	Delete "$INSTDIR\iconsets\affiliations\kingdom-affiliations.jisp"
+	Delete "$INSTDIR\iconsets\affiliations\lamps-affiliations.jisp"
 	Delete "$INSTDIR\iconsets\affiliations\medals-affiliations.jisp"
 	Delete "$INSTDIR\iconsets\affiliations\oxygen-affiliations-22.jisp"
 	Delete "$INSTDIR\iconsets\affiliations\oxygen-affiliations.jisp"
@@ -1122,6 +1131,7 @@ Section Uninstall
 	Delete "$INSTDIR\gstreamer-0.10\libgstvorbis.dll"
 
 	;Cleanup Psi+ Translations
+	Delete "$INSTDIR\translations\psi_ar.qm"
 	Delete "$INSTDIR\translations\psi_be.qm"
 	Delete "$INSTDIR\translations\psi_bg.qm"
 	Delete "$INSTDIR\translations\psi_ca.qm"
@@ -1132,6 +1142,7 @@ Section Uninstall
 	Delete "$INSTDIR\translations\psi_et.qm"
 	Delete "$INSTDIR\translations\psi_fi.qm"
 	Delete "$INSTDIR\translations\psi_fr.qm"
+	Delete "$INSTDIR\translations\psi_he.qm"
 	Delete "$INSTDIR\translations\psi_hu.qm"
 	Delete "$INSTDIR\translations\psi_it.qm"
 	Delete "$INSTDIR\translations\psi_ja.qm"
@@ -1180,6 +1191,7 @@ Section Uninstall
 	RMDir "$INSTDIR\iconsets\"
 	RMDir "$INSTDIR\gstreamer-0.10\"
 	RMDir "$INSTDIR\bearer\"
+	RMDir "$INSTDIR\crypto\"
 	RMDir "$INSTDIR\aspell\dict\"
 	RMDir "$INSTDIR\aspell\data\"
 	RMDir "$INSTDIR\aspell\"
