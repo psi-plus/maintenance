@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.9.3
+; Psi+ installation script, v0.9.4
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2012-10-22
+; Date: 2012-10-28
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.16.20"
+!define PRODUCT_VERSION "0.16.25"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.16.20-win32-setup.exe"
+OutFile "setup\psi-plus-0.16.25-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.16.20.0"
+VIProductVersion "0.16.25.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -183,7 +183,6 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\ssleay32.dll"
 	File "setup\zlib1.dll"
 	Delete "$INSTDIR\version.txt"
-	SetOutPath "$INSTDIR\aspell\"
 	Delete "$INSTDIR\aspell\data\koi8-r.cmap"
 	Delete "$INSTDIR\aspell\data\koi8-r.cset"
 	Delete "$INSTDIR\aspell\data\dvorak.kbd"
@@ -199,6 +198,7 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	Delete "$INSTDIR\aspell\dict\ru_RU.multi"
 	Delete "$INSTDIR\aspell\dict\ruen.rws"
   RMDir "$INSTDIR\aspell\dict\"
+	SetOutPath "$INSTDIR\aspell\"
 	File "setup\aspell\dvorak.kbd"
 	File "setup\aspell\en.dat"
 	File "setup\aspell\en.multi"
@@ -755,6 +755,8 @@ SectionEnd
 	!insertmacro MUI_DESCRIPTION_TEXT ${SectionStartupRegistryString} "Starts the Psi+ automatically when Windows starts up"
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
+; =============================================================================
+; =============================================================================
 ; =============================================================================
 ;Uninstall section
 Section Uninstall
