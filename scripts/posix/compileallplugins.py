@@ -4,7 +4,7 @@ import os
  
 curr_dir = os.getcwd()
 dirlist = os.listdir(curr_dir)
-plugin_dir = os.environ.get("HOME") + "/.local/share/Psi+/plugins/" 
+plugin_dir = os.environ.get("HOME") + "/.local/share/psi+/plugins/" 
 
 def CompilePlugin(dirname):
 	if dirname:
