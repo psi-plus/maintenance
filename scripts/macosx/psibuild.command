@@ -613,7 +613,7 @@ make_bundle() {
 		hdiutil attach "$WC_DMG" -noautoopen -quiet -mountpoint "$WC_DIR"
 		mv "$WC_DIR/Psi+.app" "$WC_DIR/Portable Psi+.app"
 		pushd "$WC_DIR/Portable Psi+.app/Contents"
-		/usr/libexec/PlistBuddy -c 'Add :LSEnvironment:PSIDATADIR string "Portable Psi+.app/psi+"' Info.plist
+		/usr/libexec/PlistBuddy -c 'Add :LSEnvironment:PSIDATADIR string "Portable Psi+.app/Psi+"' Info.plist
 		/usr/libexec/PlistBuddy -c 'Set :CFBundleName string "Portable Psi+"' Info.plist
 		popd
 		rm -fr "$WC_DIR/.DS_Store" "$WC_DIR/Applications" "$WC_DIR/.background" "$WC_DIR/.fseventsd"
