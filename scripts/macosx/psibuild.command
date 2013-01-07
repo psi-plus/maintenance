@@ -61,6 +61,9 @@ SKIP_INVALID_PATCH=0
 # bandl all translations
 ALL_TRANS=0
 
+# make portable version
+PORTABLE=0
+
 # official repository / репозиторий официальной Psi
 GIT_REPO_PSI=git://github.com/psi-im/psi.git
 GIT_REPO_PLUS=git://github.com/psi-plus/main.git
@@ -147,6 +150,12 @@ check_env() {
 	[ -n "`patch --help 2>/dev/null | grep dry-run`" ] && PATCH_DRYRUN_ARG="--dry-run" \
 		|| PATCH_DRYRUN_ARG="-C"
 	log "\tFound patch tool"
+
+	# PlistBuddy
+	if [ $PORTABLE = 1 ]; then
+		[ -x "/usr/libexec/PlistBuddy" ] || die "PlistBuddy not found"
+		log "\tFound PlistBuddy"
+	fi
 
 	find_qt_util() {
 		local name=$1
@@ -591,8 +600,30 @@ make_bundle() {
 	cd ${PSI_DIR}/build/admin/build
 	cp -f "${PSI_DIR}/maintenance/scripts/macosx/template.dmg.bz2" "template.dmg.bz2"
 	sh pack_dmg.sh "psi-plus-${version}.${rev}.dmg" "Psi+" "dist/psi-${version}.${rev}-mac"
-	cp -f psi-plus-${version}.${rev}.dmg "${PSI_DIR}/psi-plus-${version}.${rev}-macosx.dmg" && rm -f psi-plus-${version}.${rev}.dmg
-	log "You can find bundle in ${PSI_DIR}/psi-plus-${version}.${rev}.dmg"
+
+	cp -f psi-plus-${version}.${rev}.dmg "${PSI_DIR}/psi-plus-${version}.${rev}-macosx.dmg"
+	log "You can find bundle in ${PSI_DIR}/psi-plus-${version}.${rev}-macosx.dmg"
+
+	if [ $PORTABLE = 1 ]; then
+		PORT_DMG="psi-plus-portable-${version}.${rev}.dmg"
+		WC_DIR="wc"
+		WC_DMG="wc.dmg"
+		rm -fr "$WC_DIR"
+		hdiutil convert "psi-plus-${version}.${rev}.dmg" -quiet -format UDRW -o "$WC_DMG"
+		hdiutil attach "$WC_DMG" -noautoopen -quiet -mountpoint "$WC_DIR"
+		mv "$WC_DIR/Psi+.app" "$WC_DIR/Portable Psi+.app"
+		pushd "$WC_DIR/Portable Psi+.app/Contents"
+		/usr/libexec/PlistBuddy -c 'Add :LSEnvironment:PSIDATADIR string "Portable Psi+.app/psi+"' Info.plist
+		/usr/libexec/PlistBuddy -c 'Set :CFBundleName string "Portable Psi+"' Info.plist
+		popd
+		rm -fr "$WC_DIR/.DS_Store" "$WC_DIR/Applications" "$WC_DIR/.background" "$WC_DIR/.fseventsd"
+		diskutil rename "$WC_DIR" "Portable Psi+"
+		diskutil eject "$WC_DIR"
+		hdiutil convert "$WC_DMG" -quiet -format UDZO -imagekey zlib-level=9 -o "$PORT_DMG"
+		cp -f psi-plus-portable-${version}.${rev}.dmg "${PSI_DIR}/psi-plus-portable-${version}.${rev}-macosx.dmg" && rm -f psi-plus-potable-${version}.${rev}.dmg
+		log "You can find next bundle in ${PSI_DIR}/psi-plus-portable-${version}.${rev}-macosx.dmg"
+	fi
+	rm -f psi-plus-${version}.${rev}.dmg
 }
 
 make_appcast() {
@@ -684,10 +715,12 @@ while [ "$1" != "" ]; do
 							;;
 		--with-devplugins )	DEV_PLUGINS=1
 							;;
-		-h | --help )		echo "usage: $0 [-w | --webkit] [-b | --build-deps] [-off | --work-offline] [--upload] [--sparkle] [--with-devplugins] [--with-translations] | [-h]"
+		-p | --portable )	PORTABLE=1
+							;;
+		-h | --help )		echo "usage: $0 [-w | --webkit] [-b | --build-deps] [-off | --work-offline] [--upload] [--sparkle] [--with-devplugins] [--with-translations] | [-p | --portable] | [-h]"
 							exit
 							;;
-		* )					echo "usage: $0 [-w | --webkit] [-b | --build-deps] [-off | --work-offline] [--upload] [--sparkle] [--with-devplugins] [--with-translations] | [-h]"
+		* )					echo "usage: $0 [-w | --webkit] [-b | --build-deps] [-off | --work-offline] [--upload] [--sparkle] [--with-devplugins] [--with-translations] | [-p | --portable] | [-h]"
 							exit 1
 	esac
 	shift
