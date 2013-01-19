@@ -558,8 +558,8 @@ prepare_sources() {
      fi
   done
 
-  rev_date_list="$(cd git/; git log -n1 --date=short --pretty=format:'%ad')
-                 $(cd git-plus/; git log -n1 --date=short --pretty=format:'%ad')"
+  rev_date_list="$(cd ${PSI_DIR}/git/; git log -n1 --date=short --pretty=format:'%ad')
+                 $(cd ${PSI_DIR}/git-plus/; git log -n1 --date=short --pretty=format:'%ad')"
   rev_date=$(echo "${rev_date_list}" | sort -r | head -n1)
 
   case "${CONF_OPTS}" in
