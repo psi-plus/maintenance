@@ -564,10 +564,10 @@ prepare_sources() {
 
   case "${CONF_OPTS}" in
     *--enable-webkit*)
-      echo "0.16.${rev}-webkit (${rev_date})" > version
+      echo "0.16.${rev}-webkit ($(echo ${rev_date}))" > version
       ;;
     *)
-      echo "0.16.${rev} (${rev_date})" > version
+      echo "0.16.${rev} ($(echo ${rev_date}))" > version
       ;;
   esac
   sed -i${SED_INPLACE_ARG} \
