@@ -558,12 +558,16 @@ prepare_sources() {
      fi
   done
 
+  rev_date_list="$(cd ${PSI_DIR}/git/; git log -n1 --date=short --pretty=format:'%ad')
+                 $(cd ${PSI_DIR}/git-plus/; git log -n1 --date=short --pretty=format:'%ad')"
+  rev_date=$(echo "${rev_date_list}" | sort -r | head -n1)
+
   case "${CONF_OPTS}" in
     *--enable-webkit*)
-      echo "0.16.${rev}-webkit (@@DATE@@)" > version
+      echo "0.16.${rev}-webkit ($(echo ${rev_date}))" > version
       ;;
     *)
-      echo "0.16.${rev} (@@DATE@@)" > version
+      echo "0.16.${rev} ($(echo ${rev_date}))" > version
       ;;
   esac
   sed -i${SED_INPLACE_ARG} \
