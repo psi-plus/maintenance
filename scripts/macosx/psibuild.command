@@ -304,10 +304,18 @@ fetch_sources() {
 	git_fetch "${GIT_REPO_PLUS}" git-plus "Psi+ additionals"
 	git_fetch "${GIT_REPO_MAINTENANCE}" maintenance "Psi+ maintenance"
 	git_fetch "${GIT_REPO_RESOURCES}" resources "Psi+ resources"
-    	git_fetch "${GIT_REPO_PLUGINS}" plugins "Psi+ plugins"
-    	git_fetch "${GIT_REPO_PSIDEPS}" psideps "psideps"
+	git_fetch "${GIT_REPO_PLUGINS}" plugins "Psi+ plugins"
+	git_fetch "${GIT_REPO_PSIDEPS}" psideps "psideps"
+	cat > psideps/qca/patches/mac_universal.pri << "EOF"
+contains(QT_CONFIG,x86):CONFIG += x86
+contains(QT_CONFIG,x86_64):CONFIG += x86_64
+QMAKE_MAC_SDK=$$(QMAKE_MAC_SDK)
+isEmpty(QMAKE_MAC_SDK) {
+    QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.5.sdk
+}
+EOF
 	git_fetch "${LANGS_REPO_URI}" translations "Psi+ translations"
-    
+
 	if [ $ALL_TRANS = 1 ]; then
 		TRANSLATIONS=`ls ${PSI_DIR}/translations/translations | grep -v en | sed s/psi_// | sed s/.ts//`
 	fi
@@ -529,6 +537,15 @@ src_compile() {
 
 plugins_compile() {
 	cd "${PSI_DIR}/build/src/plugins"
+	cat >> psiplugin.pri << "EOF"
+contains(QT_CONFIG,x86):CONFIG += x86
+contains(QT_CONFIG,x86_64):CONFIG += x86_64
+QMAKE_MAC_SDK=$$(QMAKE_MAC_SDK)
+isEmpty(QMAKE_MAC_SDK) {
+    QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.5.sdk
+}
+EOF
+
 	echo "CONFIG += x86 x86_64" >> psiplugin.pri
 	echo "QMAKE_MAC_SDK=/Developer/SDKs/MacOSX10.5.sdk" >> psiplugin.pri
 	echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5" >> psiplugin.pri
