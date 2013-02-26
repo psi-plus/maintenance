@@ -546,9 +546,6 @@ isEmpty(QMAKE_MAC_SDK) {
 }
 EOF
 
-	echo "CONFIG += x86 x86_64" >> psiplugin.pri
-	echo "QMAKE_MAC_SDK=/Developer/SDKs/MacOSX10.5.sdk" >> psiplugin.pri
-	echo "QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.5" >> psiplugin.pri
 	log "List plugins for compiling..."
 	echo ${PLUGINS}
 	log "Compiling plugins..."
