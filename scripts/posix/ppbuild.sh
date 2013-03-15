@@ -13,7 +13,7 @@ rpmbuilddir=${home}/rpmbuild
 rpmspec=${rpmbuilddir}/SPECS
 rpmsrc=${rpmbuilddir}/SOURCES
 isloop=1 #do not change the value of this variable, it's a menu loop
-psi_version="0.15"
+psi_version="0.16"
 # default options
 iswebkit=""
 use_iconsets="system clients activities moods affiliations roster"
@@ -167,8 +167,8 @@ prepare_tar ()
   check_dir ${rpmsrc}
   check_dir ${rpmspec}
   echo "Preparing Psi+ source package to build RPM..."
-  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
-  tar_name=psi-plus-0.15.${rev}
+  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
+  tar_name=psi-plus-${psi_version}.${rev}
   new_src=${buildpsi}/${tar_name}
   cp -r ${orig_src} ${new_src}
   if [ -d ${new_src} ]
@@ -192,10 +192,9 @@ prepare_win ()
 {
   echo "Preparing Psi+ source package to build in OS Windows..."
   prepare_src
-  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
-  tar_name=psi-plus-0.15.${rev}-win
+  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
+  tar_name=psi-plus-${psi_version}.${rev}-win
   new_src=${buildpsi}/${tar_name}
-  #local winpri=${new_src}/conf_windows.pri #removed as unused
   local mainicon=${buildpsi}/git-plus/app.ico
   local file_pro=${new_src}/src/src.pro
   local ver_file=${new_src}/version
@@ -203,8 +202,6 @@ prepare_win ()
   if [ -d ${new_src} ]
   then
     cd ${buildpsi}
-    #sed "s/#CONFIG += qca-static/CONFIG += qca-static\nCONFIG += webkit/" -i "${winpri}"
-    #sed "s/#DEFINES += HAVE_ASPELL/DEFINES += HAVE_ASPELL/" -i "${winpri}"
     sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
     sed "s/\(@@DATE@@\)/"`date +"%Y-%m-%d"`"/" -i "${ver_file}"
     cp -f ${mainicon} ${new_src}/win32/
@@ -304,19 +301,19 @@ build_deb_package ()
 {
   echo "Building Psi+ DEB package with checkinstall"
   cd ${patches}
-  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
+  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
   desc='Psi is a cross-platform powerful Jabber client (Qt, C++) designed for the Jabber power users.
 Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru.'
   cd ${orig_src}
   echo "${desc}" > description-pak
   requires=' "libaspell15 (>=0.60)", "libc6 (>=2.7-1)", "libgcc1 (>=1:4.1.1)", "libqca2", "libqt4-dbus (>=4.4.3)", "libqt4-network (>=4.4.3)", "libqt4-qt3support (>=4.4.3)", "libqt4-xml (>=4.4.3)", "libqtcore4 (>=4.4.3)", "libqtgui4 (>=4.4.3)", "libstdc++6 (>=4.1.1)", "libx11-6", "libxext6", "libxss1", "zlib1g (>=1:1.1.4)" '
-  sudo checkinstall -D --nodoc --pkgname=psi-plus --pkggroup=net --pkgversion=0.15.${rev} --pkgsource=${orig_src} --maintainer="thetvg@gmail.com" --requires="${requires}"
+  sudo checkinstall -D --nodoc --pkgname=psi-plus --pkggroup=net --pkgversion=${psi_version}.${rev} --pkgsource=${orig_src} --maintainer="thetvg@gmail.com" --requires="${requires}"
   cp -f ${orig_src}/*.deb ${buildpsi}
 }
 #
 prepare_spec ()
 {
-  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
+  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
   if [ ! -z ${iswebkit} ]
   then
     webkit="--enable-webkit"
@@ -331,7 +328,7 @@ prepare_spec ()
   echo "Creating psi.spec file..."
   specfile="Summary: Client application for the Jabber network
 Name: psi-plus
-Version: 0.15.${rev}
+Version: ${psi_version}.${rev}
 Release: 1
 License: GPL
 Group: Applications/Internet
@@ -417,8 +414,8 @@ build_rpm_package ()
 {
   prepare_src
   prepare_tar
-  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`+5000)))
-  tar_name=psi-plus-0.15.${rev}
+  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
+  tar_name=psi-plus-${psi_version}.${rev}
   sources=${rpmsrc}
   if [ -f "${sources}/${tar_name}.tar.gz" ]
   then
