@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.9.4
+; Psi+ installation script, v0.9.5
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2012-10-28
+; Date: 2013-03-17
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.16.25"
+!define PRODUCT_VERSION "0.16.105"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,22 +22,22 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.16.25-win32-setup.exe"
+OutFile "setup\psi-plus-0.16.105-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
 
-BrandingText "Copyright © 2008-2012 ${COMPANY_NAME}"
+BrandingText "Copyright © 2008-2013 ${COMPANY_NAME}"
 
 ; -----------------------------------------------------------------------------
 ; Version Information
 VIAddVersionKey  "CompanyName"     "${COMPANY_NAME}"
-VIAddVersionKey  "LegalCopyright"  "© 2008-2012 ${COMPANY_NAME}"
+VIAddVersionKey  "LegalCopyright"  "© 2008-2013 ${COMPANY_NAME}"
 VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.16.25.0"
+VIProductVersion "0.16.105.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -550,6 +550,7 @@ Section "Psi+ Plugins" SectionPsiPlusPlugins
 	File "setup\plugins\extendedoptionsplugin.dll"
 	Delete "$INSTDIR\plugins\gmailnotifyplugin.dll"
 	File "setup\plugins\gmailserviceplugin.dll"
+	File "setup\plugins\gnupgplugin.dll"
 	File "setup\plugins\gomokugameplugin.dll"
 	File "setup\plugins\historykeeperplugin.dll"
 	File "setup\plugins\icqdieplugin.dll"
@@ -658,6 +659,7 @@ Section "Psi+ Translations" SectionPsiPlusTranslations
 	File "setup\translations\psi_hu.qm"
 	File "setup\translations\psi_it.qm"
 	File "setup\translations\psi_ja.qm"
+	File "setup\translations\psi_kk.qm"
 	File "setup\translations\psi_mk.qm"
 	File "setup\translations\psi_nl.qm"
 	File "setup\translations\psi_pl.qm"
@@ -1074,6 +1076,7 @@ Section Uninstall
 	Delete "$INSTDIR\plugins\extendedmenuplugin.dll"
 	Delete "$INSTDIR\plugins\extendedoptionsplugin.dll"
 	Delete "$INSTDIR\plugins\gmailserviceplugin.dll"
+	Delete "$INSTDIR\plugins\gnupgplugin.dll"
 	Delete "$INSTDIR\plugins\gomokugameplugin.dll"
 	Delete "$INSTDIR\plugins\historykeeperplugin.dll"
 	Delete "$INSTDIR\plugins\icqdieplugin.dll"
@@ -1162,6 +1165,7 @@ Section Uninstall
 	Delete "$INSTDIR\translations\psi_hu.qm"
 	Delete "$INSTDIR\translations\psi_it.qm"
 	Delete "$INSTDIR\translations\psi_ja.qm"
+	Delete "$INSTDIR\translations\psi_kk.qm"
 	Delete "$INSTDIR\translations\psi_mk.qm"
 	Delete "$INSTDIR\translations\psi_nl.qm"
 	Delete "$INSTDIR\translations\psi_pl.qm"
