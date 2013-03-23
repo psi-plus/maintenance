@@ -206,57 +206,112 @@ prepare_win ()
     sed "s/\(@@DATE@@\)/"`date +"%Y-%m-%d"`"/" -i "${ver_file}"
     cp -f ${mainicon} ${new_src}/win32/
     makepsi='set QMAKESPEC=win32-g++
-:: Change the value of QTSDK variable by your real QtSDK path
-set QTSDK=C:\QtSDK
+:: First of all set the QTDIR64 variable
 ::
-set QTDIR=%QTSDK%\Desktop\Qt\4.8.1\mingw
-set QCADIR=%QtSDK%\qca
-set PATH=%PATH%;%QTSDK%\Desktop\Qt\4.8.1\mingw\bin
-set ZLIBDIR=%QTSDK%\zlib-1.2.7-win\i386
-set OPENSSLDIR=%QTSDK%\OpenSSL
-set CCACHE_DIR=%QTSDK%\ccache
-set MINGWDIR=%QTSDK%\mingw
-set QCONFDIR=%QTSDK%\QConf
-set PLUGBUILDDIR=%QTSDK%\PBuilder
-set MAKE=%MINGWDIR%\bin\mingw32-make -j3
+set QTDIR=%QTDIR64%
+set MINGWDIR=C:\MinGW
+set MINGW64=C:\mingw64\bin
+set ARCH=x86_64
+set PATH=%QTDIR%\;%QTDIR%\bin;%MINGW64%\;%MINGW64%\bin;%MINGWDIR%;%MINGWDIR%\bin
+set QCADIR=C:\qca\%ARCH%
+set ZLIBDIR=C:\build\zlib-1.2.7-win\%ARCH%
+set QCONFDIR=C:\build\QConf
+set ASPELLDIR=C:\aspell\%ARCH%
+set PLUGBUILDDIR=C:\build\PluginsBuilder
+set CC=%MINGW64%\bin\gcc
+set CXX=%MINGW64%\bin\g++
+set MAKE=mingw32-make -j5
 %QCONFDIR%\qconf
-configure --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
+configure --release --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib
 pause
 @echo Runing mingw32-make
-%MINGWDIR%\bin\mingw32-make -j3
+mingw32-make -j5
 pause
-copy /Y psi-plus.exe ..\psi-plus-portable.exe
-move /Y psi-plus.exe ..\psi-plus.exe
+copy /Y psi-plus.exe psi-plus-portable.exe
 pause
-%PLUGBUILDDIR%\compile-plugins -j 3 -o ..\
+%PLUGBUILDDIR%\compile-plugins -j 5 -o ..\
 pause
 @goto exit
 
 :exit
 pause'
     makewebkitpsi='set QMAKESPEC=win32-g++
-:: Change the value of QTSDK variable by your real QtSDK path 
-set QTSDK=C:\QtSDK
-::
-set QTDIR=%QTSDK%\Desktop\Qt\4.8.1\mingw
-set QCADIR=%QtSDK%\qca
-set PATH=%PATH%;%QTSDK%\Desktop\Qt\4.8.1\mingw\bin
-set ZLIBDIR=%QTSDK%\zlib-1.2.7-win\i386
-set CCACHE_DIR=%QTSDK%\ccache
-set MINGWDIR=%QTSDK%\mingw
-set QCONFDIR=%QTSDK%\QConf
-set PLUGBUILDDIR=%QTSDK%\PBuilder
-set MAKE=%MINGWDIR%\bin\mingw32-make -j3
+:: First of all set the QTDIR64 variable 
+set QTDIR=%QTDIR64%
+set MINGWDIR=C:\MinGW
+set MINGW64=C:\mingw64\bin
+set ARCH=x86_64
+set PATH=%QTDIR%\;%QTDIR%\bin;%MINGW64%\;%MINGW64%\bin;%MINGWDIR%;%MINGWDIR%\bin
+set QCADIR=C:\qca\%ARCH%
+set ZLIBDIR=C:\build\zlib-1.2.7-win\%ARCH%
+set QCONFDIR=C:\build\QConf
+set ASPELLDIR=C:\aspell\%ARCH%
+set PLUGBUILDDIR=C:\build\PluginsBuilder
+set CC=%MINGW64%\bin\gcc
+set CXX=%MINGW64%\bin\g++
+set MAKE=mingw32-make -j5
 %QCONFDIR%\qconf
-configure --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
+configure --release --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib
 pause
 @echo Runing mingw32-make
-%MINGWDIR%\bin\mingw32-make -j3
+mingw32-make -j5
 pause
-copy /Y psi-plus.exe ..\psi-plus-portable.exe
-move /Y psi-plus.exe ..\psi-plus.exe
+copy /Y psi-plus.exe psi-plus-portable.exe
 pause
-%PLUGBUILDDIR%\compile-plugins -j 3 -o ..\
+%PLUGBUILDDIR%\compile-plugins -j 5 -o ..\
+pause
+@goto exit
+
+:exit
+pause'
+    makepsi32='set QMAKESPEC=win32-g++
+:: First of all set the QTDIR32 variable
+::
+set QTDIR=%QTDIR32%
+set MINGWDIR=C:\MinGW
+set ARCH=i386
+set PATH=%QTDIR%\;%QTDIR%\bin;%MINGWDIR%;%MINGWDIR%\bin
+set QCADIR=C:\qca\%ARCH%
+set ZLIBDIR=C:\build\zlib-1.2.7-win\%ARCH%
+set QCONFDIR=C:\build\qconf32
+set ASPELLDIR=C:\aspell\%ARCH%
+set PLUGBUILDDIR=C:\build\PluginsBuilder
+set MAKE=mingw32-make -j5
+%QCONFDIR%\qconf
+configure --release --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib
+pause
+@echo Runing mingw32-make
+mingw32-make -j5
+pause
+copy /Y psi-plus.exe psi-plus-portable.exe
+pause
+%PLUGBUILDDIR%\compile-plugins -j 5 -o ..\
+pause
+@goto exit
+
+:exit
+pause'
+    makewebkitpsi32='set QMAKESPEC=win32-g++
+:: First of all set the QTDIR32 variable 
+set QTDIR=%QTDIR32%
+set MINGWDIR=C:\MinGW
+set ARCH=i386
+set PATH=%QTDIR%\;%QTDIR%\bin;%MINGWDIR%;%MINGWDIR%\bin
+set QCADIR=C:\qca\%ARCH%
+set ZLIBDIR=C:\build\zlib-1.2.7-win\%ARCH%
+set QCONFDIR=C:\build\qconf32
+set ASPELLDIR=C:\aspell\%ARCH%
+set PLUGBUILDDIR=C:\build\PluginsBuilder
+set MAKE=mingw32-make -j5
+%QCONFDIR%\qconf
+configure --release --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib
+pause
+@echo Runing mingw32-make
+mingw32-make -j5
+pause
+copy /Y psi-plus.exe psi-plus-portable.exe
+pause
+%PLUGBUILDDIR%\compile-plugins -j 5 -o ..\
 pause
 @goto exit
 
@@ -264,6 +319,8 @@ pause
 pause'
     echo "${makepsi}" > ${new_src}/make-psiplus.cmd
     echo "${makewebkitpsi}" > ${new_src}/make-webkit-psiplus.cmd
+    echo "${makepsi32}" > ${new_src}/make-psiplus-i386.cmd
+    echo "${makewebkitpsi32}" > ${new_src}/make-webkit-psiplus-i386.cmd
     tar -pczf ${tar_name}.tar.gz ${tar_name}
     rm -r -f ${new_src}
   fi
