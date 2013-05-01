@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.9.5
+; Psi+ installation script, v0.9.6
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2013-03-17
+; Date: 2013-05-01
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.16.105"
+!define PRODUCT_VERSION "0.16.116"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.16.105-win32-setup.exe"
+OutFile "setup\psi-plus-0.16.116-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.16.105.0"
+VIProductVersion "0.16.116.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -653,6 +653,7 @@ Section "Psi+ Translations" SectionPsiPlusTranslations
 	File "setup\translations\psi_eo.qm"
 	File "setup\translations\psi_es.qm"
 	File "setup\translations\psi_et.qm"
+	File "setup\translations\psi_fa.qm"
 	File "setup\translations\psi_fi.qm"
 	File "setup\translations\psi_fr.qm"
 	File "setup\translations\psi_he.qm"
@@ -1159,6 +1160,7 @@ Section Uninstall
 	Delete "$INSTDIR\translations\psi_eo.qm"
 	Delete "$INSTDIR\translations\psi_es.qm"
 	Delete "$INSTDIR\translations\psi_et.qm"
+	Delete "$INSTDIR\translations\psi_fa.qm"
 	Delete "$INSTDIR\translations\psi_fi.qm"
 	Delete "$INSTDIR\translations\psi_fr.qm"
 	Delete "$INSTDIR\translations\psi_he.qm"
