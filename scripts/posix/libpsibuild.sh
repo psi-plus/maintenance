@@ -19,6 +19,8 @@ CCACHE_BIN_DIR="${CCACHE_BIN_DIR}"
 
 BUILD_MISSING_QCONF="${BUILD_MISSING_QCONF:-0}"
 
+EXTRA_PATCHES="${EXTRA_PATCHES}"
+
 # available translations
 LANGS="be bg ca cs de en eo es et fi fr hu it ja mk nl pl pt pt_BR ru sk sl sr@latin sv sw uk ur_PK vi zh_CN zh_TW"
 
@@ -546,6 +548,7 @@ prepare_sources() {
   cd "${PSI_DIR}"
   rev=$(cd git-plus/; git describe --tags | cut -d - -f 2)
   PATCHES=`ls -1 git-plus/patches/*diff 2>/dev/null`
+  PATCHES="${PATCHES} ${EXTRA_PATCHES}"
   cd "${PSI_DIR}/build"
   [ -e "$PATCH_LOG" ] && rm "$PATCH_LOG"
   for p in $PATCHES; do
