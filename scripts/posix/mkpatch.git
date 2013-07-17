@@ -1,4 +1,4 @@
 #!/bin/bash
 cd psi
 git submodule foreach --recursive 'git --no-pager diff --cached --src-prefix=a/$path/ --dst-prefix=b/$path/'
-git --no-pager diff --cached 
+git --no-pager diff --cached | grep -vP '^index .*[0-9]+$' 
