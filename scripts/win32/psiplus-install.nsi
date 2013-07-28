@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.9.7
+; Psi+ installation script, v0.9.8
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2013-07-17
+; Date: 2013-07-28
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.16.132"
+!define PRODUCT_VERSION "0.16.150"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.16.132-win32-setup.exe"
+OutFile "setup\psi-plus-0.16.150-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.16.132.0"
+VIProductVersion "0.16.150.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -160,8 +160,11 @@ Section "!Psi+ Core Components" SectionPsiPlusCoreComponents
 	File "setup\iconv.dll"
 	File "setup\idleui.dll"
 	File "setup\libaspell-15.dll"
+	File "setup\libcharset-1.dll"
 	File "setup\libeay32.dll"
 	File "setup\libgcc_s_dw2-1.dll"
+	File "setup\libiconv-2.dll"
+	File "setup\libidn-11.dll"
 	File "setup\libintl-3.dll"
 	Delete "$INSTDIR\libssl32.dll"
 	File "setup\mingwm10.dll"
@@ -596,7 +599,6 @@ Section "Psimedia+" SectionPsimediaPlus
 	File "setup\libgsttag-0.10-0.dll"
 	File "setup\libgstvideo-0.10-0.dll"
 	File "setup\libgthread-2.0-0.dll"
-	File "setup\libiconv-2.dll"
 	File "setup\libintl-8.dll"
 	File "setup\libjpeg-8.dll"
 	File "setup\libltdl-7.dll"
@@ -789,8 +791,11 @@ Section Uninstall
 	Delete "$INSTDIR\iconv.dll"
 	Delete "$INSTDIR\idleui.dll"
 	Delete "$INSTDIR\libaspell-15.dll"
+	Delete "$INSTDIR\libcharset-1.dll"
 	Delete "$INSTDIR\libeay32.dll"
 	Delete "$INSTDIR\libgcc_s_dw2-1.dll"
+	Delete "$INSTDIR\libiconv-2.dll"
+	Delete "$INSTDIR\libidn-11.dll"
 	Delete "$INSTDIR\libintl-3.dll"
 	Delete "$INSTDIR\mingwm10.dll"
 	Delete "$INSTDIR\psi-plus.exe"
@@ -1114,8 +1119,6 @@ Section Uninstall
 	Delete "$INSTDIR\libgsttag-0.10-0.dll"
 	Delete "$INSTDIR\libgstvideo-0.10-0.dll"
 	Delete "$INSTDIR\libgthread-2.0-0.dll"
-	Delete "$INSTDIR\libiconv-2.dll"
-	Delete "$INSTDIR\libintl-3.dll"
 	Delete "$INSTDIR\libintl-8.dll"
 	Delete "$INSTDIR\libjpeg-8.dll"
 	Delete "$INSTDIR\libltdl-7.dll"
