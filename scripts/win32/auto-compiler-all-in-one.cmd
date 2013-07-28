@@ -3,10 +3,10 @@
 REM ------------------------------------------------------
 REM auto-compiler-all-in-one.cmd
 REM http://psi-dev.googlecode.com/
-REM Psi+ auto compiler 'All-in-One' script, v0.2.6
+REM Psi+ auto compiler 'All-in-One' script, v0.2.8
 REM Written by majik <xmpp:maj@jabber.ru>
 REM Optimized by zet <mailto:vladimir.shelukhin@gmail.com>
-REM Date: 2013-04-08
+REM Date: 2013-07-25
 REM ------------------------------------------------------
 
 setlocal
@@ -29,11 +29,11 @@ SET MakeClassic=1
 SET UploadClassic=0
 SET MakeClassicDebug=0
 SET UploadClassicDebug=0
-SET MakeWebkit=1
+SET MakeWebkit=0
 SET UploadWebkit=0
 SET MakeWebkitDebug=0
 SET UploadWebkitDebug=0
-SET MakePlugins=1
+SET MakePlugins=0
 SET UploadPlugins=0
 SET MakePluginsDebug=0
 SET UploadPluginsDebug=0
@@ -221,6 +221,8 @@ IF %MakeClassic%==1 (
 	--with-zlib-lib=%ZLIBDIR%\lib ^
 	--with-qca-inc=%QCADIR%\include ^
 	--with-qca-lib=%QCADIR%\lib ^
+	--with-idn-inc=%LIBIDNDIR%\include ^
+	--with-idn-lib=%LIBIDNDIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
@@ -275,6 +277,8 @@ IF %MakeClassicDebug%==1 (
 	--with-zlib-lib=%ZLIBDIR%\lib ^
 	--with-qca-inc=%QCADIR%\include ^
 	--with-qca-lib=%QCADIR%\lib ^
+	--with-idn-inc=%LIBIDNDIR%\include ^
+	--with-idn-lib=%LIBIDNDIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
@@ -329,6 +333,8 @@ IF %MakeWebkit%==1 (
 	--with-zlib-lib=%ZLIBDIR%\lib ^
 	--with-qca-inc=%QCADIR%\include ^
 	--with-qca-lib=%QCADIR%\lib ^
+	--with-idn-inc=%LIBIDNDIR%\include ^
+	--with-idn-lib=%LIBIDNDIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
@@ -385,6 +391,8 @@ IF %MakeWebkitDebug%==1 (
 	--with-zlib-lib=%ZLIBDIR%\lib ^
 	--with-qca-inc=%QCADIR%\include ^
 	--with-qca-lib=%QCADIR%\lib ^
+	--with-idn-inc=%LIBIDNDIR%\include ^
+	--with-idn-lib=%LIBIDNDIR%\lib ^
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
