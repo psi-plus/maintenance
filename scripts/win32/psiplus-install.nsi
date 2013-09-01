@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.9.8
+; Psi+ installation script, v0.9.9
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2013-07-28
+; Date: 2013-09-01
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.16.150"
+!define PRODUCT_VERSION "0.16.204"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.16.150-win32-setup.exe"
+OutFile "setup\psi-plus-0.16.204-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.16.150.0"
+VIProductVersion "0.16.204.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -569,7 +569,7 @@ Section "Psi+ Plugins" SectionPsiPlusPlugins
 	File "setup\plugins\translateplugin.dll"
 	File "setup\plugins\videostatusplugin.dll"
 	File "setup\plugins\watcherplugin.dll"
-	File "setup\plugins\yandexnarodplugin.dll"
+	Delete "$INSTDIR\plugins\yandexnarodplugin.dll"
 
 SectionEnd
 
@@ -1098,7 +1098,6 @@ Section Uninstall
 	Delete "$INSTDIR\plugins\translateplugin.dll"
 	Delete "$INSTDIR\plugins\videostatusplugin.dll"
 	Delete "$INSTDIR\plugins\watcherplugin.dll"
-	Delete "$INSTDIR\plugins\yandexnarodplugin.dll"
 
   ;Cleanup Psimedia+
   DeleteRegValue ${PRODUCT_UNINST_ROOT_KEY} "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "PSI_ENABLE_VIDEO"
