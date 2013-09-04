@@ -88,16 +88,38 @@ then
   for p in $PATCHES; do
      [ "${p}" = "${UP_TO}" ] && [ "$1" = "-e" ] && commit_tree "before ${p}"
      git apply -p1 "${PATCHES_DIR}/${p}" || {
-       commit_tree "before broken patch ${p}"
-       die "Failed to apply ${p}";
+       broken=1
+       echo -n "Patch ${p} can't be applied cleanly. "
+       answer="n"
+       [ -e "../mkpatch" ] && {
+         echo -n "try to fix it? [Y/n] "
+         sleep 2s
+         read answer
+       } || {
+         echo "unfortunatelly mkpatch util is not found. can't fix automatically"
+       }
+       if [ "$answer" = "y" -o "$answer" = "Y" ]; then
+         commit_tree "before try to fix ${p}"
+         git apply -p1 -C1 "${PATCHES_DIR}/${p}" && {
+           broken=0
+           git submodule foreach 'git add -A'
+           git add -A
+           ../mkpatch > "${PATCHES_DIR}/${p}"
+         }
+         [ "$broken" =  1 ] && die "Fuzz for ${p} is to big. try to fix manually"
+       fi
+       if [ "$broken" = 1 ]; then
+         commit_tree "before broken patch ${p}"
+         die "Failed to apply ${p}";
+       fi
      }
      [ "${p}" = "${UP_TO}" ] && [ "$1" != "-e" ] && commit_tree "upto ${p}"
      [ "${p}" = "${UP_TO}" ] && break;
   done
 fi
 # add all to make git diff --cached working
-git submodule foreach 'git add .'
-git add .
+git submodule foreach 'git add -A'
+git add -A
 
 
 ( cd "${WORK_DIR}"; "$QCONF"; )
