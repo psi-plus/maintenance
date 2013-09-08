@@ -53,7 +53,7 @@ commit_tree()
   git add .; [ -n "`git status |grep "nothing to commit"`" ] || git commit -am "${@}";
 }
 
-qconfs="qt-qconf qconf"
+qconfs="qt-qconf qconf-qt4 qconf"
 for qc in $qconfs; do QCONF="`which ${qc} 2>/dev/null`"; [ -n "$QCONF" ] && break; done
 [ -z "$QCONF" ] && die "neither of ${qconfs} is found"
 

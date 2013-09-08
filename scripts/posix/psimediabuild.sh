@@ -11,6 +11,6 @@ do
 	patch -p1 < $i
 done
 
-qconf || qt-qconf
+qt-qconf || qconf-qt4 || qconf
 ./configure
 make

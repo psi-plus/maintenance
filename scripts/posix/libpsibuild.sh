@@ -278,7 +278,7 @@ check_env() {
     QCONF="${QCONFDIR}/qconf"
   else
     export PATH="${PATH}:${PSI_DIR}/qconf"
-    for qc in qt-qconf qconf qconf-qt4; do
+    for qc in qt-qconf qconf-qt4 qconf; do
       v=`$qc --version 2>/dev/null |grep affinix` && QCONF=$qc
     done
     [ -z "${QCONF}" -a ! "${BUILD_MISSING_QCONF}" = 1 ] && die "You should install "\
