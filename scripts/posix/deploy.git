@@ -96,7 +96,7 @@ if [ ! -z "${UP_TO}" ]
 then
   cd "${WORK_DIR}"
   for p in $PATCHES; do
-     [ "${p}" = "${UP_TO}" ] && [ "$1" = "-e" ] && commit_tree "before ${p}"
+     [ "${p}" = "${UP_TO}" ] && [ "$edit_mode" = 1 ] && commit_tree "before ${p}"
      git apply -p1 "${PATCHES_DIR}/${p}" || {
        broken=1
        echo -n "Patch ${p} can't be applied cleanly. "
@@ -123,7 +123,7 @@ then
          die "Failed to apply ${p}";
        fi
      }
-     [ "${p}" = "${UP_TO}" ] && [ "$1" != "-e" ] && commit_tree "upto ${p}"
+     [ "${p}" = "${UP_TO}" ] && [ "$edit_mode" = 0 ] && commit_tree "upto ${p}"
      [ "${p}" = "${UP_TO}" ] && break;
   done
 fi
