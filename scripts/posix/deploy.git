@@ -11,6 +11,7 @@ SKIP_BAD_PATCHES="${SKIP_BAD_PATCHES:-0}"
 BACKUP_POSTFIX=`date "+%F_%H%M%S"`
 
 # Init
+edit_mode=0
 term_width=`tput cols`
 
 die() { echo " !!!ERROR: ${1}"; exit 1; }
@@ -52,6 +53,15 @@ commit_tree()
   git submodule foreach 'git add .; [ -n "`git status |grep "nothing to commit"`" ] || git commit -am "${@}"'
   git add .; [ -n "`git status |grep "nothing to commit"`" ] || git commit -am "${@}";
 }
+
+
+while [ -n "$1" ]; do
+  case $1 in
+    -e) edit_mode=1; ;;
+    *) configure_opts="${configure_opts} $1"; ;;
+  esac
+  shift
+done
 
 qconfs="qt-qconf qconf-qt4 qconf"
 for qc in $qconfs; do QCONF="`which ${qc} 2>/dev/null`"; [ -n "$QCONF" ] && break; done
@@ -124,11 +134,8 @@ git add -A
 
 ( cd "${WORK_DIR}"; "$QCONF"; )
 
-addopts=`case "${UP_TO}" in 0030*) echo "--enable-webkit"; ;; esac`
-conf="--disable-growl --debug --prefix=/usr --no-separate-debug-info --qtdir=/usr ${addopts}"
-[ -n "`( cd "${WORK_DIR}"; ./configure --help | grep enable-plugins)`" ] && conf="${conf} --enable-plugins"
-
-( cd "${WORK_DIR}"; ./configure $conf )
+[ "${UP_TO%%-*}" -ge 8000 ] && configure_opts="${configure_opts} --enable-plugins"
+( cd "${WORK_DIR}"; ./configure --disable-growl --debug --prefix=/usr --no-separate-debug-info --qtdir=/usr $configure_opts )
 
 for proj in psi.pro.user*; do cp "$proj" "${WORK_DIR}" 2>/dev/null; done
 
