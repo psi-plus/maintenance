@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v0.9.9
+; Psi+ installation script, v1.0.0
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2013-09-01
+; Date: 2013-11-24
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.16.204"
+!define PRODUCT_VERSION "0.16.261"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.16.204-win32-setup.exe"
+OutFile "setup\psi-plus-0.16.261-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.16.204.0"
+VIProductVersion "0.16.261.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
@@ -538,6 +538,13 @@ Section "Psi+ Plugins" SectionPsiPlusPlugins
 	SetOverwrite on
 
 	; Set Section Files and Shortcuts
+	SetOutPath "$INSTDIR\"
+	File "setup\gpg-error-config"
+	File "setup\libgcrypt-11.dll"
+	File "setup\libgcrypt-config"
+	File "setup\libgpg-error-0.dll"
+	File "setup\otr.dll"
+	File "setup\tidy.dll"
 	SetOutPath "$INSTDIR\plugins\"
 	Delete "$INSTDIR\plugins\aaastopspamplugin.dll"
 	File "setup\plugins\attentionplugin.dll"
@@ -560,6 +567,7 @@ Section "Psi+ Plugins" SectionPsiPlusPlugins
 	File "setup\plugins\imageplugin.dll"
 	File "setup\plugins\jabberdiskplugin.dll"
 	File "setup\plugins\juickplugin.dll"
+	File "setup\plugins\otrplugin.dll"
 	File "setup\plugins\pepchangenotifyplugin.dll"
 	File "setup\plugins\qipxstatusesplugin.dll"
 	File "setup\plugins\screenshotplugin.dll"
@@ -1070,6 +1078,12 @@ Section Uninstall
 	Delete "$INSTDIR\sound\watcher.wav"
 
 	;Cleanup Psi+ Plugins
+	Delete "$INSTDIR\gpg-error-config"
+	Delete "$INSTDIR\libgcrypt-11.dll"
+	Delete "$INSTDIR\libgcrypt-config"
+	Delete "$INSTDIR\libgpg-error-0.dll"
+	Delete "$INSTDIR\otr.dll"
+	Delete "$INSTDIR\tidy.dll"
 	Delete "$INSTDIR\plugins\attentionplugin.dll"
 	Delete "$INSTDIR\plugins\autoreplyplugin.dll"
 	Delete "$INSTDIR\plugins\birthdayreminderplugin.dll"
@@ -1089,6 +1103,7 @@ Section Uninstall
 	Delete "$INSTDIR\plugins\imageplugin.dll"
 	Delete "$INSTDIR\plugins\jabberdiskplugin.dll"
 	Delete "$INSTDIR\plugins\juickplugin.dll"
+	Delete "$INSTDIR\plugins\otrplugin.dll"
 	Delete "$INSTDIR\plugins\pepchangenotifyplugin.dll"
 	Delete "$INSTDIR\plugins\qipxstatusesplugin.dll"
 	Delete "$INSTDIR\plugins\screenshotplugin.dll"
