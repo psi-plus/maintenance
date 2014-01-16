@@ -1,3 +1,9 @@
+# use REV_DATE to build Psi+ in state before this date:
+REV_DATE=${REV_DATE}
+[ -n "${REV_DATE}" ]
+REV_NEED=$?
+[ ${REV_NEED} -ne 0 ] && REV_DATE=`date -dnext-week +%Y-%m-%d` # this line can be removed, but it shows emaple of REV_DATE format
+
 # do not update anything from repositories until required
 WORK_OFFLINE=${WORK_OFFLINE:-0}
 
@@ -449,6 +455,7 @@ git_fetch() {
     [ $WORK_OFFLINE = 0 ] && {
       cd "${target}"
       [ -n "${comment}" ] && log "Update ${comment} .."
+      git checkout master
       git pull || die "git update failed"
       cd "${curd}"
     } || true
@@ -458,8 +465,11 @@ git_fetch() {
     [ -d "${target}" ] && rm -rf "$target"
     git clone "${remote}" "$target" || die "git clone failed"
   }
+  cd "${curd}"
+  cd "${target}"
+  [ ${REV_NEED} -eq 0 ] && git checkout `git rev-list master -n 1 --first-parent --before=${REV_DATE}`
   [ $WORK_OFFLINE = 0 -o $forcesubmodule = 1 ] && {
-    cd "${target}"
+    #cd "${target}"
     git submodule update --init || die "git submodule update failed"
   }
   cd "${curd}"
