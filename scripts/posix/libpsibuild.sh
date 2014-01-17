@@ -1,3 +1,11 @@
+# use REV_DATE to build Psi+ in state before this date:
+[ -n "${REV_DATE}" ]
+REV_NEED=$?
+#[ ${REV_NEED} -ne 0 ] && REV_DATE=`date -dnext-week +%Y-%m-%d` # this line can be removed, but it shows emaple of REV_DATE format
+# do not forget, that REV_DATE always allow you to get revision before "master".
+# it will not give you "master" even if you set date to 9999-12-31. (i wrote this in 2014 year.)
+# so if you want "master", then don't use REV_DATE, leave it as empty string.
+
 # do not update anything from repositories until required
 WORK_OFFLINE=${WORK_OFFLINE:-0}
 
@@ -78,6 +86,8 @@ QCONFDIR              Каталог с банирником qconf при руч
 SYSLIBDIRNAME         Имя системного каталога с библиотеками (lib64/lib32/lib)
                       Автодетектится если не указана
 PLUGINS_PREFIXES      Список префиксов плагинов через пробел (generic/unix/etc)
+REV_DATE              Собрать Psi+ из кода свежести до этой даты (например:
+                      2012-01-15)
 END
     ;;
     *) cat <<END
@@ -100,6 +110,7 @@ QCONFDIR              qconf's binary directory when compiled manually
 SYSLIBDIRNAME         System libraries directory name (lib64/lib32/lib)
                       Autodetected when not given
 PLUGINS_PREFIXES      Space-separated list of plugin prefixes (generic/unix/etc)
+REV_DATE              Build Psi+ in state before this date (e.g.: 2012-01-15)
 END
   esac
   exit 0
@@ -449,6 +460,7 @@ git_fetch() {
     [ $WORK_OFFLINE = 0 ] && {
       cd "${target}"
       [ -n "${comment}" ] && log "Update ${comment} .."
+      git checkout master || die "git checkout to master failed"
       git pull || die "git update failed"
       cd "${curd}"
     } || true
@@ -460,6 +472,15 @@ git_fetch() {
   }
   [ $WORK_OFFLINE = 0 -o $forcesubmodule = 1 ] && {
     cd "${target}"
+    if [ ${REV_NEED} -eq 0 ]; then
+	  REV=`git rev-list master -n 1 --first-parent --before=${REV_DATE}`
+	  if [ -z "${REV}" ]; then
+        log "!!!WARNING: git revision before ${REV_DATE} does not exist (remote=${remote}, target=${target})"
+      else  
+	    log "checkout to ${REV} (${REV_DATE}) .."
+        git checkout "${REV}" || die "git checkout to ${REV} (${REV_DATE}) failed"
+      fi
+    fi
     git submodule update --init || die "git submodule update failed"
   }
   cd "${curd}"
