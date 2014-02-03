@@ -150,9 +150,18 @@ down_all ()
 prepare_src ()
 {
   echo "Downloading and preparing psi+ sources needed to build"
+  set_options
   run_libpsibuild validate_plugins_list
   run_libpsibuild fetch_all
   run_libpsibuild prepare_all
+  echo "Do you want to apply psi-new-history.patch [y/n(default)]"
+  read ispatch
+  if [ "${ispatch}" == "y" ]
+  then
+    cd ${orig_src}
+    patch -p1 < ${patches}/dev/psi-new-history.patch
+    cd ${home}
+  fi
 }
 #
 backup_tar ()
@@ -205,122 +214,89 @@ prepare_win ()
     sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
     sed "s/\(@@DATE@@\)/"`date +"%Y-%m-%d"`"/" -i "${ver_file}"
     cp -f ${mainicon} ${new_src}/win32/
-    makepsi='set QMAKESPEC=win32-g++
-:: First of all set the QTDIR64 variable
-::
-set QTDIR=%QTDIR64%
+    makepsi='@echo off
+@echo PSI-PLUS BUILD SCRIPT
+@echo _
+set /p HISTYPE=Do you want to build psi+ with new history [y/n(default)]:%=%
+@echo _
+set /p ARCHTYPE=Do you want to build psi+ x86_64 binary [y/n(default)]:%=%
+@echo _
+set /p WEBKIT=Do you want to build psi+ webkit binary [y/n(default)]:%=%
+@echo _ 
+set /p BINTYPE=Do you want to build psi+ debug binary [y/n(default)]:%=%
+@echo _ 
+set /p ISCLEAN=Do you want to launch clean and distclean commands [y/n(default)]:%=%
+@echo _
+
+set QMAKESPEC=win32-g++
+set BUILDDIR=C:\build
 set MINGWDIR=C:\MinGW
+set PLUGBUILDDIR=%BUILDDIR%\PluginsBuilder
+
+if /i "%ARCHTYPE%"=="y" (
+set QTDIR=%QTDIR64%
 set MINGW64=C:\mingw64\bin
 set ARCH=x86_64
-set PATH=%QTDIR%\;%QTDIR%\bin;%MINGW64%\;%MINGW64%\bin;%MINGWDIR%;%MINGWDIR%\bin
-set QCADIR=C:\qca\%ARCH%
-set ZLIBDIR=C:\build\zlib-1.2.7-win\%ARCH%
-set QCONFDIR=C:\build\QConf
-set ASPELLDIR=C:\aspell\%ARCH%
-set PLUGBUILDDIR=C:\build\PluginsBuilder
 set CC=%MINGW64%\bin\gcc
 set CXX=%MINGW64%\bin\g++
-set MAKE=mingw32-make -j5
-%QCONFDIR%\qconf
-configure --release --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib
-pause
-@echo Runing mingw32-make
-mingw32-make -j5
-pause
-copy /Y psi-plus.exe psi-plus-portable.exe
-pause
-%PLUGBUILDDIR%\compile-plugins -j 5 -o ..\
-pause
-@goto exit
-
-:exit
-pause'
-    makewebkitpsi='set QMAKESPEC=win32-g++
-:: First of all set the QTDIR64 variable 
-set QTDIR=%QTDIR64%
-set MINGWDIR=C:\MinGW
-set MINGW64=C:\mingw64\bin
-set ARCH=x86_64
+) else (
+set QTDIR=%QTDIR32%
+set ARCH=i386
+) 
+if /i "%ARCH%"=="i386" (
+set PATH=%QTDIR%\;%QTDIR%\bin;%MINGWDIR%;%MINGWDIR%\bin
+) else (
 set PATH=%QTDIR%\;%QTDIR%\bin;%MINGW64%\;%MINGW64%\bin;%MINGWDIR%;%MINGWDIR%\bin
-set QCADIR=C:\qca\%ARCH%
-set ZLIBDIR=C:\build\zlib-1.2.7-win\%ARCH%
-set QCONFDIR=C:\build\QConf
-set ASPELLDIR=C:\aspell\%ARCH%
-set PLUGBUILDDIR=C:\build\PluginsBuilder
-set CC=%MINGW64%\bin\gcc
-set CXX=%MINGW64%\bin\g++
+)
+set JSONPATH=%BUILDDIR%\qjson\%ARCH%
+set QCADIR=%BUILDDIR%\qca\%ARCH%
+set ZLIBDIR=%BUILDDIR%\zlib-1.2.7-win\%ARCH%
+set QCONFDIR=%BUILDDIR%\qconf\%ARCH%
+set ASPELLDIR=%BUILDDIR%\aspell\%ARCH%
+set LIBIDNDIR=%BUILDDIR%\libidn\%ARCH%
 set MAKE=mingw32-make -j5
-%QCONFDIR%\qconf
-configure --release --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib
-pause
-@echo Runing mingw32-make
-mingw32-make -j5
-pause
-copy /Y psi-plus.exe psi-plus-portable.exe
-pause
-%PLUGBUILDDIR%\compile-plugins -j 5 -o ..\
-pause
-@goto exit
 
-:exit
-pause'
-    makepsi32='set QMAKESPEC=win32-g++
-:: First of all set the QTDIR32 variable
-::
-set QTDIR=%QTDIR32%
-set MINGWDIR=C:\MinGW
-set ARCH=i386
-set PATH=%QTDIR%\;%QTDIR%\bin;%MINGWDIR%;%MINGWDIR%\bin
-set QCADIR=C:\qca\%ARCH%
-set ZLIBDIR=C:\build\zlib-1.2.7-win\%ARCH%
-set QCONFDIR=C:\build\qconf32
-set ASPELLDIR=C:\aspell\%ARCH%
-set PLUGBUILDDIR=C:\build\PluginsBuilder
-set MAKE=mingw32-make -j5
-%QCONFDIR%\qconf
-configure --release --enable-plugins --enable-whiteboarding --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib
-pause
-@echo Runing mingw32-make
-mingw32-make -j5
-pause
-copy /Y psi-plus.exe psi-plus-portable.exe
-pause
-%PLUGBUILDDIR%\compile-plugins -j 5 -o ..\
-pause
-@goto exit
+if /i "%ISCLEAN%"=="y" (
+mingw32-make clean
+mingw32-make distclean
+)
 
-:exit
-pause'
-    makewebkitpsi32='set QMAKESPEC=win32-g++
-:: First of all set the QTDIR32 variable 
-set QTDIR=%QTDIR32%
-set MINGWDIR=C:\MinGW
-set ARCH=i386
-set PATH=%QTDIR%\;%QTDIR%\bin;%MINGWDIR%;%MINGWDIR%\bin
-set QCADIR=C:\qca\%ARCH%
-set ZLIBDIR=C:\build\zlib-1.2.7-win\%ARCH%
-set QCONFDIR=C:\build\qconf32
-set ASPELLDIR=C:\aspell\%ARCH%
-set PLUGBUILDDIR=C:\build\PluginsBuilder
-set MAKE=mingw32-make -j5
 %QCONFDIR%\qconf
-configure --release --enable-plugins --enable-whiteboarding --enable-webkit --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib
+
+if /i "%WEBKIT%"=="y" (
+set ISWEBKIT=--enable-webkit
+)
+
+if /i "%HISTYPE%"=="y" (
+set HISTORYLIBS=--with-qjson-lib=%JSONPATH%\lib
+set HISTORYINC=--with-qjson-inc=%JSONPATH%\include
+)
+set ISDEBUG=--release
+if /i "%BINTYPE%"=="y" (
+set ISDEBUG=--debug
+)
+
+@echo configure %ISDEBUG% --enable-plugins --enable-whiteboarding %ISWEBKIT% --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib --with-idn-inc=%LIBIDNDIR%\include --with-idn-lib=%LIBIDNDIR%\lib %HISTORYLIBS% %HISTORYINC%
+configure %ISDEBUG% --enable-plugins --enable-whiteboarding %ISWEBKIT% --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib --with-idn-inc=%LIBIDNDIR%\include --with-idn-lib=%LIBIDNDIR%\lib %HISTORYLIBS% %HISTORYINC%
+
 pause
 @echo Runing mingw32-make
 mingw32-make -j5
-pause
+@echo _ 
+set /p ANS1=Do you want to create psi-plus-portable.exe binary [y(default)/n]:%=%
+if /i not "%ANS1%"=="n" (
 copy /Y psi-plus.exe psi-plus-portable.exe
-pause
+)
+@echo _ 
+set /p ANS2=Do you want to psi+ plugins [y(default)/n]:%=%
+if /i not "%ANS2%"=="n" (
 %PLUGBUILDDIR%\compile-plugins -j 5 -o ..\
-pause
+)
 @goto exit
 
 :exit
 pause'
     echo "${makepsi}" > ${new_src}/make-psiplus.cmd
-    echo "${makewebkitpsi}" > ${new_src}/make-webkit-psiplus.cmd
-    echo "${makepsi32}" > ${new_src}/make-psiplus-i386.cmd
-    echo "${makewebkitpsi32}" > ${new_src}/make-webkit-psiplus-i386.cmd
     tar -pczf ${tar_name}.tar.gz ${tar_name}
     rm -r -f ${new_src}
   fi
@@ -338,6 +314,7 @@ compile_psiplus ()
 #
 build_plugins ()
 {
+  set_options
   cd ${buildpsi}
   run_libpsibuild prepare_workspace
   prepare_src
