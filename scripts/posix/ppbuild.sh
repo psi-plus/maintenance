@@ -230,30 +230,31 @@ set /p ISCLEAN=Do you want to launch clean and distclean commands [y/n(default)]
 
 set QMAKESPEC=win32-g++
 set BUILDDIR=C:\build
-set MINGWDIR=C:\MinGW
 set PLUGBUILDDIR=%BUILDDIR%\PluginsBuilder
 
 if /i "%ARCHTYPE%"=="y" (
 set QTDIR=%QTDIR64%
-set MINGW64=C:\mingw64\bin
+set MINGWDIR=C:\MinGW
+set MINGW64=C:\mingw64
 set ARCH=x86_64
 set CC=%MINGW64%\bin\gcc
 set CXX=%MINGW64%\bin\g++
 ) else (
 set QTDIR=%QTDIR32%
 set ARCH=i386
+set MINGWDIR=%QTDIR32%\mingw
 ) 
 if /i "%ARCH%"=="i386" (
 set PATH=%QTDIR%\;%QTDIR%\bin;%MINGWDIR%;%MINGWDIR%\bin
 ) else (
 set PATH=%QTDIR%\;%QTDIR%\bin;%MINGW64%\;%MINGW64%\bin;%MINGWDIR%;%MINGWDIR%\bin
 )
-set JSONPATH=%BUILDDIR%\qjson\%ARCH%
-set QCADIR=%BUILDDIR%\qca\%ARCH%
-set ZLIBDIR=%BUILDDIR%\zlib-1.2.7-win\%ARCH%
+set JSONPATH=%BUILDDIR%\psideps\qjson\%ARCH%
+set QCADIR=%BUILDDIR%\psideps\qca\%ARCH%
+set ZLIBDIR=%BUILDDIR%\psideps\zlib\%ARCH%
 set QCONFDIR=%BUILDDIR%\qconf\%ARCH%
-set ASPELLDIR=%BUILDDIR%\aspell\%ARCH%
-set LIBIDNDIR=%BUILDDIR%\libidn\%ARCH%
+set ASPELLDIR=%BUILDDIR%\psideps\aspell\%ARCH%
+set LIBIDNDIR=%BUILDDIR%\psideps\libidn\%ARCH%
 set MAKE=mingw32-make -j5
 
 if /i "%ISCLEAN%"=="y" (
@@ -265,6 +266,17 @@ mingw32-make distclean
 
 if /i "%WEBKIT%"=="y" (
 set ISWEBKIT=--enable-webkit
+if /i "%ARCH%"=="i386" (
+set INSTDIR=webkit32
+) else (
+set INSTDIR=webkit64
+)
+) else (
+if /i "%ARCH%"=="i386" (
+set INSTDIR=bin32
+) else (
+set INSTDIR=bin64
+)
 )
 
 if /i "%HISTYPE%"=="y" (
@@ -282,6 +294,8 @@ configure %ISDEBUG% --enable-plugins --enable-whiteboarding %ISWEBKIT% --qtdir=%
 pause
 @echo Runing mingw32-make
 mingw32-make -j5
+mkdir %INSTDIR%
+copy /Y psi-plus.exe %INSTDIR%\psi-plus.exe
 @echo _ 
 set /p ANS1=Do you want to create psi-plus-portable.exe binary [y(default)/n]:%=%
 if /i not "%ANS1%"=="n" (
