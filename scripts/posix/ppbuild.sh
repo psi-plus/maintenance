@@ -9,6 +9,7 @@ psi_homeplugdir=${psi_datadir}/plugins
 config_file=${home}/.psibuild.cfg
 inst_suffix=tmp
 inst_path=${buildpsi}/${inst_suffix}
+plugbuild_log=${orig_src}/plugins.log
 rpmbuilddir=${home}/rpmbuild
 rpmspec=${rpmbuilddir}/SPECS
 rpmsrc=${rpmbuilddir}/SOURCES
@@ -23,12 +24,18 @@ use_plugins="*"
 #
 qconfspath ()
 {
-  if [ ! -f "/usr/bin/qconf" ]
+  if [ -f "/usr/bin/qconf" ] || [ -f "/usr/local/bin/qconf" ]
   then
-    if [ ! -f "/usr/local/bin/qconf" ]
-      then
-        echo "Enter the path to qconf directory (Example: /home/me/qconf):"
-        read qconfpath
+    echo "QConf utility found"
+    qconfpath="qconf"
+  else
+    if [ -f "/usr/bin/qconf-qt4" ] || [ -f "/usr/local/bin/qconf-qt4" ]
+    then
+      echo "QConf utility found"
+      qconfpath="qconf-qt4"
+    else 
+      echo "Enter the path to qconf binary (Example: /home/me/qconf):"
+      read qconfpath
     fi
   fi
 }
@@ -230,31 +237,30 @@ set /p ISCLEAN=Do you want to launch clean and distclean commands [y/n(default)]
 
 set QMAKESPEC=win32-g++
 set BUILDDIR=C:\build
+set MINGWDIR=C:\MinGW
 set PLUGBUILDDIR=%BUILDDIR%\PluginsBuilder
 
 if /i "%ARCHTYPE%"=="y" (
 set QTDIR=%QTDIR64%
-set MINGWDIR=C:\MinGW
-set MINGW64=C:\mingw64
+set MINGW64=C:\mingw64\bin
 set ARCH=x86_64
 set CC=%MINGW64%\bin\gcc
 set CXX=%MINGW64%\bin\g++
 ) else (
 set QTDIR=%QTDIR32%
 set ARCH=i386
-set MINGWDIR=%QTDIR32%\mingw
 ) 
 if /i "%ARCH%"=="i386" (
 set PATH=%QTDIR%\;%QTDIR%\bin;%MINGWDIR%;%MINGWDIR%\bin
 ) else (
 set PATH=%QTDIR%\;%QTDIR%\bin;%MINGW64%\;%MINGW64%\bin;%MINGWDIR%;%MINGWDIR%\bin
 )
-set JSONPATH=%BUILDDIR%\psideps\qjson\%ARCH%
-set QCADIR=%BUILDDIR%\psideps\qca\%ARCH%
-set ZLIBDIR=%BUILDDIR%\psideps\zlib\%ARCH%
+set JSONPATH=%BUILDDIR%\qjson\%ARCH%
+set QCADIR=%BUILDDIR%\qca\%ARCH%
+set ZLIBDIR=%BUILDDIR%\zlib-1.2.7-win\%ARCH%
 set QCONFDIR=%BUILDDIR%\qconf\%ARCH%
-set ASPELLDIR=%BUILDDIR%\psideps\aspell\%ARCH%
-set LIBIDNDIR=%BUILDDIR%\psideps\libidn\%ARCH%
+set ASPELLDIR=%BUILDDIR%\aspell\%ARCH%
+set LIBIDNDIR=%BUILDDIR%\libidn\%ARCH%
 set MAKE=mingw32-make -j5
 
 if /i "%ISCLEAN%"=="y" (
@@ -266,17 +272,6 @@ mingw32-make distclean
 
 if /i "%WEBKIT%"=="y" (
 set ISWEBKIT=--enable-webkit
-if /i "%ARCH%"=="i386" (
-set INSTDIR=webkit32
-) else (
-set INSTDIR=webkit64
-)
-) else (
-if /i "%ARCH%"=="i386" (
-set INSTDIR=bin32
-) else (
-set INSTDIR=bin64
-)
 )
 
 if /i "%HISTYPE%"=="y" (
@@ -294,8 +289,6 @@ configure %ISDEBUG% --enable-plugins --enable-whiteboarding %ISWEBKIT% --qtdir=%
 pause
 @echo Runing mingw32-make
 mingw32-make -j5
-mkdir %INSTDIR%
-copy /Y psi-plus.exe %INSTDIR%\psi-plus.exe
 @echo _ 
 set /p ANS1=Do you want to create psi-plus-portable.exe binary [y(default)/n]:%=%
 if /i not "%ANS1%"=="n" (
@@ -326,23 +319,57 @@ compile_psiplus ()
   run_libpsibuild compile_psi
 }
 #
+qmakecmd ()
+{
+  if [ -f "/usr/bin/qmake" ] || [ -f "/usr/local/bin/qmake" ]
+  then
+    qmake
+  else
+    if [ -f "/usr/bin/qmake-qt4" ] || [ -f "/usr/local/bin/qmake-qt4" ]
+    then
+      qmake-qt4
+    fi
+  fi
+}
+#
 build_plugins ()
 {
-  set_options
-  cd ${buildpsi}
-  run_libpsibuild prepare_workspace
-  prepare_src
-  check_dir ${inst_path}  
-  run_libpsibuild compile_plugins
-  run_libpsibuild install_plugins
-  if [ ! -d ${psi_homeplugdir} ]
+  if [ ! -f "${orig_src}/psi.pro" ]
   then
-    cd ${psi_datadir}
-    mkdir plugins
+    prepare_src
   fi
-  cp ${inst_path}/usr/lib/psi-plus/plugins/* ${psi_homeplugdir}
-  rm -rf ${inst_path}
+  tmpplugs=${orig_src}/plugins
+  check_dir ${tmpplugs}
+  plugins=`find ${orig_src}/src/plugins -name '*plugin.pro' -print0 | xargs -0 -n1 dirname`
+  for pplugin in ${plugins}
+  do
+    make_plugin ${pplugin} 2>>${plugbuild_log}
+  done
+  echo "*******************************"
+  echo "Plugins compiled succesfully!!!"
+  echo "*******************************"
+  echo "Do you want to install psi+ plugins into ${psi_homeplugdir} [y/n(default)]"
+  read isinstall
+  if [ "${isinstall}" == "y" ]
+  then
+    cp -vf ${buildpsi}/build/plugins/*.so ${psi_homeplugdir}/
+  fi
+  echo "********************************"
+  echo "Plugins installed succesfully!!!"
+  echo "********************************"
   cd ${home}
+}
+#
+make_plugin ()
+{
+  if [ ! -z "$1" ]
+  then
+    currdir=$(pwd)
+    cd "$1"
+    if [ ! -z "`ls | grep -e '.o$'`" ]; then make && make distclean; fi
+    qmakecmd && make && cp -f *.so ${tmpplugs}/
+    cd ${currdir}
+  fi
 }
 #
 build_deb_package ()
@@ -369,9 +396,7 @@ prepare_spec ()
   qconfspath
   if [ ! -z ${qconfpath} ]
   then
-    qconfcmd=${qconfpath}/qconf
-  else
-    qconfcmd="qconf"
+    qconfcmd=${qconfpath}
   fi
   echo "Creating psi.spec file..."
   specfile="Summary: Client application for the Jabber network
@@ -554,7 +579,7 @@ otr_deb ()
   cd $otrdebdir
   debver=`grep -Po '\d\.\d\.\d+' src/psiotrplugin.cpp`
 #
-control='Source: psi-plus-otrplugin
+  control='Source: psi-plus-otrplugin
 Section: libs
 Priority: optional
 Maintainer: Vitaly Tonkacheyev <thetvg@gmail.com>
@@ -567,7 +592,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libc6 (>=2.7-1), libgcc1 (>=1:4.1.1), libqtcore4 (>=4.6), libqtgui4 (>=4.6), libqt4-xml (>=4.6), libotr2, libgcrypt11, libtidy-0.99-0, libstdc++6 (>=4.1.1), libx11-6, zlib1g (>=1:1.1.4)
 Description: Off-The-Record-Messaging plugin for Psi
  This is a Off-The-Record-Messaging plugin for the Psi+ instant messenger. Psi+ (aka Psi-dev) is a collection of patches for Psi. Psi+ is available from http://code.google.com/p/psi-dev/.'
-copyright="This work was packaged for Debian by:
+  copyright="This work was packaged for Debian by:
 
     ${user} <${email}> on ${data}
 
@@ -619,9 +644,9 @@ the Free Software Foundation; either version 2 of the License, or
 
 # Please also look if there are files or directories which have a
 # different copyright/license attached and list them here."
-dirs='usr/lib/psi-plus/plugins'
-compat='7'
-rules='#!/usr/bin/make -f
+  dirs='usr/lib/psi-plus/plugins'
+  compat='7'
+  rules='#!/usr/bin/make -f
 # -*- makefile -*-
 # Sample debian/rules that uses debhelper.
 # This file was originally written by Joey Hess and Craig Small.
@@ -646,18 +671,18 @@ include /usr/share/cdbs/1/class/qmake.mk
 QMAKE=qmake-qt4
 CFLAGS=-O3
 CXXFLAGS=-O3'
-package_sh="#!/bin/bash
+  package_sh="#!/bin/bash
 set -e
 
 debuild -us -uc
 debuild -S -us -uc
 su -c pbuilder build ../psi-plus-otrplugin-${debver}.dsc"
-changelog_template="psi-plus-otrplugin (${debver}-1) unstable; urgency=low
+  changelog_template="psi-plus-otrplugin (${debver}-1) unstable; urgency=low
 
   * New upstream release see README for details
 
  -- ${user} <${email}>  ${data}"
-docs='COPYING
+  docs='COPYING
 INSTALL
 README'
 #
@@ -694,7 +719,7 @@ README'
 #
 prepare_plugins_spec ()
 {
-specfile="
+  specfile="
 Summary: ${summary}
 Name: ${progname}
 Version: ${rpmver}
@@ -731,7 +756,7 @@ cd ${plugdir}
 %{_libdir}/psi-plus/plugins/${libfile}
 ${docfiles}
 "
-echo "${specfile}" > ${rpmspec}/${progname}.spec
+  echo "${specfile}" > ${rpmspec}/${progname}.spec
 }
 #
 otr_rpm ()
@@ -787,12 +812,11 @@ get_resources ()
 install_resources ()
 {
   cd ${buildpsi}
-  if [ -d "resources" ]
+  if [ ! -d "resources" ]
   then
-    cp -rf ${buildpsi}/resources/* ${psi_datadir}/ 
-  else
     get_resources
   fi
+  cp -rf ${buildpsi}/resources/* ${psi_datadir}/
 }
 #
 install_iconsets ()
@@ -800,10 +824,9 @@ install_iconsets ()
   cd ${buildpsi}
   if [ -d "resources" ]
   then
-    cp -rf ${buildpsi}/resources/iconsets ${psi_datadir}/
-  else
     get_resources
   fi  
+  cp -rf ${buildpsi}/resources/iconsets ${psi_datadir}/
 }
 #
 install_skins ()
@@ -814,6 +837,7 @@ install_skins ()
     cp -rf ${buildpsi}/resources/skins ${psi_datadir}/
   else
     get_resources
+    cp -rf ${buildpsi}/resources/skins ${psi_datadir}/
   fi 
 }
 #
@@ -825,6 +849,7 @@ install_sounds ()
     cp -rf ${buildpsi}/resources/sound ${psi_datadir}/
   else
     get_resources
+    cp -rf ${buildpsi}/resources/sound ${psi_datadir}/
   fi 
 }
 #
@@ -836,6 +861,7 @@ install_themes ()
     cp -rf ${buildpsi}/resources/themes ${psi_datadir}/
   else
     get_resources
+    cp -rf ${buildpsi}/resources/themes ${psi_datadir}/
   fi 
 }
 #
@@ -851,8 +877,15 @@ build_locales ()
   run_libpsibuild fetch_sources
   if [ -d "${tr_path}" ]
   then
-    rm -f ${tr_path}/*.qm 
-    lrelease ${tr_path}/*.ts 
+    rm -f ${tr_path}/*.qm
+    if [ -f "/usr/bin/lrelease" ] || [ -f "/usr/local/bin/lrelease" ]
+    then
+      lrelease ${tr_path}/*.ts 
+    fi
+    if [ -f "/usr/bin/lrelease-qt4" ] || [ -f "/usr/local/bin/lrelease-qt4" ]
+    then
+      lrelease-qt4 ${tr_path}/*.ts 
+    fi
   fi 
 }
 #
@@ -997,8 +1030,8 @@ get_help ()
   echo "[it] - Install themes to $HOME/.local/share/Psi+"
   echo "[il] - Install locales to $HOME/.local/share/Psi+"
   echo "[bl] - Just build locale files without installing"
+  echo "[ba] - Download all sources and build psi+ binary with plugins"
   echo "[ur] - Update resources"
-  echo "[up] - Download all sources and build psi+ binary"
   echo "-------------------------------------------"
   echo "Press Enter to continue..."
   read
@@ -1026,8 +1059,8 @@ choose_action ()
     "iz" ) install_sounds;;
     "it" ) install_themes;;
     "ur" ) update_resources;;
-    "up" ) prepare_src
-              compile_psiplus;;
+    "ba" ) compile_psiplus
+           build_plugins;;
     "il" ) install_locales;;
     "bl" ) build_locales;;
     "0" ) quit;;
