@@ -1,12 +1,13 @@
 #!/bin/bash
 home=/home/$USER
-buildpsi=${home}/psi
+workdir=${home}
+buildpsi=${workdir}/psi
 orig_src=${buildpsi}/build
 patches=${buildpsi}/git-plus/patches
 psi_datadir=${home}/.local/share/psi+
 psi_cachedir=${home}/.cache/psi+
 psi_homeplugdir=${psi_datadir}/plugins
-config_file=${home}/.psibuild.cfg
+config_file=${home}/.config/psibuild.cfg
 inst_suffix=tmp
 inst_path=${buildpsi}/${inst_suffix}
 plugbuild_log=${orig_src}/plugins.log
@@ -103,24 +104,19 @@ check_libpsibuild ()
 {
   # checkout libpsibuild
   libpsibuild_url="https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh"
-  cd ${home}
   die() { echo "$@"; exit 1; }
+  cd ${workdir}
   if [ "$isoffline" = 0 ]
   then
     echo "**libpsibuild.sh library updates check**"; echo ""
     wget --output-document="libpsibuild.sh.new" --no-check-certificate ${libpsibuild_url};
-    if [ -f "${home}/libpsibuild.sh" ]
+    if [ "`diff -q libpsibuild.sh libpsibuild.sh.new`" ] || [ ! -f "${workdir}/libpsibuild.sh" ]
     then
-      if [ "`diff -q libpsibuild.sh libpsibuild.sh.new`" ]
-      then
-        echo "**libpsibuild.sh library has been updated**"; echo ""
-        mv -f ${home}/libpsibuild.sh.new ${home}/libpsibuild.sh
-      else
-        echo "**you have the last version of libpsibuild.sh library**"; echo ""  
-        rm -f ${home}/libpsibuild.sh.new
-      fi      	
+      echo "**libpsibuild.sh library has been updated**"; echo ""
+      mv -f ${workdir}/libpsibuild.sh.new ${workdir}/libpsibuild.sh
     else
-      wget --no-check-certificate ${libpsibuild_url} || die "Failed to update libpsibuild";
+      echo "**you have the last version of libpsibuild.sh library**"; echo ""  
+      rm -f ${workdir}/libpsibuild.sh.new
     fi
   fi
 }
@@ -130,7 +126,7 @@ run_libpsibuild ()
   if [ ! -z "$1" ]
   then
     cmd=$1
-    cd ${home}
+    cd ${workdir}
     . ./libpsibuild.sh
     check_env $CONF_OPTS
     $cmd
@@ -167,13 +163,13 @@ prepare_src ()
   then
     cd ${orig_src}
     patch -p1 < ${patches}/dev/psi-new-history.patch
-    cd ${home}
+    cd ${workdir}
   fi
 }
 #
 backup_tar ()
 {
-  cd ${home}
+  cd ${workdir}
   tar -pczf psi.tar.gz psi
 }
 #
@@ -372,7 +368,7 @@ build_plugins ()
   echo "********************************"
   echo "Plugins installed succesfully!!!"
   echo "********************************"
-  cd ${home}
+  cd ${workdir}
 }
 #
 make_plugin ()
@@ -381,8 +377,12 @@ make_plugin ()
   then
     currdir=$(pwd)
     cd "$1"
+    if [ -d "/usr/lib/ccache/bin" ] || [ -d "/usr/lib64/ccache/bin" ]
+    then
+    QMAKE_CCACHE_CMD="QMAKE_CXX=ccache g++"
+    fi
     if [ ! -z "`ls | grep -e '.o$'`" ]; then make && make distclean; fi
-    qmakecmd && make && cp -f *.so ${tmpplugs}/
+    qmakecmd -t ${QMAKE_CCACHE_CMD} && make && cp -f *.so ${tmpplugs}/
     cd ${currdir}
   fi
 }
@@ -1082,7 +1082,7 @@ choose_action ()
   esac
 }
 #
-cd ${home}
+cd ${workdir}
 read_options
 check_libpsibuild
 if [ ! -f "${config_file}" ]
