@@ -515,9 +515,9 @@ fetch_sources() {
 # accepts list of plugins in single var return list of corresponding directories
 # plugins should be already downloaded into "${PSI_DIR}/plugins"
 # ex: validate_plugins_list "gnome3support redirector" -> "unix/gnome3supportplugin dev/redirectorplugin" 
-validate_plugins_list() {
+validate_plugins_list() { 
+  local requested_plugins="$1"
   local plugins_repo_dir="${PSI_DIR}/plugins"
-  local requested_plugins="$2"
   [ -z "${requested_plugins}" -o ! -d "$plugins_repo_dir" ] && return 0;
   local actual_plugins=""
   if [ "$requested_plugins" = "*" ]; then
