@@ -512,24 +512,30 @@ fetch_sources() {
   }
 }
 
+# accepts list of plugins in single var return list of corresponding directories
+# plugins should be already downloaded into "${PSI_DIR}/plugins"
+# ex: validate_plugins_list "gnome3support redirector" -> "unix/gnome3supportplugin dev/redirectorplugin" 
+validate_plugins_list() {
+  local plugins_repo_dir="${PSI_DIR}/plugins"
+  local requested_plugins="$2"
+  [ -z "${requested_plugins}" -o ! -d "$plugins_repo_dir" ] && return 0;
+  local actual_plugins=""
+  if [ "$requested_plugins" = "*" ]; then
+    actual_plugins=$(cd "$plugins_repo_dir"; find $PLUGINS_PREFIXES -maxdepth 1 -type d -name '*plugin')
+  else
+    for pn in $requested_plugins; do
+      local p=$(cd "$plugins_repo_dir"; find $PLUGINS_PREFIXES -maxdepth 1 -type d -name "${pn}plugin")
+      [ -n "$p" ] && actual_plugins="$actual_plugins $p"
+    done
+  fi
+  echo $actual_plugins;
+}
+
 fetch_plugins_sources() {
   git_fetch "${GIT_REPO_PLUGINS}" plugins "Psi+ plugins"
   [ -z "${PLUGINS}" ] && return 0
   log "Validate plugins list.."
-  local plugins_tmp=""
-  local require_all_plugins="$([ "$PLUGINS" = "*" ] && echo 1 || echo 0)"
-  local actual_plugins=""
-  for plugins_prefix in $PLUGINS_PREFIXES; do
-    PLUGINS_ALL=`echo $(ls -F "${PSI_DIR}/plugins/$plugins_prefix" | grep 'plugin/')`
-    [ $require_all_plugins = 1 ] && {
-      for p in $PLUGINS_ALL; do actual_plugins="$actual_plugins $plugins_prefix/${p%/}"; done
-    } || {
-      for pn in $PLUGINS; do
-        for p in $PLUGINS_ALL; do [ "${p}" = "${pn}plugin/" ] && actual_plugins="$actual_plugins $plugins_prefix/${p%/}"; done
-      done
-    }
-  done
-  PLUGINS="${actual_plugins}"
+  PLUGIN_DIRS=`validate_plugins_list "${PLUGINS}"`
   log "Enabled plugins:" $(echo $PLUGINS | sed 's:generic/::g')
 }
 
@@ -650,7 +656,7 @@ compile_psi() {
 compile_plugins() {
   failed_plugins="" # global var
 
-  for name in ${PLUGINS}; do
+  for name in ${PLUGIN_DIRS}; do
     log "Compiling ${name} plugin.."
     cd  "${PSI_DIR}/build/src/plugins/$name"
     "$QMAKE" "PREFIX=${COMPILE_PREFIX}" && "$MAKE" $MAKEOPT || {
@@ -693,7 +699,7 @@ cp \"${f}.qm\" \"${INSTALL_ROOT}${datadir}/translations\""
 
 install_plugins() {
   case "`uname`" in MINGW*) return 0; ;; esac # disable on windows, must be reimplemented
-  for name in ${PLUGINS}; do
+  for name in ${PLUGIN_DIRS}; do
     case "$failed_plugins" in
       *"$name"*)
         log "Skipping installation of failed plugin ${name}"
