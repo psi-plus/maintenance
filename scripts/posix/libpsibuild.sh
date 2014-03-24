@@ -616,7 +616,7 @@ prepare_sources() {
 prepare_plugins_sources() {
   [ -d "${PSI_DIR}/build/src/plugins/generic" ] || \
     die "preparing plugins requires prepared psi+ sources"
-  for name in ${PLUGINS}; do
+  for name in ${PLUGIN_DIRS}; do
     mkdir -p `dirname "${PSI_DIR}/build/src/plugins/$name"`
     cp -a "${PSI_DIR}/plugins/$name" \
       "${PSI_DIR}/build/src/plugins/$name"
