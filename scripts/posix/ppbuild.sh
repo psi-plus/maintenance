@@ -1,5 +1,12 @@
 #!/bin/bash
+#CONSTANTS
 home=/home/$USER
+psi_version="0.16"
+bindirs="/usr/bin
+/usr/local/bin
+${home}/bin
+"
+#VARIABLES
 workdir=${home}
 buildpsi=${workdir}/psi
 orig_src=${buildpsi}/build
@@ -14,9 +21,7 @@ plugbuild_log=${orig_src}/plugins.log
 rpmbuilddir=${home}/rpmbuild
 rpmspec=${rpmbuilddir}/SPECS
 rpmsrc=${rpmbuilddir}/SOURCES
-isloop=1 #do not change the value of this variable, it's a menu loop
-psi_version="0.16"
-# default options
+#DEFAULT OPTIONS
 iswebkit=""
 use_iconsets="system clients activities moods affiliations roster"
 isoffline=0
@@ -25,25 +30,32 @@ use_plugins="*"
 #
 qconfspath ()
 {
-  if [ -f "/usr/bin/qconf" ] || [ -f "/usr/local/bin/qconf" ]
-  then
-    echo "QConf utility found"
-    qconfpath="qconf"
-  else
-    if [ -f "/usr/bin/qconf-qt4" ] || [ -f "/usr/local/bin/qconf-qt4" ]
+  qconf_cmds="qconf
+  qconf-qt4
+  qt-qconf"
+  for cmd_item in ${qconf_cmds}
+  do
+    for bin_path in ${bindirs}
+    do
+    if [ -f "${bin_path}/${cmd_item}" ]
     then
       echo "QConf utility found"
-      qconfpath="qconf-qt4"
-    else 
-      echo "Enter the path to qconf binary (Example: /home/me/qconf):"
-      read qconfpath
+      qconfpath="cmd_item"
+      echo "${bin_path}/${cmd_item}"
+      break
     fi
+    done
+  done
+  if [ -z "${qconfpath}" ]
+  then
+    echo "Enter the path to qconf binary (Example: /home/me/qconf):"
+    read qconfpath
   fi
 }
 #
 quit ()
 {
-  isloop=0
+  break
 }
 #
 read_options ()
@@ -154,7 +166,8 @@ prepare_src ()
 {
   echo "Downloading and preparing psi+ sources needed to build"
   set_options
-  run_libpsibuild validate_plugins_list
+  echo "Cleaning builddir and preparing workspace..."
+  run_libpsibuild prepare_workspace
   run_libpsibuild fetch_all
   run_libpsibuild prepare_all
   echo "Do you want to apply psi-new-history.patch [y/n(default)]"
@@ -325,22 +338,30 @@ compile_psiplus ()
   set_options
   def_prefix="/usr"
   INSTALL_ROOT="${INSTALL_ROOT:-$def_prefix}"
-  run_libpsibuild prepare_workspace
   prepare_src
   run_libpsibuild compile_psi
 }
 #
 qmakecmd ()
 {
-  if [ -f "/usr/bin/qmake" ] || [ -f "/usr/local/bin/qmake" ]
-  then
-    qmake
-  else
-    if [ -f "/usr/bin/qmake-qt4" ] || [ -f "/usr/local/bin/qmake-qt4" ]
+  cmdlist="qmake
+  qmake-qt4
+  "
+  for cmd_path in ${bindirs}
+  do
+    if [ -f "${cmd_path}/qmake" ]
     then
-      qmake-qt4
+      qmake
+    else
+      if [ -f "${cmd_path}/qmake-qt4" ]
+      then
+        qmake-qt4
+      else
+        echo "ERROR qmake not found"
+      fi
     fi
-  fi
+    
+  done
 }
 #
 build_plugins ()
@@ -379,9 +400,9 @@ make_plugin ()
     cd "$1"
     if [ -d "/usr/lib/ccache/bin" ] || [ -d "/usr/lib64/ccache/bin" ]
     then
-    QMAKE_CCACHE_CMD="QMAKE_CXX=ccache g++"
+      QMAKE_CCACHE_CMD="QMAKE_CXX=ccache g++"
     fi
-    if [ ! -z "`ls | grep -e '.o$'`" ]; then make && make distclean; fi
+    if [ ! -z "`ls .obj | grep -e '.o$'`" ]; then make && make distclean; fi
     qmakecmd -t ${QMAKE_CCACHE_CMD} && make && cp -f *.so ${tmpplugs}/
     cd ${currdir}
   fi
@@ -389,8 +410,11 @@ make_plugin ()
 #
 build_deb_package ()
 {
+  if [ ! -f "${orig_src}/psi.pro" ]
+  then
+    compile_psiplus
+  fi
   echo "Building Psi+ DEB package with checkinstall"
-  cd ${patches}
   rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
   desc='Psi is a cross-platform powerful Jabber client (Qt, C++) designed for the Jabber power users.
 Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru.'
@@ -827,6 +851,7 @@ get_resources ()
 install_resources ()
 {
   cd ${buildpsi}
+  check_dir ${psi_datadir}
   if [ ! -d "resources" ]
   then
     get_resources
@@ -837,6 +862,7 @@ install_resources ()
 install_iconsets ()
 {
   cd ${buildpsi}
+  check_dir ${psi_datadir}
   if [ -d "resources" ]
   then
     get_resources
@@ -847,6 +873,7 @@ install_iconsets ()
 install_skins ()
 {
   cd ${buildpsi}
+  check_dir ${psi_datadir}
   if [ -d "resources" ]
   then
     cp -rf ${buildpsi}/resources/skins ${psi_datadir}/
@@ -859,6 +886,7 @@ install_skins ()
 install_sounds ()
 {
   cd ${buildpsi}
+  check_dir ${psi_datadir}
   if [ -d "resources" ]
   then
     cp -rf ${buildpsi}/resources/sound ${psi_datadir}/
@@ -871,6 +899,7 @@ install_sounds ()
 install_themes ()
 {
   cd ${buildpsi}
+  check_dir ${psi_datadir}
   if [ -d "resources" ]
   then
     cp -rf ${buildpsi}/resources/themes ${psi_datadir}/
@@ -908,6 +937,7 @@ install_locales ()
 {
   local tr_path=${buildpsi}/langs/translations
   build_locales
+  check_dir ${psi_datadir}
   cp -rf ${tr_path}/*.qm ${psi_datadir}/
 }
 #
@@ -1038,12 +1068,12 @@ print_menu ()
 get_help ()
 {
   echo "---------------HELP-----------------------"
-  echo "[ia] - Install all resources to $HOME/.local/share/Psi+"
-  echo "[ii] - Install iconsets to $HOME/.local/share/Psi+"
-  echo "[is] - Install skins to $HOME/.local/share/Psi+"
-  echo "[iz] - Install sounds to to $HOME/.local/share/Psi+"
-  echo "[it] - Install themes to $HOME/.local/share/Psi+"
-  echo "[il] - Install locales to $HOME/.local/share/Psi+"
+  echo "[ia] - Install all resources to $HOME/.local/share/psi+"
+  echo "[ii] - Install iconsets to $HOME/.local/share/psi+"
+  echo "[is] - Install skins to $HOME/.local/share/psi+"
+  echo "[iz] - Install sounds to to $HOME/.local/share/psi+"
+  echo "[it] - Install themes to $HOME/.local/share/psi+"
+  echo "[il] - Install locales to $HOME/.local/share/psi+"
   echo "[bl] - Just build locale files without installing"
   echo "[ba] - Download all sources and build psi+ binary with plugins"
   echo "[ur] - Update resources"
@@ -1090,11 +1120,9 @@ then
   set_config
 fi
 set_options
-echo "Cleaning builddir and preparing workspace..."
-run_libpsibuild prepare_workspace
 clear
 #
-while [ ${isloop} = 1 ]
+while true
 do
   print_menu
   choose_action
