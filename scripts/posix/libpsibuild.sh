@@ -518,6 +518,7 @@ fetch_sources() {
 validate_plugins_list() { 
   local requested_plugins="$1"
   local plugins_repo_dir="${PSI_DIR}/plugins"
+  [ -d "$plugins_repo_dir" ] || die "Expected plugins repo in ${PSI_DIR}/plugins"
   [ -z "${requested_plugins}" -o ! -d "$plugins_repo_dir" ] && return 0;
   local actual_plugins=""
   if [ "$requested_plugins" = "*" ]; then
