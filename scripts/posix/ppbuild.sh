@@ -344,24 +344,17 @@ compile_psiplus ()
 #
 qmakecmd ()
 {
-  cmdlist="qmake
-  qmake-qt4
-  "
-  for cmd_path in ${bindirs}
-  do
-    if [ -f "${cmd_path}/qmake" ]
+  if [ -f "/usr/bin/qmake" ] || [ -f "/usr/local/bin/qmake" ]
+  then
+    qmake
+  else
+    if [ -f "/usr/bin/qmake-qt4" ] || [ -f "/usr/local/bin/qmake-qt4" ]
     then
-      qmake
+      qmake-qt4
     else
-      if [ -f "${cmd_path}/qmake-qt4" ]
-      then
-        qmake-qt4
-      else
-        echo "ERROR qmake not found"
-      fi
+      echo "ERROR qmake not found"
     fi
-    
-  done
+  fi
 }
 #
 build_plugins ()
