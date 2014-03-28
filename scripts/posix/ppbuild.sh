@@ -12,7 +12,8 @@ def_prefix="/usr"
 libpsibuild_url="https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh"
 #VARIABLES
 workdir=${home}
-buildpsi=${workdir}/github/psi
+default_buildpsi=${workdir}/github/psi
+buildpsi=${default_buildpsi}
 orig_src=${buildpsi}/build
 patches=${buildpsi}/git-plus/patches
 psi_datadir=${home}/.local/share/psi+
@@ -76,6 +77,7 @@ read_options ()
       "3" ) skip_invalid=$(echo ${line});;
       "4" ) pluginlist=$(echo ${line});;
       "5" ) no_enchant=$(echo ${line});;
+      "6" ) buildpsi=$(echo ${line});;
       esac
       let "inc+=1"
     done < ${config_file}
@@ -83,6 +85,12 @@ read_options ()
       use_plugins="*"
     else
       use_plugins=${pluginlist}
+    fi
+    if [ -z "${buildpsi}" ]; then
+      buildpsi=${default_buildpsi}
+    fi
+    if [ "${buildpsi:0:5}" == "\$HOME" ]; then
+      buildpsi=${home}/${buildpsi:6}
     fi
   fi
 }
@@ -509,6 +517,9 @@ prepare_dev ()
   check_dir ${psidev}
   check_dir ${orig}
   check_dir ${new}
+  if [ ! -d ${buildpsi}/git ]; then
+    down_all
+  fi
   cp -r git/* ${orig}
   cp -r git/* ${new}
   cd ${psidev}
@@ -895,7 +906,8 @@ set_config ()
     echo "--[4] - Skip Invalid patches (current: ${skip_patches})"
     echo "--[5] - Set list of plugins needed to build (for all use *)"
     echo "--[6] - Set use aspell instead of enchant (current: ${noenchant})"
-    echo "--[7] - Print option values"
+    echo "--[7] - Set psi+ sources path (current: ${buildpsi})"
+    echo "--[8] - Print option values"
     echo "--[0] - Do nothing"
     read deistvo
     case ${deistvo} in
@@ -947,13 +959,25 @@ set_config ()
             else
               no_enchant=""
             fi;;
-      "7" ) echo "==Options=="
+      "7" ) echo "Please set psi+ sources path (absolute path, or \$HOME/path)"
+            read variable
+            if [ ! -z "${variable}" ]; then
+              if [ "${variable:0:5}" == "\$HOME" ]; then
+                buildpsi=${home}/${variable:6}
+              else
+                buildpsi=${variable}
+              fi
+            else
+              buildpsi=${default_buildpsi}
+            fi;;            
+      "8" ) echo "==Options=="
             echo "WebKit = ${use_webkit}"
             echo "Iconsets = ${use_iconsets}"
             echo "Offline Mode = ${is_offline}"
             echo "Skip Invalid Patches = ${skip_patches}"
             echo "Plugins = ${use_plugins}"
             echo "No Enchant = ${noenchant}"
+            echo "Psi+ sources path = ${buildpsi}"
             echo "===========";;
       "0" ) clear
             loop=0;;
@@ -969,6 +993,7 @@ set_config ()
     echo "$use_plugins" >> ${config_file}
   fi
   echo "$no_enchant" >> ${config_file}
+  echo "$buildpsi" >> ${config_file}
 }
 #
 print_menu ()
