@@ -1,34 +1,17 @@
 #!/bin/bash
-#CONSTANTS
-home=/home/$USER
-psi_version="0.16"
+
+#CONSTANTS/КОНСТАНТЫ
+home=/home/$USER #домашний каталог
+psi_version="0.16" #не менять без необходимости, нужно для пакетирования
 bindirs="/usr/bin
 /usr/local/bin
-${home}/bin"
+${home}/bin" #список каталогов где могут быть найдены бинарники
 qconf_cmds="qconf
 qconf-qt4
-qt-qconf"
-def_prefix="/usr"
+qt-qconf" #список возможных имён бинарника qconf
+def_prefix="/usr" #префикс для сборки пси+
 libpsibuild_url="https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh"
-#VARIABLES
-workdir=${home}
-default_buildpsi=${workdir}/github/psi
-buildpsi=${default_buildpsi}
-orig_src=${buildpsi}/build
-patches=${buildpsi}/git-plus/patches
-psi_datadir=${home}/.local/share/psi+
-psi_cachedir=${home}/.cache/psi+
-psi_homeplugdir=${psi_datadir}/plugins
-config_file=${home}/.config/psibuild.cfg
-inst_suffix=tmp
-inst_path=${buildpsi}/${inst_suffix}
-plugbuild_log=${orig_src}/plugins.log
-rpmbuilddir=${home}/rpmbuild
-rpmspec=${rpmbuilddir}/SPECS
-rpmsrc=${rpmbuilddir}/SOURCES
-qconf_bin="qconf"
-qconf_dir="/usr/bin"
-#DEFAULT OPTIONS
+#DEFAULT OPTIONS/ОПЦИИ ПО УМОЛЧАНИЮ
 no_enchant="--disable-enchant"
 iswebkit=""
 use_iconsets="system clients activities moods affiliations roster"
@@ -36,6 +19,45 @@ isoffline=0
 skip_invalid=0
 use_plugins="*"
 #
+
+#VARIABLES/ПЕРЕМЕННЫЕ
+#каталог где будет лежать скрипт libpsibuild.sh и каталог buildpsi(по умолчанию)
+workdir=${home}/github
+#значение переменной buildpsi по умолчанию
+default_buildpsi=${workdir}/psi 
+#имя временного каталога для пакетирования
+inst_suffix=tmp
+#WARNING: следующие переменные будут изменены в процессе работы скрипта автоматически
+buildpsi=${default_buildpsi} #инициализация переменной
+orig_src=${buildpsi}/build #рабочий каталог для компиляции psi+
+patches=${buildpsi}/git-plus/patches #путь к патчам psi+, необходим для разработки
+inst_path=${buildpsi}/${inst_suffix} #только для пакетирования
+#
+
+#ENVIRONMENT VARIABLES/ПЕРЕМЕННЫЕ СРЕДЫ
+psi_datadir=${home}/.local/share/psi+
+psi_cachedir=${home}/.cache/psi+
+psi_homeplugdir=${psi_datadir}/plugins
+#
+
+#CONFIG FILE PATH/ПУТЬ К ФАЙЛУ НАСТРОЕК
+config_file=${home}/.config/psibuild.cfg
+
+#PLUGINS_BUILD_LOG/ЛОГ ФАЙЛ СБОРКИ ПЛАГИНОВ
+plugbuild_log=${orig_src}/plugins.log
+#
+
+#RPM_VARIABLES/ПЕРЕМЕННЫЕ ДЛЯ СБОРКИ RPM ПАКЕТОВ
+rpmbuilddir=${home}/rpmbuild
+rpmspec=${rpmbuilddir}/SPECS
+rpmsrc=${rpmbuilddir}/SOURCES
+#
+
+#значения по умолчанию для поиска утилиты qconf
+qconf_bin="qconf"
+qconf_dir="/usr/bin"
+#
+
 find_qconf ()
 {
   local isfound=0
@@ -93,6 +115,7 @@ read_options ()
       buildpsi=${home}/${buildpsi:6}
     fi
   fi
+  update_variables
 }
 #
 set_options ()
@@ -106,6 +129,13 @@ set_options ()
   INSTALL_ROOT="${INSTALL_ROOT:-$def_prefix}"
   QCONFDIR=${qconf_dir}
   PLUGINS="${PLUGINS:-$use_plugins}"
+}
+#
+update_variables ()
+{
+  orig_src=${buildpsi}/build
+  patches=${buildpsi}/git-plus/patches
+  inst_path=${buildpsi}/${inst_suffix}
 }
 #
 check_libpsibuild ()
@@ -170,8 +200,10 @@ prepare_src ()
 #
 backup_tar ()
 {
-  cd ${workdir}
-  tar -pczf psi.tar.gz psi
+  echo "Backup ${buildpsi##*/} into ${buildpsi%/*}/${buildpsi##*/}.tar.gz started..."
+  cd ${buildpsi%/*}
+  tar -pczf ${buildpsi##*/}.tar.gz ${buildpsi##*/}
+  echo "Backup finished..."; echo " "
 }
 #
 prepare_tar ()
@@ -994,6 +1026,7 @@ set_config ()
   fi
   echo "$no_enchant" >> ${config_file}
   echo "$buildpsi" >> ${config_file}
+  update_variables
 }
 #
 print_menu ()
@@ -1018,15 +1051,17 @@ print_menu ()
 get_help ()
 {
   echo "---------------HELP-----------------------"
-  echo "[ia] - Install all resources to $HOME/.local/share/psi+"
-  echo "[ii] - Install iconsets to $HOME/.local/share/psi+"
-  echo "[is] - Install skins to $HOME/.local/share/psi+"
-  echo "[iz] - Install sounds to to $HOME/.local/share/psi+"
-  echo "[it] - Install themes to $HOME/.local/share/psi+"
-  echo "[il] - Install locales to $HOME/.local/share/psi+"
+  echo "[ia] - Install all resources to $psi_datadir"
+  echo "[ii] - Install iconsets to $psi_datadir"
+  echo "[is] - Install skins to $psi_datadir"
+  echo "[iz] - Install sounds to to $psi_datadir"
+  echo "[it] - Install themes to $psi_datadir"
+  echo "[il] - Install locales to $psi_datadir"
   echo "[bl] - Just build locale files without installing"
   echo "[ba] - Download all sources and build psi+ binary with plugins"
   echo "[ur] - Update resources"
+  echo "[bs] - Backup ${buildpsi##*/} directory in ${buildpsi%/*}"
+  echo "[pw] - Prepare psi+ workspace (clean ${buildpsi}/build dir)"
   echo "-------------------------------------------"
   echo "Press Enter to continue..."
   read
@@ -1059,6 +1094,8 @@ choose_action ()
            build_plugins;;
     "il" ) install_locales;;
     "bl" ) build_locales;;
+    "bs" ) backup_tar;;
+    "pw" ) run_libpsibuild prepare_workspace;;
     "0" ) quit;;
   esac
 }
