@@ -4,11 +4,15 @@ home=/home/$USER
 psi_version="0.16"
 bindirs="/usr/bin
 /usr/local/bin
-${home}/bin
-"
+${home}/bin"
+qconf_cmds="qconf
+qconf-qt4
+qt-qconf"
+def_prefix="/usr"
+libpsibuild_url="https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh"
 #VARIABLES
 workdir=${home}
-buildpsi=${workdir}/psi
+buildpsi=${workdir}/github/psi
 orig_src=${buildpsi}/build
 patches=${buildpsi}/git-plus/patches
 psi_datadir=${home}/.local/share/psi+
@@ -21,35 +25,36 @@ plugbuild_log=${orig_src}/plugins.log
 rpmbuilddir=${home}/rpmbuild
 rpmspec=${rpmbuilddir}/SPECS
 rpmsrc=${rpmbuilddir}/SOURCES
+qconf_bin="qconf"
+qconf_dir="/usr/bin"
 #DEFAULT OPTIONS
+no_enchant="--disable-enchant"
 iswebkit=""
 use_iconsets="system clients activities moods affiliations roster"
 isoffline=0
 skip_invalid=0
 use_plugins="*"
 #
-qconfspath ()
+find_qconf ()
 {
-  qconf_cmds="qconf
-  qconf-qt4
-  qt-qconf"
-  for cmd_item in ${qconf_cmds}
-  do
-    for bin_path in ${bindirs}
-    do
-    if [ -f "${bin_path}/${cmd_item}" ]
-    then
-      echo "QConf utility found"
-      qconfpath="cmd_item"
-      echo "${bin_path}/${cmd_item}"
+  local isfound=0
+  for cmd_item in ${qconf_cmds}; do
+    for bin_path in ${bindirs}; do
+    if [ -f "${bin_path}/${cmd_item}" ]; then
+      qconf_dir="${bin_path}"
+      qconf_bin="${bin_path}/${cmd_item}"
+      isfound=1
       break
     fi
     done
+    if [ ${isfound} -eq 1 ]; then
+      echo "QConf utility found: ${qconf_bin}"; echo ""
+      break
+    fi
   done
-  if [ -z "${qconfpath}" ]
-  then
-    echo "Enter the path to qconf binary (Example: /home/me/qconf):"
-    read qconfpath
+  if [ ${isfound} -eq 0 ] || [ -z "${qconf_bin}" ]; then
+    echo "Enter the absolute path to qconf binary (Example: /home/me/qconf):"
+    read qconf_bin
   fi
 }
 #
@@ -61,68 +66,48 @@ quit ()
 read_options ()
 {
   local pluginlist=""
-  if [ -f ${config_file} ]
-  then
-    inc=0
-    while read -r line
-    do
+  if [ -f ${config_file} ]; then
+    local inc=0
+    while read -r line; do
       case ${inc} in
-      "0" ) iswebkit=`echo ${line}`;;
-      "1" ) use_iconsets=`echo ${line}`;;
-      "2" ) isoffline=`echo ${line}`;;
-      "3" ) skip_invalid=`echo ${line}`;;
-      "4" ) pluginlist=`echo ${line}`;;
+      "0" ) iswebkit=$(echo ${line});;
+      "1" ) use_iconsets=$(echo ${line});;
+      "2" ) isoffline=$(echo ${line});;
+      "3" ) skip_invalid=$(echo ${line});;
+      "4" ) pluginlist=$(echo ${line});;
+      "5" ) no_enchant=$(echo ${line});;
       esac
       let "inc+=1"
     done < ${config_file}
-    if [ "$pluginlist" == "all" ]
-    then
+    if [ "$pluginlist" == "all" ]; then
       use_plugins="*"
     else
       use_plugins=${pluginlist}
     fi
   fi
-
 }
 #
 set_options ()
 {
-  # OPTIONS / НАСТРОЙКИ
-  # build and store directory / каталог для сорсов и сборки
-  PSI_DIR="${buildpsi}" # leave empty for ${HOME}/psi on *nix or /c/psi on windows
-  # icons for downloads / иконки для скачивания
+  PSI_DIR="${buildpsi}"
   ICONSETS=${use_iconsets}
-  # do not update anything from repositories until required
-  # не обновлять ничего из репозиториев если нет необходимости
   WORK_OFFLINE=${WORK_OFFLINE:-$isoffline}
-  # log of applying patches / лог применения патчей
-  PATCH_LOG="" # PSI_DIR/psipatch.log by default (empty for default)
-  # skip patches which applies with errors / пропускать глючные патчи
+  PATCH_LOG=""
   SKIP_INVALID_PATCH="${SKIP_INVALID_PATCH:-$skip_invalid}"
-  # configure options / опции скрипта configure
-  CONF_OPTS=${iswebkit}
-  # install root / каталог куда устанавливать (полезно для пакаджеров)
-  INSTALL_ROOT="${INSTALL_ROOT:-$inst_path}"
-  # bin directory of compiler cache (all compiler wrappers are there)
-  CCACHE_BIN_DIR="${CCACHE_BIN_DIR}"
-  # if system doesn't have qconf package set this variable to
-  # manually compiled qconf directory.
-  QCONFDIR="${QCONFDIR}"
-  # plugins to build
+  CONF_OPTS="${iswebkit} ${no_enchant}"
+  INSTALL_ROOT="${INSTALL_ROOT:-$def_prefix}"
+  QCONFDIR=${qconf_dir}
   PLUGINS="${PLUGINS:-$use_plugins}"
 }
 #
 check_libpsibuild ()
 {
-  # checkout libpsibuild
-  libpsibuild_url="https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh"
   die() { echo "$@"; exit 1; }
   cd ${workdir}
-  if [ "$isoffline" = 0 ]
-  then
+  if [ "$isoffline" = 0 ]; then
     echo "**libpsibuild.sh library updates check**"; echo ""
     wget --output-document="libpsibuild.sh.new" --no-check-certificate ${libpsibuild_url};
-    if [ "`diff -q libpsibuild.sh libpsibuild.sh.new`" ] || [ ! -f "${workdir}/libpsibuild.sh" ]
+    if [ "$(diff -q libpsibuild.sh libpsibuild.sh.new)" ] || [ ! -f "${workdir}/libpsibuild.sh" ]
     then
       echo "**libpsibuild.sh library has been updated**"; echo ""
       mv -f ${workdir}/libpsibuild.sh.new ${workdir}/libpsibuild.sh
@@ -130,27 +115,24 @@ check_libpsibuild ()
       echo "**you have the last version of libpsibuild.sh library**"; echo ""  
       rm -f ${workdir}/libpsibuild.sh.new
     fi
+    chmod u+x ${workdir}/libpsibuild.sh
   fi
 }
 #
 run_libpsibuild ()
 {
-  if [ ! -z "$1" ]
-  then
-    cmd=$1
+  if [ ! -z "$1" ]; then
     cd ${workdir}
     . ./libpsibuild.sh
     check_env $CONF_OPTS
-    $cmd
+    $1
   fi
 }
 #
 check_dir ()
 {
-  if [ ! -z "$1" ]
-  then
-    if [ ! -d "$1" ]
-    then
+  if [ ! -z "$1" ]; then
+    if [ ! -d "$1" ]; then
       mkdir -pv "$1"
     fi
   fi
@@ -158,22 +140,20 @@ check_dir ()
 #
 down_all ()
 {
-  echo "Downloading all psi+ sources needed to build"
+  check_dir ${buildpsi}/git
+  check_dir ${buildpsi}/git-plus
+  check_dir ${buildpsi}/plugins
   run_libpsibuild fetch_all
 }
 #
 prepare_src ()
 {
-  echo "Downloading and preparing psi+ sources needed to build"
-  set_options
-  echo "Cleaning builddir and preparing workspace..."
+  down_all
   run_libpsibuild prepare_workspace
-  run_libpsibuild fetch_all
   run_libpsibuild prepare_all
   echo "Do you want to apply psi-new-history.patch [y/n(default)]"
   read ispatch
-  if [ "${ispatch}" == "y" ]
-  then
+  if [ "${ispatch}" == "y" ]; then
     cd ${orig_src}
     patch -p1 < ${patches}/dev/psi-new-history.patch
     cd ${workdir}
@@ -192,19 +172,16 @@ prepare_tar ()
   check_dir ${rpmsrc}
   check_dir ${rpmspec}
   echo "Preparing Psi+ source package to build RPM..."
-  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
-  tar_name=psi-plus-${psi_version}.${rev}
-  new_src=${buildpsi}/${tar_name}
+  local rev=$(cd ${buildpsi}/git-plus/; echo $(($(git describe --tags | cut -d - -f 2))))
+  local tar_name=psi-plus-${psi_version}.${rev}
+  local new_src=${buildpsi}/${tar_name}
   cp -r ${orig_src} ${new_src}
-  if [ -d ${new_src} ]
-  then
+  if [ -d ${new_src} ]; then
     cd ${buildpsi}
     tar -sczf ${tar_name}.tar.gz ${tar_name}
     rm -r -f ${new_src}
-    if [ -d ${rpmsrc} ]
-    then
-      if [ -f "${rpmsrc}/${tar_name}.tar.gz" ]
-      then
+    if [ -d ${rpmsrc} ]; then
+      if [ -f "${rpmsrc}/${tar_name}.tar.gz" ]; then
         rm -f ${rpmsrc}/${tar_name}.tar.gz
       fi
       cp -f ${buildpsi}/${tar_name}.tar.gz ${rpmsrc}
@@ -217,20 +194,19 @@ prepare_win ()
 {
   echo "Preparing Psi+ source package to build in OS Windows..."
   prepare_src
-  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
-  tar_name=psi-plus-${psi_version}.${rev}-win
-  new_src=${buildpsi}/${tar_name}
+  local rev=$(cd ${buildpsi}/git-plus/; echo $(($(git describe --tags | cut -d - -f 2))))
+  local tar_name=psi-plus-${psi_version}.${rev}-win
+  local new_src=${buildpsi}/${tar_name}
   local mainicon=${buildpsi}/git-plus/app.ico
   local file_pro=${new_src}/src/src.pro
   local ver_file=${new_src}/version
   cp -r ${orig_src} ${new_src}
-  if [ -d ${new_src} ]
-  then
+  if [ -d ${new_src} ]; then
     cd ${buildpsi}
     sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
-    sed "s/\(@@DATE@@\)/"`date +"%Y-%m-%d"`"/" -i "${ver_file}"
+    sed "s/\(@@DATE@@\)/"$(date +"%Y-%m-%d")"/" -i "${ver_file}"
     cp -f ${mainicon} ${new_src}/win32/
-    makepsi='@echo off
+    local makepsi='@echo off
 @echo PSI-PLUS BUILD SCRIPT
 @echo _
 set /p HISTYPE=Do you want to build psi+ with new history [y/n(default)]:%=%
@@ -258,7 +234,7 @@ set CXX=%MINGW64%\bin\g++
 ) else (
 set QTDIR=%QTDIR32%
 set ARCH=i386
-set MINGWDIR=%QTDIR32%\mingw
+set MINGWDIR=C:\MinGW
 ) 
 if /i "%ARCH%"=="i386" (
 set PATH=%QTDIR%\;%QTDIR%\bin;%MINGWDIR%;%MINGWDIR%\bin
@@ -329,27 +305,22 @@ pause
 '
     echo "${makepsi}" > ${new_src}/make-psiplus.cmd
     tar -pczf ${tar_name}.tar.gz ${tar_name}
-    rm -r -f ${new_src}
+    rm -rf ${new_src}
   fi
 }
 #
 compile_psiplus ()
 {
-  set_options
-  def_prefix="/usr"
-  INSTALL_ROOT="${INSTALL_ROOT:-$def_prefix}"
   prepare_src
-  run_libpsibuild compile_psi
+  run_libpsibuild compile_psi 2>${buildpsi}/errors.txt
 }
 #
 qmakecmd ()
 {
-  if [ -f "/usr/bin/qmake" ] || [ -f "/usr/local/bin/qmake" ]
-  then
+  if [ -f "/usr/bin/qmake" ] || [ -f "/usr/local/bin/qmake" ]; then
     qmake
   else
-    if [ -f "/usr/bin/qmake-qt4" ] || [ -f "/usr/local/bin/qmake-qt4" ]
-    then
+    if [ -f "/usr/bin/qmake-qt4" ] || [ -f "/usr/local/bin/qmake-qt4" ]; then
       qmake-qt4
     else
       echo "ERROR qmake not found"
@@ -359,15 +330,13 @@ qmakecmd ()
 #
 build_plugins ()
 {
-  if [ ! -f "${orig_src}/psi.pro" ]
-  then
+  if [ ! -f "${orig_src}/psi.pro" ]; then
     prepare_src
   fi
-  tmpplugs=${orig_src}/plugins
+  local tmpplugs=${orig_src}/plugins
   check_dir ${tmpplugs}
-  plugins=`find ${orig_src}/src/plugins -name '*plugin.pro' -print0 | xargs -0 -n1 dirname`
-  for pplugin in ${plugins}
-  do
+  local plugins=$(find ${orig_src}/src/plugins -name '*plugin.pro' -print0 | xargs -0 -n1 dirname)
+  for pplugin in ${plugins}; do
     make_plugin ${pplugin} 2>>${plugbuild_log}
   done
   echo "*******************************"
@@ -375,8 +344,8 @@ build_plugins ()
   echo "*******************************"
   echo "Do you want to install psi+ plugins into ${psi_homeplugdir} [y/n(default)]"
   read isinstall
-  if [ "${isinstall}" == "y" ]
-  then
+  if [ "${isinstall}" == "y" ]; then
+    check_dir ${psi_homeplugdir}
     cp -vf ${buildpsi}/build/plugins/*.so ${psi_homeplugdir}/
   fi
   echo "********************************"
@@ -387,15 +356,13 @@ build_plugins ()
 #
 make_plugin ()
 {
-  if [ ! -z "$1" ]
-  then
-    currdir=$(pwd)
+  if [ ! -z "$1" ]; then
+    local currdir=$(pwd)
     cd "$1"
-    if [ -d "/usr/lib/ccache/bin" ] || [ -d "/usr/lib64/ccache/bin" ]
-    then
+    if [ -d "/usr/lib/ccache/bin" ] || [ -d "/usr/lib64/ccache/bin" ]; then
       QMAKE_CCACHE_CMD="QMAKE_CXX=ccache g++"
     fi
-    if [ ! -z "`ls .obj | grep -e '.o$'`" ]; then make && make distclean; fi
+    if [ ! -z "$(ls .obj | grep -e '.o$')" ]; then make && make distclean; fi
     qmakecmd -t ${QMAKE_CCACHE_CMD} && make && cp -f *.so ${tmpplugs}/
     cd ${currdir}
   fi
@@ -403,35 +370,31 @@ make_plugin ()
 #
 build_deb_package ()
 {
-  if [ ! -f "${orig_src}/psi.pro" ]
-  then
+  if [ ! -f "${orig_src}/psi.pro" ]; then
     compile_psiplus
   fi
   echo "Building Psi+ DEB package with checkinstall"
-  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
-  desc='Psi is a cross-platform powerful Jabber client (Qt, C++) designed for the Jabber power users.
+  local rev=$(cd ${buildpsi}/git-plus/; echo $(($(git describe --tags | cut -d - -f 2))))
+  local desc='Psi is a cross-platform powerful Jabber client (Qt, C++) designed for the Jabber power users.
 Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru.'
   cd ${orig_src}
   echo "${desc}" > description-pak
-  requires=' "libaspell15 (>=0.60)", "libc6 (>=2.7-1)", "libgcc1 (>=1:4.1.1)", "libqca2", "libqt4-dbus (>=4.4.3)", "libqt4-network (>=4.4.3)", "libqt4-qt3support (>=4.4.3)", "libqt4-xml (>=4.4.3)", "libqtcore4 (>=4.4.3)", "libqtgui4 (>=4.4.3)", "libstdc++6 (>=4.1.1)", "libx11-6", "libxext6", "libxss1", "zlib1g (>=1:1.1.4)" '
+  local requires=' "libaspell15 (>=0.60)", "libc6 (>=2.7-1)", "libgcc1 (>=1:4.1.1)", "libqca2", "libqt4-dbus (>=4.4.3)", "libqt4-network (>=4.4.3)", "libqt4-qt3support (>=4.4.3)", "libqt4-xml (>=4.4.3)", "libqtcore4 (>=4.4.3)", "libqtgui4 (>=4.4.3)", "libstdc++6 (>=4.1.1)", "libx11-6", "libxext6", "libxss1", "zlib1g (>=1:1.1.4)" '
   sudo checkinstall -D --nodoc --pkgname=psi-plus --pkggroup=net --pkgversion=${psi_version}.${rev} --pkgsource=${orig_src} --maintainer="thetvg@gmail.com" --requires="${requires}"
   cp -f ${orig_src}/*.deb ${buildpsi}
 }
 #
 prepare_spec ()
 {
-  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
-  if [ ! -z ${iswebkit} ]
-  then
+  local rev=$(cd ${buildpsi}/git-plus/; echo $(($(git describe --tags | cut -d - -f 2))))
+  if [ ! -z ${iswebkit} ]; then
     webkit="--enable-webkit"
   fi
-  qconfspath
-  if [ ! -z ${qconfpath} ]
-  then
-    qconfcmd=${qconfpath}
+  if [ ! -z ${qconf_bin} ] && [ -f "${qconf_bin}" ]; then
+    qconfcmd=${qconf_bin}
   fi
   echo "Creating psi.spec file..."
-  specfile="Summary: Client application for the Jabber network
+  local specfile="Summary: Client application for the Jabber network
 Name: psi-plus
 Version: ${psi_version}.${rev}
 Release: 1
@@ -509,8 +472,8 @@ touch --no-create %{_datadir}/icons/hicolor || :
 %exclude %{_datadir}/psi-plus/COPYING
 %exclude %{_datadir}/psi-plus/README
 "
-  tmp_spec=${buildpsi}/test.spec
-  usr_spec=${rpmspec}/psi-plus.spec
+  local tmp_spec=${buildpsi}/test.spec
+  local usr_spec=${rpmspec}/psi-plus.spec
   echo "${specfile}" > ${tmp_spec}
   cp -f ${tmp_spec} ${usr_spec}
 }
@@ -519,17 +482,16 @@ build_rpm_package ()
 {
   prepare_src
   prepare_tar
-  rev=$(cd ${buildpsi}/git-plus/; echo $((`git describe --tags | cut -d - -f 2`)))
-  tar_name=psi-plus-${psi_version}.${rev}
-  sources=${rpmsrc}
-  if [ -f "${sources}/${tar_name}.tar.gz" ]
-  then
+  local rev=$(cd ${buildpsi}/git-plus/; echo $(($(git describe --tags | cut -d - -f 2))))
+  local tar_name=psi-plus-${psi_version}.${rev}
+  local sources=${rpmsrc}
+  if [ -f "${sources}/${tar_name}.tar.gz" ]; then
     prepare_spec
     echo "Building Psi+ RPM package"
     cd ${rpmspec}
     rpmbuild -ba --clean --rmspec --rmsource ${usr_spec}
-    rpm_ready=`find $HOME/rpmbuild/RPMS | grep psi-plus`
-    rpm_src_ready=`find $HOME/rpmbuild/SRPMS | grep psi-plus`
+    local rpm_ready=$(find $HOME/rpmbuild/RPMS | grep psi-plus)
+    local rpm_src_ready=$(find $HOME/rpmbuild/SRPMS | grep psi-plus)
     cp -f ${rpm_ready} ${buildpsi}
     cp -f ${rpm_src_ready} ${buildpsi}
   fi
@@ -537,9 +499,9 @@ build_rpm_package ()
 #
 prepare_dev ()
 {
-  psidev=$buildpsi/psidev
-  orig=$psidev/git.orig
-  new=$psidev/git
+  local psidev=$buildpsi/psidev
+  local orig=$psidev/git.orig
+  local new=$psidev/git
   rm -rf $orig
   rm -rf $new
   cd ${buildpsi}
@@ -550,26 +512,21 @@ prepare_dev ()
   cp -r git/* ${orig}
   cp -r git/* ${new}
   cd ${psidev}
-  if [ ! -f deploy ]
-  then
+  if [ ! -f deploy ]; then
     wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/deploy" || die "Failed to update deploy";
   fi
-  if [ ! -f mkpatch ]
-  then
+  if [ ! -f mkpatch ]; then
     wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/mkpatch" || die "Failed to update mkpatch";
   fi
-  if [ ! -f psidiff.ignore ]
-  then
+  if [ ! -f psidiff.ignore ]; then
     wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/psidiff.ignore" || die "Failed to update psidiff.ignore";
   fi
-  patchlist=`ls ${buildpsi}/git-plus/patches/ | grep diff`
+  local patchlist=$(ls ${buildpsi}/git-plus/patches/ | grep diff)
   cd ${orig}
   echo "Enter maximum patch number to patch orig src"
   read patchnumber
-  for patchfile in ${patchlist}
-    do
-      if [  ${patchfile:0:4} -lt ${patchnumber} ]
-      then
+  for patchfile in ${patchlist}; do
+      if [  ${patchfile:0:4} -lt ${patchnumber} ]; then
         echo  ${patchfile}
         patch -p1 < ${buildpsi}/git-plus/patches/${patchfile}
       fi
@@ -577,10 +534,8 @@ prepare_dev ()
   cd ${new}
   echo "Enter maximum patch number to patch work src"
   read patchnumber
-  for patchfile in ${patchlist}
-    do
-      if [  ${patchfile:0:4} -lt ${patchnumber} ]
-      then
+  for patchfile in ${patchlist}; do
+      if [  ${patchfile:0:4} -lt ${patchnumber} ]; then
         echo  ${patchfile}
         patch -p1 < ${buildpsi}/git-plus/patches/${patchfile}
       fi
@@ -590,28 +545,21 @@ prepare_dev ()
 otr_deb ()
 {
   prepare_src
-  cd $buildpsi
-  if [ -d $buildpsi/plugins/dev/otrplugin ]
-  then
-    cd $buildpsi/plugins
-    git pull
-  else
-    git clone git://github.com/psi-plus/plugins.git
-  fi
-  otrorigdir=$buildpsi/plugins/dev/otrplugin
-  cd $buildpsi/plugins/dev
-  cp -r $otrorigdir $orig_src/src/plugins/generic
-  otrdebdir=$orig_src/src/plugins/generic/otrplugin
-  cd $otrdebdir
-  PREFIX=/usr
-  user="Vitaly Tonkacheyev"
-  email="thetvg@gmail.com"
-  data=`LANG=en date +'%a, %d %b %Y %T %z'`
-  year=`date +'%Y'`
-  cd $otrdebdir
-  debver=`grep -Po '\d\.\d\.\d+' src/psiotrplugin.cpp`
+  cd ${buildpsi}
+  local otrorigdir=${buildpsi}/plugins/generic/otrplugin
+  cd ${buildpsi}/plugins/generic
+  cp -r ${otrorigdir} ${orig_src}/src/plugins/generic
+  local otrdebdir=${orig_src}/src/plugins/generic/otrplugin
+  cd ${otrdebdir}
+  local PREFIX=/usr
+  local user="Vitaly Tonkacheyev"
+  local email="thetvg@gmail.com"
+  local data=$(LANG=en date +'%a, %d %b %Y %T %z')
+  local year=$(date +'%Y')
+  cd ${otrdebdir}
+  local debver=$(grep -Po '\d\.\d\.\d+' src/psiotrplugin.cpp)
 #
-  control='Source: psi-plus-otrplugin
+  local control='Source: psi-plus-otrplugin
 Section: libs
 Priority: optional
 Maintainer: Vitaly Tonkacheyev <thetvg@gmail.com>
@@ -624,7 +572,7 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libc6 (>=2.7-1), libgcc1 (>=1:4.1.1), libqtcore4 (>=4.6), libqtgui4 (>=4.6), libqt4-xml (>=4.6), libotr2, libgcrypt11, libtidy-0.99-0, libstdc++6 (>=4.1.1), libx11-6, zlib1g (>=1:1.1.4)
 Description: Off-The-Record-Messaging plugin for Psi
  This is a Off-The-Record-Messaging plugin for the Psi+ instant messenger. Psi+ (aka Psi-dev) is a collection of patches for Psi. Psi+ is available from http://code.google.com/p/psi-dev/.'
-  copyright="This work was packaged for Debian by:
+  local copyright="This work was packaged for Debian by:
 
     ${user} <${email}> on ${data}
 
@@ -676,9 +624,9 @@ the Free Software Foundation; either version 2 of the License, or
 
 # Please also look if there are files or directories which have a
 # different copyright/license attached and list them here."
-  dirs='usr/lib/psi-plus/plugins'
-  compat='7'
-  rules='#!/usr/bin/make -f
+  local dirs='usr/lib/psi-plus/plugins'
+  local compat='7'
+  local rules='#!/usr/bin/make -f
 # -*- makefile -*-
 # Sample debian/rules that uses debhelper.
 # This file was originally written by Joey Hess and Craig Small.
@@ -703,37 +651,32 @@ include /usr/share/cdbs/1/class/qmake.mk
 QMAKE=qmake-qt4
 CFLAGS=-O3
 CXXFLAGS=-O3'
-  package_sh="#!/bin/bash
+  local package_sh="#!/bin/bash
 set -e
 
 debuild -us -uc
 debuild -S -us -uc
 su -c pbuilder build ../psi-plus-otrplugin-${debver}.dsc"
-  changelog_template="psi-plus-otrplugin (${debver}-1) unstable; urgency=low
+  local changelog_template="psi-plus-otrplugin (${debver}-1) unstable; urgency=low
 
   * New upstream release see README for details
 
  -- ${user} <${email}>  ${data}"
-  docs='COPYING
+  local docs='COPYING
 INSTALL
 README'
 #
-  builddeb=$orig_src/src/plugins/generic/psi-plus-otrplugin-${debver}
-  if [ -d ${builddeb} ]
-  then
-    rm -r -f ${builddeb}
-  fi
-  mkdir ${builddeb}
+  builddeb=${orig_src}/src/plugins/generic/psi-plus-otrplugin-${debver}
+  check_dir ${builddeb}/debian
   cp -r ${otrdebdir}/* ${builddeb}
-  mkdir ${builddeb}/debian
-  changefile=${builddeb}/debian/changelog
-  rulesfile=${builddeb}/debian/rules
-  controlfile=${builddeb}/debian/control
-  dirsfile=${builddeb}/debian/dirs
-  compatfile=${builddeb}/debian/compat
-  copyrightfile=${builddeb}/debian/copyright
-  docsfile=${builddeb}/debian/docs
-  package_sh_file=${builddeb}/package.sh
+  local changefile=${builddeb}/debian/changelog
+  local rulesfile=${builddeb}/debian/rules
+  local controlfile=${builddeb}/debian/control
+  local dirsfile=${builddeb}/debian/dirs
+  local compatfile=${builddeb}/debian/compat
+  local copyrightfile=${builddeb}/debian/copyright
+  local docsfile=${builddeb}/debian/docs
+  local package_sh_file=${builddeb}/package.sh
   echo "${changelog_template}" > ${changefile}
   echo "${package_sh}" > ${package_sh_file}
   echo "${rules}" > ${rulesfile}
@@ -744,14 +687,14 @@ README'
   echo "${copyright}" > ${copyrightfile}
 #
   cd ${builddeb}
-  qmake
+  qmakecmd
   dpkg-buildpackage -rfakeroot
   cp -f ../psi-plus-otrplugin_${debver}*.deb $buildpsi
 }
 #
 prepare_plugins_spec ()
 {
-  specfile="
+  local specfile="
 Summary: ${summary}
 Name: ${progname}
 Version: ${rpmver}
@@ -793,37 +736,28 @@ ${docfiles}
 #
 otr_rpm ()
 {
-  progname="psi-plus-otrplugin"
+  local progname="psi-plus-otrplugin"
   prepare_src
-  cd $buildpsi
-  if [ -d $buildpsi/plugins/dev/otrplugin ]
-  then
-    cd $buildpsi/plugins
-    git pull
-  else
-    git clone git://github.com/psi-plus/plugins.git
-  fi
-  cd $buildpsi
-  #
-  otrorigdir=$buildpsi/plugins/dev/otrplugin
-  PREFIX="/usr"
-  rpmver=`grep -Po '\d\.\d\.\d+' ${otrorigdir}/src/psiotrplugin.cpp`
-  package_name="${progname}-${rpmver}.tar.gz"
-  summary="Off-The-Record-Messaging plugin for Psi"
-  breq="libotr-devel, libtidy-devel, libgcrypt-devel"
-  urlpath="https://github.com/psi-plus/plugins"
-  group="Applications/Internet"
-  desc="This is a Off-The-Record-Messaging plugin for the Psi+ instant messenger.
+  cd ${buildpsi}
+  local otrorigdir=${buildpsi}/plugins/generic/otrplugin
+  local PREFIX="/usr"
+  local rpmver=$(grep -Po '\d\.\d\.\d+' ${otrorigdir}/src/psiotrplugin.cpp)
+  local package_name="${progname}-${rpmver}.tar.gz"
+  local summary="Off-The-Record-Messaging plugin for Psi"
+  local breq="libotr-devel, libtidy-devel, libgcrypt-devel"
+  local urlpath="https://github.com/psi-plus/plugins"
+  local group="Applications/Internet"
+  local desc="This is a Off-The-Record-Messaging plugin for the Psi+ instant messenger.
  Psi+ (aka Psi-dev) is a collection of patches for Psi. Psi+ is available from
  http://code.google.com/p/psi-dev/"
-  plugdir="dev/otrplugin"
-  libfile="libotrplugin.so"
-  docfiles="%doc $plugdir/README $plugdir/COPYING"
+  local plugdir="generic/otrplugin"
+  local libfile="libotrplugin.so"
+  local docfiles="%doc ${plugdir}/README ${plugdir}/COPYING"
   #
-  check_dir ${inst_path}/${progname}-${rpmver}/dev/otrplugin
-  cp -r $orig_src/src/plugins/*.pri ${inst_path}/${progname}-${rpmver}/
-  cp -r $orig_src/src/plugins/include ${inst_path}/${progname}-${rpmver}/
-  cp -r $otrorigdir/* ${inst_path}/${progname}-${rpmver}/dev/otrplugin/
+  check_dir ${inst_path}/${progname}-${rpmver}/generic/otrplugin
+  cp -r ${orig_src}/src/plugins/*.pri ${inst_path}/${progname}-${rpmver}/
+  cp -r ${orig_src}/src/plugins/include ${inst_path}/${progname}-${rpmver}/
+  cp -r ${otrorigdir}/* ${inst_path}/${progname}-${rpmver}/generic/otrplugin/
   cd ${inst_path}
   tar -pczf $package_name ${progname}-${rpmver}
   #
@@ -845,8 +779,7 @@ install_resources ()
 {
   cd ${buildpsi}
   check_dir ${psi_datadir}
-  if [ ! -d "resources" ]
-  then
+  if [ ! -d "resources" ]; then
     get_resources
   fi
   cp -rf ${buildpsi}/resources/* ${psi_datadir}/
@@ -856,8 +789,7 @@ install_iconsets ()
 {
   cd ${buildpsi}
   check_dir ${psi_datadir}
-  if [ -d "resources" ]
-  then
+  if [ -d "resources" ]; then
     get_resources
   fi  
   cp -rf ${buildpsi}/resources/iconsets ${psi_datadir}/
@@ -867,8 +799,7 @@ install_skins ()
 {
   cd ${buildpsi}
   check_dir ${psi_datadir}
-  if [ -d "resources" ]
-  then
+  if [ -d "resources" ]; then
     cp -rf ${buildpsi}/resources/skins ${psi_datadir}/
   else
     get_resources
@@ -880,8 +811,7 @@ install_sounds ()
 {
   cd ${buildpsi}
   check_dir ${psi_datadir}
-  if [ -d "resources" ]
-  then
+  if [ -d "resources" ]; then
     cp -rf ${buildpsi}/resources/sound ${psi_datadir}/
   else
     get_resources
@@ -893,8 +823,7 @@ install_themes ()
 {
   cd ${buildpsi}
   check_dir ${psi_datadir}
-  if [ -d "resources" ]
-  then
+  if [ -d "resources" ]; then
     cp -rf ${buildpsi}/resources/themes ${psi_datadir}/
   else
     get_resources
@@ -912,15 +841,12 @@ build_locales ()
 {
   local tr_path=${buildpsi}/langs/translations
   run_libpsibuild fetch_sources
-  if [ -d "${tr_path}" ]
-  then
+  if [ -d "${tr_path}" ]; then
     rm -f ${tr_path}/*.qm
-    if [ -f "/usr/bin/lrelease" ] || [ -f "/usr/local/bin/lrelease" ]
-    then
+    if [ -f "/usr/bin/lrelease" ] || [ -f "/usr/local/bin/lrelease" ]; then
       lrelease ${tr_path}/*.ts 
     fi
-    if [ -f "/usr/bin/lrelease-qt4" ] || [ -f "/usr/local/bin/lrelease-qt4" ]
-    then
+    if [ -f "/usr/bin/lrelease-qt4" ] || [ -f "/usr/local/bin/lrelease-qt4" ]; then
       lrelease-qt4 ${tr_path}/*.ts 
     fi
   fi 
@@ -937,43 +863,45 @@ install_locales ()
 set_config ()
 {
   local use_webkit="n"
-  if [ ! -z "$iswebkit" ]
-  then
+  if [ ! -z "$iswebkit" ]; then
     use_webkit="y"
   else
     use_webkit="n"
   fi
   local is_offline="n"
-  if [ "$isoffline" -eq 0 ]
-  then
+  if [ "$isoffline" -eq 0 ]; then
     is_offline="n"
   else
     is_offline="y"
   fi
   local skip_patches="n"
-  if [ "$skip_invalid" -eq 0 ]
-  then
+  if [ "$skip_invalid" -eq 0 ]; then
     skip_patches="n"
   else
     skip_patches="y"
   fi
+  local noenchant="y"
+  if [ ! -z "${no_enchant}" ]; then
+    noenchant="y"
+  else
+    noenchant="n"
+  fi
   local loop=1
-  while [ ${loop} = 1 ]
-  do
+  while [ ${loop} = 1 ];  do
     echo "Choose action TODO:"
     echo "--[1] - Set WebKit version to use (current: ${use_webkit})"
     echo "--[2] - Set iconsets list needed to build"
     echo "--[3] - Set Offline Mode (current: ${is_offline})"
     echo "--[4] - Skip Invalid patches (current: ${skip_patches})"
     echo "--[5] - Set list of plugins needed to build (for all use *)"
-    echo "--[6] - Print option values"
+    echo "--[6] - Set use aspell instead of enchant (current: ${noenchant})"
+    echo "--[7] - Print option values"
     echo "--[0] - Do nothing"
     read deistvo
     case ${deistvo} in
       "1" ) echo "Do you want use WebKit [y/n] ?"
             read variable
-            if [ "$variable" == "y" ]
-            then
+            if [ "$variable" == "y" ]; then
               iswebkit="--enable-webkit"
               use_webkit="y"
             else
@@ -982,16 +910,14 @@ set_config ()
             fi;;
       "2" ) echo "Please enter iconsets separated by space"
             read variable
-            if [ ! -z "$variable" ]
-            then
+            if [ ! -z "$variable" ]; then
               use_iconsets=${variable}
             else
               use_iconsets="system clients activities moods affiliations roster"
             fi;;
       "3" ) echo "Do you want use Offline Mode [y/n] ?"
             read variable
-            if [ "$variable" == "y" ]
-            then
+            if [ "$variable" == "y" ]; then
               isoffline=1
               is_offline="y"
             else
@@ -1000,8 +926,7 @@ set_config ()
             fi;;
       "4" ) echo "Do you want to skip invalid patches when patching [y/n] ?"
             read variable
-            if [ "$variable" == "y" ]
-            then
+            if [ "$variable" == "y" ]; then
               skip_invalid=1
               skip_patches="y"
             else
@@ -1010,18 +935,25 @@ set_config ()
             fi;;
       "5" ) echo "Please enter plugins needed to build separated by space (* for all)"
             read variable
-            if [ ! -z "$variable" ]
-            then
+            if [ ! -z "$variable" ]; then
               use_plugins=${variable}
             else
               use_plugins=""
             fi;;
-      "6" ) echo "==Options=="
+      "6" ) echo "Do you want use aspell spellcheck engine instead on enchant [y/n] ?"
+            read variable
+            if [ "$variable" == "y" ]; then
+              no_enchant="--disable-enchant"
+            else
+              no_enchant=""
+            fi;;
+      "7" ) echo "==Options=="
             echo "WebKit = ${use_webkit}"
             echo "Iconsets = ${use_iconsets}"
             echo "Offline Mode = ${is_offline}"
             echo "Skip Invalid Patches = ${skip_patches}"
             echo "Plugins = ${use_plugins}"
+            echo "No Enchant = ${noenchant}"
             echo "===========";;
       "0" ) clear
             loop=0;;
@@ -1031,12 +963,12 @@ set_config ()
   echo "$use_iconsets" >> ${config_file}
   echo "$isoffline" >> ${config_file}
   echo "$skip_invalid" >> ${config_file}
-  if [ "$use_plugins" == "*" ]
-  then
+  if [ "$use_plugins" == "*" ]; then
     echo "all" >> ${config_file}
   else
     echo "$use_plugins" >> ${config_file}
   fi
+  echo "$no_enchant" >> ${config_file}
 }
 #
 print_menu ()
@@ -1077,6 +1009,7 @@ get_help ()
 #
 choose_action ()
 {
+  set_options
   read vibor
   case ${vibor} in
     "1" ) down_all;;
@@ -1108,15 +1041,14 @@ choose_action ()
 cd ${workdir}
 read_options
 check_libpsibuild
-if [ ! -f "${config_file}" ]
-then
+if [ ! -f "${config_file}" ]; then
   set_config
 fi
+find_qconf
 set_options
 clear
 #
-while true
-do
+while true; do
   print_menu
   choose_action
 done
