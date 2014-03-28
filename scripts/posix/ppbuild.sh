@@ -513,7 +513,7 @@ touch --no-create %{_datadir}/icons/hicolor || :
 %exclude %{_datadir}/psi-plus/README
 "
   local tmp_spec=${buildpsi}/test.spec
-  local usr_spec=${rpmspec}/psi-plus.spec
+  usr_spec=${rpmspec}/psi-plus.spec
   echo "${specfile}" > ${tmp_spec}
   cp -f ${tmp_spec} ${usr_spec}
 }
