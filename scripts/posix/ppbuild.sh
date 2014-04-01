@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #CONSTANTS/КОНСТАНТЫ
-home=/home/$USER #домашний каталог
+home=${HOME:-/home/$USER} #домашний каталог
 psi_version="0.16" #не менять без необходимости, нужно для пакетирования
 bindirs="/usr/bin
 /usr/local/bin
@@ -27,11 +27,21 @@ workdir=${home}/github
 default_buildpsi=${workdir}/psi 
 #имя временного каталога для пакетирования
 inst_suffix=tmp
+#префикс CMAKE по умолчанию
+DEF_CMAKE_INST_PREFIX="${home}/.local"
+#каталог плагинов в префиксе по умолчанию
+DEF_CMAKE_INST_SUFFIX="share/psi+/plugins"
+#список плагинов для сборки через ";" (otrplugin;cleanerplugin и.т.д.)
+DEF_PLUG_LIST="ALL"
+#тип сборки плагинов
+DEF_CMAKE_BUILD_TYPE="Release"
+
 #WARNING: следующие переменные будут изменены в процессе работы скрипта автоматически
 buildpsi=${default_buildpsi} #инициализация переменной
 orig_src=${buildpsi}/build #рабочий каталог для компиляции psi+
 patches=${buildpsi}/git-plus/patches #путь к патчам psi+, необходим для разработки
 inst_path=${buildpsi}/${inst_suffix} #только для пакетирования
+cmake_files_dir=${buildpsi}/psi-plus-plugins-cmake #файлы CMAKE для сборки плагинов
 #
 
 #ENVIRONMENT VARIABLES/ПЕРЕМЕННЫЕ СРЕДЫ
@@ -136,6 +146,7 @@ update_variables ()
   orig_src=${buildpsi}/build
   patches=${buildpsi}/git-plus/patches
   inst_path=${buildpsi}/${inst_suffix}
+  cmake_files_dir=${buildpsi}/psi-plus-plugins-cmake
 }
 #
 check_libpsibuild ()
@@ -406,6 +417,56 @@ make_plugin ()
     qmakecmd -t ${QMAKE_CCACHE_CMD} && make && cp -f *.so ${tmpplugs}/
     cd ${currdir}
   fi
+}
+#
+fetch_cmake_files ()
+{
+  local repo_url="https://github.com/Vitozz/psi-plus-plugins-cmake.git"
+  
+  cd ${buildpsi}
+  if [ ! -d "${cmake_files_dir}" ]; then
+    check_dir ${cmake_files_dir}
+    git clone ${repo_url} ${cmake_files_dir}
+  else
+    cd ${cmake_files_dir}
+    git reset --hard
+    git pull
+  fi
+}
+#
+build_cmake_plugins ()
+{
+  echo_done() {
+    echo " "
+    echo "********************************"
+    echo "Plugins installed succesfully!!!"
+    echo "********************************"
+    echo " "
+  }
+  local pl_preffix=${DEF_CMAKE_INST_PREFIX}
+  local pl_suffix=${DEF_CMAKE_INST_SUFFIX}
+  fetch_cmake_files
+  if [ ! -f "${orig_src}/psi.pro" ]; then
+    prepare_src
+  fi
+  check_dir ${orig_src}
+  cp -rf ${cmake_files_dir}/* ${orig_src}/
+  cd ${orig_src}
+  local b_dir=${orig_src}/build
+  check_dir ${b_dir}
+  cd ${b_dir}
+  echo "Do you want to install psi+ plugins into ${psi_homeplugdir} [y/n(default)]"
+  read isinstall
+  if [ "${isinstall}" != "y" ]; then
+    pl_preffix=${orig_src}
+    pl_suffix="plugins"
+  fi  
+  local cmake_flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${pl_preffix} -DPLUGINS_PATH=${pl_suffix} -DBUILD_PLUGINS=${DEF_PLUG_LIST}"
+  echo " "; echo "Build psi+ plugins using CMAKE started..."; echo " "
+  cmake ${cmake_flags} ..
+  make && make install && echo_done
+  cd ${orig_src}
+  rm -rf ${b_dir}
 }
 #
 build_deb_package ()
@@ -1096,6 +1157,7 @@ choose_action ()
     "bl" ) build_locales;;
     "bs" ) backup_tar;;
     "pw" ) run_libpsibuild prepare_workspace;;
+    "cb" ) build_cmake_plugins;;
     "0" ) quit;;
   esac
 }
