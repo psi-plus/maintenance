@@ -1123,6 +1123,7 @@ get_help ()
   echo "[ur] - Update resources"
   echo "[bs] - Backup ${buildpsi##*/} directory in ${buildpsi%/*}"
   echo "[pw] - Prepare psi+ workspace (clean ${buildpsi}/build dir)"
+  echo "[cb] - Build psi+ plugins using CMAKE"  
   echo "-------------------------------------------"
   echo "Press Enter to continue..."
   read
