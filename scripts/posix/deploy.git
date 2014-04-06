@@ -89,7 +89,7 @@ echo "patches will be applied up to ${UP_TO}"
 
 unpack_git "${WORK_DIR}"
 cp -a "${ICONSETS_DIR}/system/default" "${WORK_DIR}/iconsets/system"
-cp -a "${ICONSETS_DIR}/roster/default" "${WORK_DIR}/iconsets/roster"
+#cp -a "${ICONSETS_DIR}/roster/default" "${WORK_DIR}/iconsets/roster"
 touch "${SHORT_LOG}"
 
 if [ ! -z "${UP_TO}" ]
@@ -108,7 +108,8 @@ then
        } || {
          echo "unfortunatelly mkpatch util is not found. can't fix automatically"
        }
-       if [ "$answer" = "y" -o "$answer" = "Y" ]; then
+       if [ -z "$answer" -o "$answer" = "y" -o "$answer" = "Y" ]; then
+         echo "Fixing patch $p"
          commit_tree "before try to fix ${p}"
          git apply -p1 -C1 "${PATCHES_DIR}/${p}" && {
            broken=0
