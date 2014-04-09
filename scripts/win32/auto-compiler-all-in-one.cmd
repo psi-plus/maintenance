@@ -3,10 +3,10 @@
 REM ------------------------------------------------------
 REM auto-compiler-all-in-one.cmd
 REM http://psi-dev.googlecode.com/
-REM Psi+ auto compiler 'All-in-One' script, v0.2.8
+REM Psi+ auto compiler 'All-in-One' script, v0.3.0
 REM Written by majik <xmpp:maj@jabber.ru>
 REM Optimized by zet <mailto:vladimir.shelukhin@gmail.com>
-REM Date: 2013-07-25
+REM Date: 2014-04-09
 REM ------------------------------------------------------
 
 setlocal
@@ -29,15 +29,15 @@ SET MakeClassic=1
 SET UploadClassic=0
 SET MakeClassicDebug=0
 SET UploadClassicDebug=0
-SET MakeWebkit=0
+SET MakeWebkit=1
 SET UploadWebkit=0
 SET MakeWebkitDebug=0
 SET UploadWebkitDebug=0
-SET MakePlugins=0
+SET MakePlugins=1
 SET UploadPlugins=0
 SET MakePluginsDebug=0
 SET UploadPluginsDebug=0
-SET vOpenSSL=1.0.1e
+SET vOpenSSL=1.0.1g
 SET GoogleUser=yourlogin
 SET GooglePass=yourpass
 REM End of configuring, now you can try using script
@@ -92,6 +92,8 @@ REM %GIT% checkout new_juick
 	ECHO Found Psi+ sources
 	)
 
+rem ==========================PAUSE&PAUSE
+
 REM Checking for first start
 IF %Update%==1 GOTO :preparing_and_patching
 
@@ -141,16 +143,15 @@ IF ERRORLEVEL 1 (
 	)
 ECHO N | COMP vPluginsOld vPluginsNew
 IF ERRORLEVEL 1 (
-	ECHO Found updates for psiplus plugins & ECHO :Found updates for Psi+ Plugins>> logs.txt & SET Update=1 & SET PluginsUpdate=1
+	ECHO Found updates for Psi+ Plugins & ECHO :Found updates for Psi+ Plugins>> logs.txt & SET Update=1 & SET PluginsUpdate=1
 	) ELSE (
-	ECHO Updates for psiplus plugins not found
+	ECHO Updates for Psi+ Plugins not found
 	SET PluginsUpdate=0
 	SET MakePlugins=0
 	SET UploadPlugins=0
 	SET MakePluginsDebug=0
 	SET UploadPluginsDebug=0
 	)
-
 REM Preparing and patching
 :preparing_and_patching
 	FOR /f "tokens=4 delims=: " %%x IN ('%QMAKE% -v ^| findstr /C:"Using Qt version "') DO SET vQt=%%x
@@ -172,6 +173,7 @@ IF %Update%==1 (
 	IF EXIST PsiPlusWorkdir RMDIR PsiPlusWorkdir /S /Q
 	ECHO D | xcopy psi PsiPlusWorkdir /E /Y /Q
 	ECHO D | xcopy PsiPlus\patches PsiPlusWorkdir\patches /E /Y /Q
+REM	ECHO D | xcopy PsiPlus\patches\dev\psi-new-history.patch PsiPlusWorkdir\patches /E /Y /Q
 	REM Patching Psi to Psi+
 	ECHO Patching Psi to Psi+
 	ECHO :Patching Psi to Psi+ r.%vPsiPlusMinor%>> logs.txt
@@ -226,7 +228,8 @@ IF %MakeClassic%==1 (
 	--disable-xss ^
 	--disable-qdbus ^
 	--enable-whiteboarding
-	IF ERRORLEVEL 1 ECHO Configuring failed & CD .. & ECHO !configuring failed>> logs.txt & GOTO :exit
+	IF ERRORLEVEL 1 ECHO Configuring failed & CD .. & ECHO !configuring failed>> logs.txt & GOTO PAUSE
+
 	REM Compiling Psi+ Classic release version
 	ECHO Compiling Psi+ Classic release version
 	ECHO :Compiling Psi+ Classic release version>> ..\logs.txt
@@ -366,7 +369,7 @@ IF %UploadWebkit%==1 (
 	--user %GoogleUser% ^
 	--password %GooglePass% ^
 	--project psi-dev ^
-	--summary "Psi+ WebKit Nightly Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || see the file README.TXT inside the archive" ^
+	--summary "Psi+ WebKit Nightly Build || psi-git %date% %currentTime% MSD || Qt %vQt% || Win32 OpenSSL Libs v%vOpenSSL% || See the file README.TXT inside the archive" ^
 	--labels "Windows,WebKit,NightlyBuild,Archive" "psi-plus-%vPsiPlusMajor%.%vPsiPlusMinor%-webkit-win32.7z"
 	)
 
@@ -453,7 +456,7 @@ IF %UploadPlugins%==1 (
 	--user %GoogleUser% ^
 	--password %GooglePass% ^
 	--project psi-dev ^
-	--summary "Psi+ Plugins || %date% %currentTime% MSD || Qt %vQt%" ^
+	--summary "Psi+ Plugins including OTR Plugin || %date% %currentTime% MSD || Qt %vQt%" ^
 	--labels "Plugins,Windows,Archive" "psi-plus-plugins-%vPsiPlusMajor%.%vPlugins%-win32.7z"
 	)
 
