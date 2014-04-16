@@ -537,7 +537,7 @@ fetch_plugins_sources() {
   [ -z "${PLUGINS}" ] && return 0
   log "Validate plugins list.."
   PLUGIN_DIRS=`validate_plugins_list "${PLUGINS}"`
-  log "Enabled plugins:" $(echo $PLUGINS | sed 's:generic/::g')
+  log "Enabled plugins:" $(echo $PLUGIN_DIRS | sed 's:generic/::g')
 }
 
 fetch_all() {
