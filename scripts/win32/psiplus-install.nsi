@@ -1,13 +1,13 @@
 ; psiplus-install.nsi
 ; http://psi-dev.googlecode.com/
-; Psi+ installation script, v1.0.0
+; Psi+ installation script, v1.0.1
 ; Written by zet <mailto:vladimir.shelukhin@gmail.com>
-; Date: 2013-11-24
+; Date: 2014-05-02
 
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.16.261"
+!define PRODUCT_VERSION "0.16.361"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,22 +22,22 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.16.261-win32-setup.exe"
+OutFile "setup\psi-plus-0.16.361-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
 
-BrandingText "Copyright © 2008-2013 ${COMPANY_NAME}"
+BrandingText "Copyright © 2008-2014 ${COMPANY_NAME}"
 
 ; -----------------------------------------------------------------------------
 ; Version Information
 VIAddVersionKey  "CompanyName"     "${COMPANY_NAME}"
-VIAddVersionKey  "LegalCopyright"  "© 2008-2013 ${COMPANY_NAME}"
+VIAddVersionKey  "LegalCopyright"  "© 2008-2014 ${COMPANY_NAME}"
 VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.16.261.0"
+VIProductVersion "0.16.361.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install
