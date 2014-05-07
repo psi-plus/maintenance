@@ -271,27 +271,23 @@ set /p BINTYPE=Do you want to build psi+ debug binary [y/n(default)]:%=%
 set /p ISCLEAN=Do you want to launch clean and distclean commands [y/n(default)]:%=%
 @echo _
 
+set PARENT_DIR=%CD%
 set QMAKESPEC=win32-g++
 set BUILDDIR=C:\build
 set PLUGBUILDDIR=%BUILDDIR%\PluginsBuilder
 
 if /i "%ARCHTYPE%"=="y" (
 set QTDIR=%QTDIR64%
-set MINGWDIR=C:\MinGW
-set MINGW64=C:\mingw64
+set MINGWDIR=C:\mingw\mingw64
 set ARCH=x86_64
-set CC=%MINGW64%\bin\gcc
-set CXX=%MINGW64%\bin\g++
 ) else (
 set QTDIR=%QTDIR32%
 set ARCH=i386
-set MINGWDIR=C:\MinGW
+set MINGWDIR=C:\mingw\mingw32
 ) 
-if /i "%ARCH%"=="i386" (
+
 set PATH=%QTDIR%\;%QTDIR%\bin;%MINGWDIR%;%MINGWDIR%\bin
-) else (
-set PATH=%QTDIR%\;%QTDIR%\bin;%MINGW64%\;%MINGW64%\bin;%MINGWDIR%;%MINGWDIR%\bin
-)
+
 set JSONPATH=%BUILDDIR%\psideps\qjson\%ARCH%
 set QCADIR=%BUILDDIR%\psideps\qca\%ARCH%
 set ZLIBDIR=%BUILDDIR%\psideps\zlib\%ARCH%
@@ -331,7 +327,6 @@ if /i "%BINTYPE%"=="y" (
 set ISDEBUG=--debug
 )
 
-@echo configure %ISDEBUG% --enable-plugins --enable-whiteboarding %ISWEBKIT% --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib --with-idn-inc=%LIBIDNDIR%\include --with-idn-lib=%LIBIDNDIR%\lib %HISTORYLIBS% %HISTORYINC%
 configure %ISDEBUG% --enable-plugins --enable-whiteboarding %ISWEBKIT% --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib --with-idn-inc=%LIBIDNDIR%\include --with-idn-lib=%LIBIDNDIR%\lib %HISTORYLIBS% %HISTORYINC%
 
 pause
@@ -347,7 +342,9 @@ copy /Y psi-plus.exe psi-plus-portable.exe
 @echo _ 
 set /p ANS2=Do you want to psi+ plugins [y(default)/n]:%=%
 if /i not "%ANS2%"=="n" (
-%PLUGBUILDDIR%\compile-plugins -j 5 -o ..\
+mkdir %PARENT_DIR%\plugins
+mkdir %PARENT_DIR%\plugins\%ARCH%
+%PLUGBUILDDIR%\compile-plugins -j 5 -o %PARENT_DIR%\plugins\%ARCH%
 )
 @goto exit
 
