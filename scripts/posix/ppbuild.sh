@@ -257,95 +257,192 @@ prepare_win ()
     sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
     sed "s/\(@@DATE@@\)/"$(date +"%Y-%m-%d")"/" -i "${ver_file}"
     cp -f ${mainicon} ${new_src}/win32/
-    local makepsi='@echo off
-@echo PSI-PLUS BUILD SCRIPT
-@echo _
-set /p HISTYPE=Do you want to build psi+ with new history [y/n(default)]:%=%
-@echo _
-set /p ARCHTYPE=Do you want to build psi+ x86_64 binary [y/n(default)]:%=%
-@echo _
-set /p WEBKIT=Do you want to build psi+ webkit binary [y/n(default)]:%=%
-@echo _ 
-set /p BINTYPE=Do you want to build psi+ debug binary [y/n(default)]:%=%
-@echo _ 
-set /p ISCLEAN=Do you want to launch clean and distclean commands [y/n(default)]:%=%
-@echo _
+    local makepsi='@ECHO off
+@ECHO:PSI-PLUS BUILD SCRIPT
+@ECHO.
+set /p HISTYPE="Do you want to build psi+ with new history [y/n(default)]"
+@ECHO.
+set /p BINTYPE="Do you want to build psi+ debug binary [y/n(default)]"
+@ECHO. 
 
 set PARENT_DIR=%CD%
+set BUILDLOG=%PARENT_DIR%\build.log
+@ECHO:Logging started>%BUILDLOG%
+@ECHO:_>>%BUILDLOG%
+set SEVENZIP="C:\Program files\7-Zip"
 set QMAKESPEC=win32-g++
-set BUILDDIR=C:\build
-set PLUGBUILDDIR=%BUILDDIR%\PluginsBuilder
-
-if /i "%ARCHTYPE%"=="y" (
-set QTDIR=%QTDIR64%
-set MINGWDIR=C:\mingw\mingw64
-set ARCH=x86_64
-) else (
-set QTDIR=%QTDIR32%
-set ARCH=i386
-set MINGWDIR=C:\mingw\mingw32
-) 
-
-set PATH=%QTDIR%\;%QTDIR%\bin;%MINGWDIR%;%MINGWDIR%\bin
-
-set JSONPATH=%BUILDDIR%\psideps\qjson\%ARCH%
-set QCADIR=%BUILDDIR%\psideps\qca\%ARCH%
-set ZLIBDIR=%BUILDDIR%\psideps\zlib\%ARCH%
-set QCONFDIR=%BUILDDIR%\qconf\%ARCH%
-set ASPELLDIR=%BUILDDIR%\psideps\aspell\%ARCH%
-set LIBIDNDIR=%BUILDDIR%\psideps\libidn\%ARCH%
 set MAKE=mingw32-make -j5
+set BUILDDIR=C:\build
+set MINGWPREFIX=C:\mingw
+set QTDIRPREFIX=C:\Qt\4.8.6
+set PLUGBUILDDIR=%BUILDDIR%\PluginsBuilder
+set PSIDEPSPREFIX=%BUILDDIR%\psideps
+set nHistoryTemplate=new_history
+set HISTORYLIBS= 
+set HISTORYINC= 
+set bin32Template=win32
+set bin64Template=win64
+set CONFDEFAULTS=--enable-plugins --enable-whiteboarding
+set ISDEBUG=--release
+set PSI_DATE=%date:~6,4%-%date:~3,2%-%date:~0,2%
+set SEVENZFLAGS=-mx=9 -m0=LZMA -mmt=on
+set /p revision=< %PARENT_DIR%\revision
+set /p psiver=< %PARENT_DIR%\psiver
+REM win64 specific variables
+set ARCH64=x86_64
+set QTDIR64=%QTDIRPREFIX%\%ARCH64%
+set MINGW64=%MINGWPREFIX%\mingw64
+set QCONF64=%BUILDDIR%\qconf\%ARCH64%\qconf.exe
+REM win32 specific variables
+set ARCH32=i386
+set QTDIR32=%QTDIRPREFIX%\%ARCH32%
+set MINGW32=%MINGWPREFIX%\mingw32
+set QCONF32=%BUILDDIR%\qconf\%ARCH32%\qconf.exe
 
-if /i "%ISCLEAN%"=="y" (
-mingw32-make clean
-mingw32-make distclean
+IF /I "%BINTYPE%" == "y" (
+	@goto debug
+) ELSE (
+	@goto mainloop
 )
 
-%QCONFDIR%\qconf
+:mainloop
+set ISWEBKIT=NO
+IF /I NOT "%BUILT32%" == "OK" @goto set32vars
+IF /I NOT "%BUILT64%" == "OK" @goto set64vars
+set ISWEBKIT=OK
+IF /I NOT "%BUILTW32%" == "OK" @goto set32vars
+IF /I NOT "%BUILTW64%" == "OK" @goto set64vars
+IF /I NOT "%ISPLUGINS%" == "OK" @goto plugins
+@goto goyandex
 
-if /i "%WEBKIT%"=="y" (
-set ISWEBKIT=--enable-webkit
-if /i "%ARCH%"=="i386" (
-set INSTDIR=webkit32
-) else (
-set INSTDIR=webkit64
-)
-) else (
-if /i "%ARCH%"=="i386" (
-set INSTDIR=bin32
-) else (
-set INSTDIR=bin64
-)
-)
+:debug
+COPY /Y %PARENT_DIR%\src\src.pro %PARENT_DIR%\src\src.pro.orig
+set ISDEBUG=--debug
+@ECHO:CONFIG+=console>%PARENT_DIR%\src\src.pro
+TYPE %PARENT_DIR%\src\src.pro.orig>>%PARENT_DIR%\src\src.pro
+@ECHO:Building debug binaries with console>>%BUILDLOG%
+@goto mainloop
 
-if /i "%HISTYPE%"=="y" (
+:set32vars
+set ARCH=%ARCH32%
+set MINGWDIR=%MINGW32%
+set QTDIR=%QTDIR32%
+set BTYPE=W32
+@ECHO:* Building %BTYPE%-webkit^=%ISWEBKIT% psi+ binary *>>%BUILDLOG%
+@ECHO:_>>%BUILDLOG%
+@ECHO:%BTYPE% variables^:>>%BUILDLOG%
+@ECHO:QT4 in %QTDIR%>>%BUILDLOG%
+@ECHO:MINGW in %MINGWDIR%>>%BUILDLOG%
+@goto setcommonvars
+
+:set64vars
+set ARCH=%ARCH64%
+set MINGWDIR=%MINGW64%
+set QTDIR=%QTDIR64%
+set BTYPE=W64
+@ECHO:* Building %BTYPE%-webkit^=%ISWEBKIT% psi+ binary *>>%BUILDLOG%
+@ECHO:_>>%BUILDLOG%
+@ECHO:%BTYPE% variables^:>>%BUILDLOG%
+@ECHO:QT4 in %QTDIR%>>%BUILDLOG%
+@ECHO:MINGW in %MINGWDIR%>>%BUILDLOG%
+@goto setcommonvars
+
+:setcommonvars
+set JSONPATH=%PSIDEPSPREFIX%\qjson\%ARCH%
+@ECHO:QJSON library in %JSONPATH%>>%BUILDLOG%
+set QCADIR=%PSIDEPSPREFIX%\qca\%ARCH%
+@ECHO:QCA library in %QCADIR%>>%BUILDLOG%
+set ZLIBDIR=%PSIDEPSPREFIX%\zlib\%ARCH%
+@ECHO:ZLIB library in %ZLIBDIR%>>%BUILDLOG%
+set ASPELLDIR=%PSIDEPSPREFIX%\aspell\%ARCH%
+@ECHO:ASPELL library in %ASPELLDIR%>>%BUILDLOG%
+set LIBIDNDIR=%PSIDEPSPREFIX%\libidn\%ARCH%
+@ECHO:LIBIDN library in %LIBIDNDIR%>>%BUILDLOG%
+IF "%ISWEBKIT%" == "OK" SET WEBKITFLAG=--enable-webkit
+IF "%ISWEBKIT%" == "NO" SET WEBKITFLAG= 
+set PATH=%MINGWDIR%;%MINGWDIR%\bin;%QTDIR%;%QTDIR%\bin
+IF /I "%HISTYPE%" == "y" @goto setnewhis
+@goto makeit
+
+:setnewhis
 set HISTORYLIBS=--with-qjson-lib=%JSONPATH%\lib
 set HISTORYINC=--with-qjson-inc=%JSONPATH%\include
-)
-set ISDEBUG=--release
-if /i "%BINTYPE%"=="y" (
-set ISDEBUG=--debug
-)
+@ECHO:%BTYPE% with new history>>%BUILDLOG%
+@goto makeit
 
-configure %ISDEBUG% --enable-plugins --enable-whiteboarding %ISWEBKIT% --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib --with-idn-inc=%LIBIDNDIR%\include --with-idn-lib=%LIBIDNDIR%\lib %HISTORYLIBS% %HISTORYINC%
+:archivate
+IF /I "%HISTYPE%" == "y" SET isNHis=-%nHistoryTemplate%
+IF "%ISWEBKIT%" == "OK" SET wbkPref=-webkit
+IF /I "%BTYPE%" == "W32" SET sysType=-win32
+IF /I "%BTYPE%" == "W64" SET sysType=-win64
+set INARCH=%PARENT_DIR%\psi-plus.exe
+IF NOT EXIST "%INARCH%" (
+	@ECHO:ERROR NO %INARCH% BINARY FOUND
+	@ECHO:ERROR NO %INARCH% BINARY FOUND>>%BUILDLOG%
+	@goto exit
+)
+set EXITARCH=%BUILDDIR%\psi-plus-%psiver%.%revision%%wbkPref%%isNHis%%sysType%.7z
+%SEVENZIP%\7z.exe a -t7z %EXITARCH% %INARCH% %SEVENZFLAGS%
+@ECHO:Archive file %EXITARCH% created>>%BUILDLOG%
+@ECHO:_>>%BUILDLOG%
+@goto mainloop
 
-pause
-@echo Runing mingw32-make
+:makeit
+IF EXIST "%PARENT_DIR%\Makefile" (
+	%MINGWDIR%\bin\mingw32-make clean
+	%MINGWDIR%\bin\mingw32-make distclean
+	@ECHO:Sources was cleaned>>%BUILDLOG%
+)
+IF /I "%BTYPE%%ISWEBKIT%" == "W64NO" @ECHO %psiver%.%revision%-64 ^(%PSI_DATE%^)>%PARENT_DIR%\version
+IF /I "%BTYPE%%ISWEBKIT%" == "W64OK" @ECHO %psiver%.%revision%-webkit-64 ^(%PSI_DATE%^)>%PARENT_DIR%\version
+IF /I "%BTYPE%%ISWEBKIT%" == "W32NO" @ECHO %psiver%.%revision% ^(%PSI_DATE%^)>%PARENT_DIR%\version
+IF /I "%BTYPE%%ISWEBKIT%" == "W32OK" @ECHO %psiver%.%revision%-webkit ^(%PSI_DATE%^)>%PARENT_DIR%\version
+IF /I "%BTYPE%" == "W32" %QCONF32%
+IF /I "%BTYPE%" == "W64" %QCONF64%
+configure %ISDEBUG% %CONFDEFAULTS% %WEBKITFLAG% --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib --with-idn-inc=%LIBIDNDIR%\include --with-idn-lib=%LIBIDNDIR%\lib %HISTORYLIBS% %HISTORYINC%
+@ECHO:%BTYPE% webkit^=%ISWEBKIT% configured>>%BUILDLOG%
 mingw32-make -j5
-mkdir %INSTDIR%
-copy /Y psi-plus.exe %INSTDIR%\psi-plus.exe
-@echo _ 
-set /p ANS1=Do you want to create psi-plus-portable.exe binary [y(default)/n]:%=%
-if /i not "%ANS1%"=="n" (
-copy /Y psi-plus.exe psi-plus-portable.exe
+@ECHO:%BTYPE% webkit^=%ISWEBKIT% compiled>>%BUILDLOG%
+IF /I "%BTYPE%%ISWEBKIT%" == "W64NO" SET BUILT64=OK
+IF /I "%BTYPE%%ISWEBKIT%" == "W64OK" SET BUILTW64=OK
+IF /I "%BTYPE%%ISWEBKIT%" == "W32NO" SET BUILT32=OK
+IF /I "%BTYPE%%ISWEBKIT%" == "W32OK" SET BUILTW32=OK
+@goto archivate
+
+:plugins
+setlocal EnableDelayedExpansion
+set /p ANS2="Do you want to build psi+ plugins [y/n(default)]"
+IF /I "%ANS2%" == "y" (
+	@ECHO:_>>%BUILDLOG%
+	@ECHO:* Building psi+ W32-plugins *>>%BUILDLOG%
+	set PATH=%MINGW32%;%MINGW32%\bin;%QTDIR32%;%QTDIR32%\bin
+	%PLUGBUILDDIR%\compile-plugins -j 5
+	set INPL=%PARENT_DIR%\*.dll
+	set EXPL=%BUILDDIR%\psi-plus-%psiver%.%revision%-plugins-%bin32Template%.7z
+	%SEVENZIP%\7z.exe a -t7z !EXPL! !INPL! %SEVENZFLAGS%
+	@ECHO:Archive file !EXPL! created>>%BUILDLOG%
+	@ECHO:_>>%BUILDLOG%
+	@ECHO:* Building psi+ W64-plugins *>>%BUILDLOG%
+	set PATH=%MINGW64%;%MINGW64%\bin;%QTDIR64%;%QTDIR64%\bin
+	%PLUGBUILDDIR%\compile-plugins -j 5
+	set EXPL=%BUILDDIR%\psi-plus-%psiver%.%revision%-plugins-%bin64Template%.7z
+	%SEVENZIP%\7z.exe a -t7z !EXPL! !INPL! %SEVENZFLAGS%
+	@ECHO:Archive file !EXPL! created>>%BUILDLOG%
 )
-@echo _ 
-set /p ANS2=Do you want to psi+ plugins [y(default)/n]:%=%
-if /i not "%ANS2%"=="n" (
-mkdir %PARENT_DIR%\plugins
-mkdir %PARENT_DIR%\plugins\%ARCH%
-%PLUGBUILDDIR%\compile-plugins -j 5 -o %PARENT_DIR%\plugins\%ARCH%
+set ISPLUGINS=OK
+@goto mainloop
+
+:goyandex
+setlocal EnableDelayedExpansion
+set /p ANS4="Do you want to copy build data to YandexDisk [y/n(default)]"
+IF /I "%ANS4%" == "y" (
+	set YADISKPATH=%USERPROFILE%\YandexDisk\psi-plus
+	COPY /Y %BUILDDIR%\psi-plus-plugins-%bin32Template%.7z !YADISKPATH!\%bin32Template%
+	COPY /Y %BUILDDIR%\psi-plus-%psiver%.%revision%*%bin32Template%.7z !YADISKPATH!\%bin32Template%
+	COPY /Y %BUILDDIR%\psi-plus-plugins-%bin64Template%.7z !YADISKPATH!\%bin64Template%
+	COPY /Y %BUILDDIR%\psi-plus-%psiver%.%revision%*%bin64Template%.7z !YADISKPATH!\%bin64Template%
 )
+IF /I "%BINTYPE%" == "y" COPY /Y %PARENT_DIR%\src\src.pro.orig %PARENT_DIR%\src\src.pro 
 @goto exit
 
 :exit
