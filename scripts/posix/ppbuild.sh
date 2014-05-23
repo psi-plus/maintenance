@@ -740,156 +740,6 @@ prepare_dev ()
   done
 }
 #
-otr_deb ()
-{
-  prepare_src
-  cd ${buildpsi}
-  local otrorigdir=${buildpsi}/plugins/generic/otrplugin
-  cd ${buildpsi}/plugins/generic
-  cp -r ${otrorigdir} ${orig_src}/src/plugins/generic
-  local otrdebdir=${orig_src}/src/plugins/generic/otrplugin
-  cd ${otrdebdir}
-  local PREFIX=/usr
-  local user="Vitaly Tonkacheyev"
-  local email="thetvg@gmail.com"
-  local data=$(LANG=en date +'%a, %d %b %Y %T %z')
-  local year=$(date +'%Y')
-  cd ${otrdebdir}
-  local debver=$(grep -Po '\d\.\d\.\d+' src/psiotrplugin.cpp)
-#
-  local control='Source: psi-plus-otrplugin
-Section: libs
-Priority: optional
-Maintainer: Vitaly Tonkacheyev <thetvg@gmail.com>
-Build-Depends: debhelper (>= 7), cdbs, libqt4-dev, libtidy-dev, libotr2-dev, libgcrypt11-dev
-Standards-Version: 3.8.3
-Homepage: https://github.com/psi-plus/plugins
-
-Package: psi-plus-otrplugin
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libc6 (>=2.7-1), libgcc1 (>=1:4.1.1), libqtcore4 (>=4.6), libqtgui4 (>=4.6), libqt4-xml (>=4.6), libotr2, libgcrypt11, libtidy-0.99-0, libstdc++6 (>=4.1.1), libx11-6, zlib1g (>=1:1.1.4)
-Description: Off-The-Record-Messaging plugin for Psi
- This is a Off-The-Record-Messaging plugin for the Psi+ instant messenger. Psi+ (aka Psi-dev) is a collection of patches for Psi. Psi+ is available from http://code.google.com/p/psi-dev/.'
-  local copyright="This work was packaged for Debian by:
-
-    ${user} <${email}> on ${data}
-
-It was downloaded from:
-
-   https://github.com/psi-plus/plugins
-
-Upstream Author(s):
-
-     Timo Engel <timo-e@freenet.de>
-
-Copyright:
-
-    <Copyright (C) 2007 Timo Engel>
-
-License:
-
-### SELECT: ###
-    This package is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 2 of the License, or
-    (at your option) any later version.
-### OR ###
-   This package is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License version 2 as
-   published by the Free Software Foundation.
-##########
-
-    This package is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this package; if not, write to the Free Software
-    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
-
-On Debian systems, the complete text of the GNU General
-Public License version 2 can be found in \"/usr/share/common-licenses/GPL-2\".
-
-The Debian packaging is:
-
-    Copyright (C) ${year} $user <$email>
-
-you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-# Please also look if there are files or directories which have a
-# different copyright/license attached and list them here."
-  local dirs='usr/lib/psi-plus/plugins'
-  local compat='7'
-  local rules='#!/usr/bin/make -f
-# -*- makefile -*-
-# Sample debian/rules that uses debhelper.
-# This file was originally written by Joey Hess and Craig Small.
-# As a special exception, when this file is copied by dh-make into a
-# dh-make output file, you may use that output file without restriction.
-# This special exception was added by Craig Small in version 0.37 of dh-make.
-
-# Uncomment this to turn on verbose mode.
-#export DH_VERBOSE=1
-config.status: configure
-	dh_testdir
-
-	# Add here commands to configure the package.
-	./configure --host=$(DEB_HOST_GNU_TYPE)
-	--build=$(DEB_BUILD_GNU_TYPE)
-	--prefix=/usr 
-  
-include /usr/share/cdbs/1/rules/debhelper.mk
-include /usr/share/cdbs/1/class/qmake.mk
-
-# Add here any variable or target overrides you need.
-QMAKE=qmake-qt4
-CFLAGS=-O3
-CXXFLAGS=-O3'
-  local package_sh="#!/bin/bash
-set -e
-
-debuild -us -uc
-debuild -S -us -uc
-su -c pbuilder build ../psi-plus-otrplugin-${debver}.dsc"
-  local changelog_template="psi-plus-otrplugin (${debver}-1) unstable; urgency=low
-
-  * New upstream release see README for details
-
- -- ${user} <${email}>  ${data}"
-  local docs='COPYING
-INSTALL
-README'
-#
-  builddeb=${orig_src}/src/plugins/generic/psi-plus-otrplugin-${debver}
-  check_dir ${builddeb}/debian
-  cp -r ${otrdebdir}/* ${builddeb}
-  local changefile=${builddeb}/debian/changelog
-  local rulesfile=${builddeb}/debian/rules
-  local controlfile=${builddeb}/debian/control
-  local dirsfile=${builddeb}/debian/dirs
-  local compatfile=${builddeb}/debian/compat
-  local copyrightfile=${builddeb}/debian/copyright
-  local docsfile=${builddeb}/debian/docs
-  local package_sh_file=${builddeb}/package.sh
-  echo "${changelog_template}" > ${changefile}
-  echo "${package_sh}" > ${package_sh_file}
-  echo "${rules}" > ${rulesfile}
-  echo "${control}" > ${controlfile}
-  echo "${dirs}" > ${dirsfile}
-  echo "${docs}" > ${docsfile}
-  echo "${compat}" > ${compatfile}
-  echo "${copyright}" > ${copyrightfile}
-#
-  cd ${builddeb}
-  qmakecmd
-  dpkg-buildpackage -rfakeroot
-  cp -f ../psi-plus-otrplugin_${debver}*.deb $buildpsi
-}
-#
 prepare_plugins_spec ()
 {
   local specfile="
@@ -912,12 +762,10 @@ ${desc}
 %setup
 
 %build
-cd ${plugdir}
-qmake
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{buildroot}%{_datadir} -DPLUGINS_PATH=/psi-plus/plugins .
 %{__make} %{?_smp_mflags} 
 
 %install
-cd ${plugdir}
 [ \"%{buildroot}\" != \"/\"] && rm -rf %{buildroot}
 %{__make} install INSTALL_ROOT=\"%{buildroot}\"
 
@@ -925,46 +773,38 @@ cd ${plugdir}
 [ \"%{buildroot}\" != \"/\" ] && rm -rf %{buildroot}
 
 %files
-%defattr(-, root, root, 0755)
-%{_libdir}/psi-plus/plugins/${libfile}
-${docfiles}
+%{_datadir}/psi-plus/plugins
 "
   echo "${specfile}" > ${rpmspec}/${progname}.spec
 }
 #
-otr_rpm ()
+build_rpm_plugins ()
 {
-  local progname="psi-plus-otrplugin"
+  local progname="psi-plus-plugins"
+  fetch_cmake_files
   prepare_src
+  check_dir ${orig_src}
+  cp -rf ${cmake_files_dir}/* ${orig_src}/
   cd ${buildpsi}
-  local otrorigdir=${buildpsi}/plugins/generic/otrplugin
-  local PREFIX="/usr"
-  local rpmver=$(grep -Po '\d\.\d\.\d+' ${otrorigdir}/src/psiotrplugin.cpp)
+  local rev=$(cd ${buildpsi}/git-plus/; echo $(($(git describe --tags | cut -d - -f 2))))
+  local rpmver=${psi_version}.${rev}
+  local allpluginsdir=${buildpsi}/${progname}-${rpmver}
   local package_name="${progname}-${rpmver}.tar.gz"
-  local summary="Off-The-Record-Messaging plugin for Psi"
-  local breq="libotr-devel, libtidy-devel, libgcrypt-devel"
+  local summary="Plugins for psi-plus-${rpmver}"
+  local breq="libotr2-devel, libtidy-devel, libgcrypt-devel, libgpg-error-devel"
   local urlpath="https://github.com/psi-plus/plugins"
   local group="Applications/Internet"
-  local desc="This is a Off-The-Record-Messaging plugin for the Psi+ instant messenger.
- Psi+ (aka Psi-dev) is a collection of patches for Psi. Psi+ is available from
- http://code.google.com/p/psi-dev/"
-  local plugdir="generic/otrplugin"
-  local libfile="libotrplugin.so"
-  local docfiles="%doc ${plugdir}/README ${plugdir}/COPYING"
-  #
-  check_dir ${inst_path}/${progname}-${rpmver}/generic/otrplugin
-  cp -r ${orig_src}/src/plugins/*.pri ${inst_path}/${progname}-${rpmver}/
-  cp -r ${orig_src}/src/plugins/include ${inst_path}/${progname}-${rpmver}/
-  cp -r ${otrorigdir}/* ${inst_path}/${progname}-${rpmver}/generic/otrplugin/
-  cd ${inst_path}
+  local desc="Plugins for jabber-client Psi+"
+  check_dir ${allpluginsdir}
+  cp -r ${orig_src}/* ${allpluginsdir}/
+  cd ${buildpsi}
   tar -pczf $package_name ${progname}-${rpmver}
-  #
   prepare_plugins_spec
   cp -rf ${package_name} ${rpmsrc}/
   rpmbuild -ba --clean --rmspec --rmsource ${rpmspec}/${progname}.spec
   echo "Cleaning..."
-  cd $buildpsi
-  rm -rf ${inst_suffix}
+  cd ${buildpsi}
+  rm -rf ${allpluginsdir}
 }
 #
 get_resources ()
@@ -1194,10 +1034,10 @@ print_menu ()
 ---[31] - Build and install psi+ plugins
 [4] - Build Debian package with checkinstall
 [5] - Build openSUSE RPM-package
+---[51] - Build plugins openSUSE RPM-package
 [6] - Set libpsibuild options
 [7] - Prepare psi+ sources for development
-[8] - Build otrplugin deb-package 
----[81] - Build otrplugin openSUSE RPM-package
+[8] - Build psi+ plugins using CMAKE
 [9] - Get help on additional actions
 [0] - Exit'
   echo "${menu_text}"
@@ -1216,8 +1056,7 @@ get_help ()
   echo "[ba] - Download all sources and build psi+ binary with plugins"
   echo "[ur] - Update resources"
   echo "[bs] - Backup ${buildpsi##*/} directory in ${buildpsi%/*}"
-  echo "[pw] - Prepare psi+ workspace (clean ${buildpsi}/build dir)"
-  echo "[cb] - Build psi+ plugins using CMAKE"  
+  echo "[pw] - Prepare psi+ workspace (clean ${buildpsi}/build dir)" 
   echo "-------------------------------------------"
   echo "Press Enter to continue..."
   read
@@ -1235,10 +1074,9 @@ choose_action ()
     "31" ) build_plugins;;
     "4" ) build_deb_package;;
     "5" ) build_rpm_package;;
+    "51" ) build_rpm_plugins;;
     "6" ) set_config;;
     "7" ) prepare_dev;;
-    "8" ) otr_deb;;
-    "81" ) otr_rpm;;
     "9" ) get_help;;
     "ia" ) install_resources;;
     "ii" ) install_iconsets;;
@@ -1252,7 +1090,7 @@ choose_action ()
     "bl" ) build_locales;;
     "bs" ) backup_tar;;
     "pw" ) run_libpsibuild prepare_workspace;;
-    "cb" ) build_cmake_plugins;;
+    "8" ) build_cmake_plugins;;
     "0" ) quit;;
   esac
 }
