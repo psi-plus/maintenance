@@ -416,15 +416,18 @@ IF /I "%ANS2%" == "y" (
 	@ECHO:_>>%BUILDLOG%
 	@ECHO:* Building psi+ W32-plugins *>>%BUILDLOG%
 	set PATH=%MINGW32%;%MINGW32%\bin;%QTDIR32%;%QTDIR32%\bin
-	%PLUGBUILDDIR%\compile-plugins -j 5
-	set INPL=%PARENT_DIR%\*.dll
+	mkdir %PARENT_DIR%\plugins\32
+	%PLUGBUILDDIR%\compile-plugins -j=5 -o=%PARENT_DIR%\plugins\32
+	set INPL=%PARENT_DIR%\plugins\32\*.dll
 	set EXPL=%BUILDDIR%\psi-plus-%psiver%.%revision%-plugins-%bin32Template%.7z
 	%SEVENZIP%\7z.exe a -t7z !EXPL! !INPL! %SEVENZFLAGS%
 	@ECHO:Archive file !EXPL! created>>%BUILDLOG%
 	@ECHO:_>>%BUILDLOG%
 	@ECHO:* Building psi+ W64-plugins *>>%BUILDLOG%
 	set PATH=%MINGW64%;%MINGW64%\bin;%QTDIR64%;%QTDIR64%\bin
-	%PLUGBUILDDIR%\compile-plugins -j 5
+	mkdir %PARENT_DIR%\plugins\64
+	%PLUGBUILDDIR%\compile-plugins -j=5 -o=%PARENT_DIR%\plugins\64
+	set INPL=%PARENT_DIR%\plugins\64\*.dll
 	set EXPL=%BUILDDIR%\psi-plus-%psiver%.%revision%-plugins-%bin64Template%.7z
 	%SEVENZIP%\7z.exe a -t7z !EXPL! !INPL! %SEVENZFLAGS%
 	@ECHO:Archive file !EXPL! created>>%BUILDLOG%
