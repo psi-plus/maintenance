@@ -244,6 +244,7 @@ prepare_tar ()
 prepare_win ()
 {
   echo "Preparing Psi+ source package to build in OS Windows..."
+  fetch_cmake_files
   prepare_src
   local rev=$(cd ${buildpsi}/git-plus/; echo $(($(git describe --tags | cut -d - -f 2))))
   local tar_name=psi-plus-${psi_version}.${rev}-win
@@ -252,6 +253,7 @@ prepare_win ()
   local file_pro=${new_src}/src/src.pro
   local ver_file=${new_src}/version
   cp -r ${orig_src} ${new_src}
+  cp -r ${cmake_files_dir}/* ${new_src}/
   if [ -d ${new_src} ]; then
     cd ${buildpsi}
     sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
@@ -298,6 +300,12 @@ set ARCH32=i386
 set QTDIR32=%QTDIRPREFIX%\%ARCH32%
 set MINGW32=%MINGWPREFIX%\mingw32
 set QCONF32=%BUILDDIR%\qconf\%ARCH32%\qconf.exe
+
+ECHO:Choose what to build^: 
+ECHO:-1--All
+ECHO:-2--Plugins
+CHOICE /C 12 /T 10 /D 1
+IF ERRORLEVEL==2 @goto onlyplugins
 
 IF /I "%BINTYPE%" == "y" (
 	@goto debug
@@ -415,24 +423,60 @@ set /p ANS2="Do you want to build psi+ plugins [y/n(default)]"
 IF /I "%ANS2%" == "y" (
 	@ECHO:_>>%BUILDLOG%
 	@ECHO:* Building psi+ W32-plugins *>>%BUILDLOG%
-	set PATH=%MINGW32%;%MINGW32%\bin;%QTDIR32%;%QTDIR32%\bin
-	mkdir %PARENT_DIR%\plugins\32
-	%PLUGBUILDDIR%\compile-plugins -j=5 -o=%PARENT_DIR%\plugins\32
-	set INPL=%PARENT_DIR%\plugins\32\*.dll
+	mkdir %PARENT_DIR%\plugins\w32
+	mkdir %PARENT_DIR%\plugins\w64
+	set CMAKEDIR=C:\build\cmake\i386
+	set ARCH=i386
+	set BTYPE=Release
+	IF /I "%BINTYPE%" == "y" set BTYPE=Debug
+	set LIBGCRYPT_ROOT=C:\build\psideps\libgcrypt\!ARCH!
+	set LIBGPGERROR_ROOT=C:\build\psideps\libgpg-error\!ARCH!
+	set LIBOTR_ROOT=C:\build\psideps\libotr\!ARCH!
+	set LIBTIDY_ROOT=C:\build\psideps\libtidy\!ARCH!
+	set PATH=%MINGW32%;%MINGW32%\bin;%QTDIR32%;%QTDIR32%\bin;!CMAKEDIR!\bin
+	set pl32=%PARENT_DIR%\plugins\w32
+	set pl64=%PARENT_DIR%\plugins\w64
+	set BDIR=build_!ARCH!_!BTYPE!
+	cd %PARENT_DIR%
+	if exist !BDIR! rmdir /S /Q !BDIR!
+	mkdir !BDIR!
+	cd !BDIR!
+	!CMAKEDIR!\bin\cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=!pl32! -DCMAKE_BUILD_TYPE=!BTYPE! -DLIBGCRYPT_ROOT=!LIBGCRYPT_ROOT! -DLIBGPGERROR_ROOT=!LIBGPGERROR_ROOT! -DLIBOTR_ROOT=!LIBOTR_ROOT! -DLIBTIDY_ROOT=!LIBTIDY_ROOT! ..
+	mingw32-make -j5 &&	mingw32-make install
+	set INPL=!pl32!\psi-plus\plugins\*.dll
 	set EXPL=%BUILDDIR%\psi-plus-%psiver%.%revision%-plugins-%bin32Template%.7z
 	%SEVENZIP%\7z.exe a -t7z !EXPL! !INPL! %SEVENZFLAGS%
 	@ECHO:Archive file !EXPL! created>>%BUILDLOG%
+	
+	cd %PARENT_DIR%
 	@ECHO:_>>%BUILDLOG%
 	@ECHO:* Building psi+ W64-plugins *>>%BUILDLOG%
-	set PATH=%MINGW64%;%MINGW64%\bin;%QTDIR64%;%QTDIR64%\bin
-	mkdir %PARENT_DIR%\plugins\64
-	%PLUGBUILDDIR%\compile-plugins -j=5 -o=%PARENT_DIR%\plugins\64
-	set INPL=%PARENT_DIR%\plugins\64\*.dll
+	set ARCH=x86_64
+	set LIBGCRYPT_ROOT=C:\build\psideps\libgcrypt\!ARCH!
+	set LIBGPGERROR_ROOT=C:\build\psideps\libgpg-error\!ARCH!
+	set LIBOTR_ROOT=C:\build\psideps\libotr\!ARCH!
+	set LIBTIDY_ROOT=C:\build\psideps\libtidy\!ARCH!
+	set PATH=%MINGW64%;%MINGW64%\bin;%QTDIR64%;%QTDIR64%\bin;!CMAKEDIR!\bin
+	set BDIR=build_!ARCH!_!BTYPE!
+	if exist !BDIR! rmdir /S /Q !BDIR! 
+	mkdir !BDIR!
+	cd !BDIR!
+	!CMAKEDIR!\bin\cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=!pl64! -DCMAKE_BUILD_TYPE=!BTYPE! -DLIBGCRYPT_ROOT=!LIBGCRYPT_ROOT! -DLIBGPGERROR_ROOT=!LIBGPGERROR_ROOT! -DLIBOTR_ROOT=!LIBOTR_ROOT! -DLIBTIDY_ROOT=!LIBTIDY_ROOT! ..
+	mingw32-make -j5 &&	mingw32-make install
+	set INPL=!pl64!\psi-plus\plugins\*.dll
 	set EXPL=%BUILDDIR%\psi-plus-%psiver%.%revision%-plugins-%bin64Template%.7z
 	%SEVENZIP%\7z.exe a -t7z !EXPL! !INPL! %SEVENZFLAGS%
 	@ECHO:Archive file !EXPL! created>>%BUILDLOG%
+	cd %PARENT_DIR%
 )
 set ISPLUGINS=OK
+@goto mainloop
+
+:onlyplugins
+SET BUILT32=OK
+SET BUILT64=OK
+SET BUILTW32=OK
+SET BUILTW64=OK
 @goto mainloop
 
 :goyandex
@@ -529,6 +573,7 @@ fetch_cmake_files ()
     git reset --hard
     git pull
   fi
+  cd ${buildpsi}
 }
 #
 build_cmake_plugins ()
