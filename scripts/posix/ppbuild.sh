@@ -259,6 +259,8 @@ prepare_win ()
     sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
     sed "s/\(@@DATE@@\)/"$(date +"%Y-%m-%d")"/" -i "${ver_file}"
     cp -f ${mainicon} ${new_src}/win32/
+    echo "${rev}" > ${new_src}/revision
+    echo "${psi_version}" > ${new_src}/psiver
     local makepsi='@ECHO off
 @ECHO:PSI-PLUS BUILD SCRIPT
 @ECHO.
@@ -423,46 +425,39 @@ set /p ANS2="Do you want to build psi+ plugins [y/n(default)]"
 IF /I "%ANS2%" == "y" (
 	@ECHO:_>>%BUILDLOG%
 	@ECHO:* Building psi+ W32-plugins *>>%BUILDLOG%
-	mkdir %PARENT_DIR%\plugins\w32
-	mkdir %PARENT_DIR%\plugins\w64
-	set CMAKEDIR=C:\build\cmake\i386
+	cd %PARENT_DIR%
+	set pl32=%PARENT_DIR%\plugins\w32
+	set pl64=%PARENT_DIR%\plugins\w64
+	mkdir !pl32! && mkdir !pl64!
+	set CMAKEDIR=%BUILDDIR%\cmake\i386
+	set LIBGCRYPT_ROOT=%PSIDEPSPREFIX%\libgcrypt
+	set LIBGPGERROR_ROOT=%PSIDEPSPREFIX%\libgpg-error
+	set LIBOTR_ROOT=%PSIDEPSPREFIX%\libotr
+	set LIBTIDY_ROOT=%PSIDEPSPREFIX%\libtidy
 	set ARCH=i386
 	set BTYPE=Release
 	IF /I "%BINTYPE%" == "y" set BTYPE=Debug
-	set LIBGCRYPT_ROOT=C:\build\psideps\libgcrypt\!ARCH!
-	set LIBGPGERROR_ROOT=C:\build\psideps\libgpg-error\!ARCH!
-	set LIBOTR_ROOT=C:\build\psideps\libotr\!ARCH!
-	set LIBTIDY_ROOT=C:\build\psideps\libtidy\!ARCH!
 	set PATH=%MINGW32%;%MINGW32%\bin;%QTDIR32%;%QTDIR32%\bin;!CMAKEDIR!\bin
-	set pl32=%PARENT_DIR%\plugins\w32
-	set pl64=%PARENT_DIR%\plugins\w64
 	set BDIR=build_!ARCH!_!BTYPE!
-	cd %PARENT_DIR%
 	if exist !BDIR! rmdir /S /Q !BDIR!
-	mkdir !BDIR!
-	cd !BDIR!
-	!CMAKEDIR!\bin\cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=!pl32! -DCMAKE_BUILD_TYPE=!BTYPE! -DLIBGCRYPT_ROOT=!LIBGCRYPT_ROOT! -DLIBGPGERROR_ROOT=!LIBGPGERROR_ROOT! -DLIBOTR_ROOT=!LIBOTR_ROOT! -DLIBTIDY_ROOT=!LIBTIDY_ROOT! ..
-	mingw32-make -j5 &&	mingw32-make install
+	mkdir !BDIR! && cd !BDIR!
+	!CMAKEDIR!\bin\cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=!pl32! -DCMAKE_BUILD_TYPE=!BTYPE! -DLIBGCRYPT_ROOT=!LIBGCRYPT_ROOT!\!ARCH! -DLIBGPGERROR_ROOT=!LIBGPGERROR_ROOT!\!ARCH! -DLIBOTR_ROOT=!LIBOTR_ROOT!\!ARCH! -DLIBTIDY_ROOT=!LIBTIDY_ROOT!\!ARCH! ..
+	mingw32-make -j5 && mingw32-make install
 	set INPL=!pl32!\psi-plus\plugins\*.dll
 	set EXPL=%BUILDDIR%\psi-plus-%psiver%.%revision%-plugins-%bin32Template%.7z
 	%SEVENZIP%\7z.exe a -t7z !EXPL! !INPL! %SEVENZFLAGS%
 	@ECHO:Archive file !EXPL! created>>%BUILDLOG%
-	
+
 	cd %PARENT_DIR%
 	@ECHO:_>>%BUILDLOG%
 	@ECHO:* Building psi+ W64-plugins *>>%BUILDLOG%
 	set ARCH=x86_64
-	set LIBGCRYPT_ROOT=C:\build\psideps\libgcrypt\!ARCH!
-	set LIBGPGERROR_ROOT=C:\build\psideps\libgpg-error\!ARCH!
-	set LIBOTR_ROOT=C:\build\psideps\libotr\!ARCH!
-	set LIBTIDY_ROOT=C:\build\psideps\libtidy\!ARCH!
 	set PATH=%MINGW64%;%MINGW64%\bin;%QTDIR64%;%QTDIR64%\bin;!CMAKEDIR!\bin
 	set BDIR=build_!ARCH!_!BTYPE!
 	if exist !BDIR! rmdir /S /Q !BDIR! 
-	mkdir !BDIR!
-	cd !BDIR!
-	!CMAKEDIR!\bin\cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=!pl64! -DCMAKE_BUILD_TYPE=!BTYPE! -DLIBGCRYPT_ROOT=!LIBGCRYPT_ROOT! -DLIBGPGERROR_ROOT=!LIBGPGERROR_ROOT! -DLIBOTR_ROOT=!LIBOTR_ROOT! -DLIBTIDY_ROOT=!LIBTIDY_ROOT! ..
-	mingw32-make -j5 &&	mingw32-make install
+	mkdir !BDIR! && cd !BDIR!
+	!CMAKEDIR!\bin\cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=!pl64! -DCMAKE_BUILD_TYPE=!BTYPE! -DLIBGCRYPT_ROOT=!LIBGCRYPT_ROOT!\!ARCH! -DLIBGPGERROR_ROOT=!LIBGPGERROR_ROOT!\!ARCH! -DLIBOTR_ROOT=!LIBOTR_ROOT!\!ARCH! -DLIBTIDY_ROOT=!LIBTIDY_ROOT!\!ARCH! ..
+	mingw32-make -j5 && mingw32-make install
 	set INPL=!pl64!\psi-plus\plugins\*.dll
 	set EXPL=%BUILDDIR%\psi-plus-%psiver%.%revision%-plugins-%bin64Template%.7z
 	%SEVENZIP%\7z.exe a -t7z !EXPL! !INPL! %SEVENZFLAGS%
