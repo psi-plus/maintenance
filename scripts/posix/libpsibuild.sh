@@ -311,7 +311,13 @@ check_env() {
   esac
 
   # Plugins
-  validate_plugins_list
+  local plugins_enabled=0
+  case "${CONF_OPTS}" in *--enable-plugins*) plugins_enabled=1; ;; *) ;; esac
+  [ -n "${PLUGINS}" ] && [ "${plugins_enabled}" = 0 ] && {
+    warning "WARNING: there are selected plugins but plugins are disabled in"
+    warning "configuration options. no one will be built"
+    PLUGINS=""
+  }
 
   # Language
   validate_translations
@@ -355,22 +361,8 @@ validate_translations() {
   log "Choosen interface language:" $TRANSLATIONS
 }
 
-validate_plugins_list() {
-  local plugins_enabled=0
-  case "${CONF_OPTS}" in *--enable-plugins*) plugins_enabled=1; ;; *) ;; esac
-
-  [ -n "${PLUGINS}" ] && [ "${plugins_enabled}" = 0 ] && {
-    warning "WARNING: there are selected plugins but plugins are disabled in"
-    warning "configuration options. no one will be built"
-    PLUGINS=""
-  }
-}
-
 prepare_workspace() {
-  if [ ! -d "${PSI_DIR}" ]
-  then
-    mkdir "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"
-  fi
+  mkdir -p "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"
   rm -rf "${PSI_DIR}"/build
   [ -d "${PSI_DIR}"/build ] && \
     die "can't delete old build directory ${PSI_DIR}/build"
@@ -518,7 +510,7 @@ fetch_sources() {
 validate_plugins_list() { 
   local requested_plugins="$1"
   local plugins_repo_dir="${PSI_DIR}/plugins"
-  [ -d "$plugins_repo_dir" ] || die "Expected plugins repo in ${PSI_DIR}/plugins"
+  [ -d "$plugins_repo_dir" ] || die "Expected plugins repo in ${plugins_repo_dir}"
   [ -z "${requested_plugins}" -o ! -d "$plugins_repo_dir" ] && return 0;
   local actual_plugins=""
   if [ "$requested_plugins" = "*" ]; then
