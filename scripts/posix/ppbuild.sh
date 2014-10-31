@@ -9,6 +9,10 @@ ${home}/bin" #список каталогов где могут быть най�
 qconf_cmds="qconf
 qconf-qt4
 qt-qconf" #список возможных имён бинарника qconf
+lib_prefixes="/usr/lib
+/usr/lib64
+/usr/local/lib
+/usr/local/lib64" #список каталогов для поиска библиотек
 def_prefix="/usr" #префикс для сборки пси+
 libpsibuild_url="https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh"
 #DEFAULT OPTIONS/ОПЦИИ ПО УМОЛЧАНИЮ
@@ -18,6 +22,15 @@ use_iconsets="system clients activities moods affiliations roster"
 isoffline=0
 skip_invalid=0
 use_plugins="*"
+let cpu_count=$(grep -c ^processor /proc/cpuinfo)+1
+#
+#COLORS
+red="\e[0;31m"
+green="\e[0;32m"
+nocolor="\x1B[0m"
+pink="\x1B[01;91m"
+yellow="\x1B[01;93m"
+blue="\x1B[01;94m"
 #
 
 #VARIABLES/ПЕРЕМЕННЫЕ
@@ -81,13 +94,31 @@ find_qconf ()
     fi
     done
     if [ ${isfound} -eq 1 ]; then
-      echo "QConf utility found: ${qconf_bin}"; echo ""
+      echo -e "${pink}QConf utility found:${nocolor} ${qconf_bin}"; echo ""
       break
     fi
   done
   if [ ${isfound} -eq 0 ] || [ -z "${qconf_bin}" ]; then
-    echo "Enter the absolute path to qconf binary (Example: /home/me/qconf):"
+    echo -e "Enter the absolute path to qconf binary (${pink}Example:${nocolor} /home/me/qconf):"
     read qconf_bin
+  fi
+}
+
+find_ccache ()
+{
+  local ccache_path=""
+  for prefix_path in ${lib_prefixes}; do
+    if [ -d "${prefix_path}/ccache/bin" ]; then
+      if [ -f "${prefix_path}/ccache/bin/g++" ]; then
+        ccache_path=${prefix_path}/ccache/bin
+        break
+      fi
+    fi
+  done
+  
+  if [ ! -z "${ccache_path}" ]; then
+    PATH="${ccache_path}:${PATH}"
+    QMAKE_CCACHE_CMD="QMAKE_CXX=ccache g++"
   fi
 }
 #
@@ -149,19 +180,20 @@ update_variables ()
   cmake_files_dir=${buildpsi}/psi-plus-plugins-cmake
 }
 #
+die() { echo "$@"; exit 1; }
+#
 check_libpsibuild ()
 {
-  die() { echo "$@"; exit 1; }
   cd ${workdir}
   if [ "$isoffline" = 0 ]; then
-    echo "**libpsibuild.sh library updates check**"; echo ""
+    echo -e "${blue}**libpsibuild.sh library updates check**${nocolor}"; echo ""
     wget --output-document="libpsibuild.sh.new" --no-check-certificate ${libpsibuild_url};
     if [ "$(diff -q libpsibuild.sh libpsibuild.sh.new)" ] || [ ! -f "${workdir}/libpsibuild.sh" ]
     then
-      echo "**libpsibuild.sh library has been updated**"; echo ""
+      echo -e "${blue}**libpsibuild.sh library has been updated**${nocolor}"; echo ""
       mv -f ${workdir}/libpsibuild.sh.new ${workdir}/libpsibuild.sh
     else
-      echo "**you have the last version of libpsibuild.sh library**"; echo ""  
+      echo -e "${blue}**you have the last version of libpsibuild.sh library**${nocolor}"; echo ""  
       rm -f ${workdir}/libpsibuild.sh.new
     fi
     chmod u+x ${workdir}/libpsibuild.sh
@@ -200,11 +232,11 @@ prepare_src ()
   down_all
   run_libpsibuild prepare_workspace
   run_libpsibuild prepare_all
-  echo "Do you want to apply psi-new-history.patch [y/n(default)]"
+  echo -e "${blue}Do you want to apply psi-new-history.patch${nocolor} ${pink}[y/n(default)]${nocolor}"
   read ispatch
   if [ "${ispatch}" == "y" ]; then
     cd ${orig_src}
-    patch -p1 < ${patches}/dev/psi-new-history.patch
+    patch -p1 --input=${patches}/dev/psi-new-history.patch
     cd ${workdir}
   fi
 }
@@ -241,276 +273,34 @@ prepare_tar ()
   fi
 }
 #
-prepare_win ()
-{
-  echo "Preparing Psi+ source package to build in OS Windows..."
-  fetch_cmake_files
-  prepare_src
-  local rev=$(cd ${buildpsi}/git-plus/; echo $(($(git describe --tags | cut -d - -f 2))))
-  local tar_name=psi-plus-${psi_version}.${rev}-win
-  local new_src=${buildpsi}/${tar_name}
-  local mainicon=${buildpsi}/git-plus/app.ico
-  local file_pro=${new_src}/src/src.pro
-  local ver_file=${new_src}/version
-  cp -r ${orig_src} ${new_src}
-  cp -r ${cmake_files_dir}/* ${new_src}/
-  if [ -d ${new_src} ]; then
-    cd ${buildpsi}
-    sed "s/#CONFIG += psi_plugins/CONFIG += psi_plugins/" -i "${file_pro}"
-    sed "s/\(@@DATE@@\)/"$(date +"%Y-%m-%d")"/" -i "${ver_file}"
-    cp -f ${mainicon} ${new_src}/win32/
-    echo "${rev}" > ${new_src}/revision
-    echo "${psi_version}" > ${new_src}/psiver
-    local makepsi='@ECHO off
-@ECHO:PSI-PLUS BUILD SCRIPT
-@ECHO.
-set /p HISTYPE="Do you want to build psi+ with new history [y/n(default)]"
-@ECHO.
-set /p BINTYPE="Do you want to build psi+ debug binary [y/n(default)]"
-@ECHO. 
-
-set PARENT_DIR=%CD%
-set BUILDLOG=%PARENT_DIR%\build.log
-@ECHO:Logging started>%BUILDLOG%
-@ECHO:_>>%BUILDLOG%
-set SEVENZIP="C:\Program files\7-Zip"
-set QMAKESPEC=win32-g++
-set MAKE=mingw32-make -j5
-set BUILDDIR=C:\build
-set MINGWPREFIX=C:\mingw
-set QTDIRPREFIX=C:\Qt\4.8.6
-set PLUGBUILDDIR=%BUILDDIR%\PluginsBuilder
-set PSIDEPSPREFIX=%BUILDDIR%\psideps
-set nHistoryTemplate=new_history
-set HISTORYLIBS= 
-set HISTORYINC= 
-set bin32Template=win32
-set bin64Template=win64
-set CONFDEFAULTS=--enable-plugins --enable-whiteboarding
-set ISDEBUG=--release
-set PSI_DATE=%date:~6,4%-%date:~3,2%-%date:~0,2%
-set SEVENZFLAGS=-mx=9 -m0=LZMA -mmt=on
-set /p revision=< %PARENT_DIR%\revision
-set /p psiver=< %PARENT_DIR%\psiver
-REM win64 specific variables
-set ARCH64=x86_64
-set QTDIR64=%QTDIRPREFIX%\%ARCH64%
-set MINGW64=%MINGWPREFIX%\mingw64
-set QCONF64=%BUILDDIR%\qconf\%ARCH64%\qconf.exe
-REM win32 specific variables
-set ARCH32=i386
-set QTDIR32=%QTDIRPREFIX%\%ARCH32%
-set MINGW32=%MINGWPREFIX%\mingw32
-set QCONF32=%BUILDDIR%\qconf\%ARCH32%\qconf.exe
-
-ECHO:Choose what to build^: 
-ECHO:-1--All
-ECHO:-2--Plugins
-CHOICE /C 12 /T 10 /D 1
-IF ERRORLEVEL==2 @goto onlyplugins
-
-IF /I "%BINTYPE%" == "y" (
-	@goto debug
-) ELSE (
-	@goto mainloop
-)
-
-:mainloop
-set ISWEBKIT=NO
-IF /I NOT "%BUILT32%" == "OK" @goto set32vars
-IF /I NOT "%BUILT64%" == "OK" @goto set64vars
-set ISWEBKIT=OK
-IF /I NOT "%BUILTW32%" == "OK" @goto set32vars
-IF /I NOT "%BUILTW64%" == "OK" @goto set64vars
-IF /I NOT "%ISPLUGINS%" == "OK" @goto plugins
-@goto goyandex
-
-:debug
-COPY /Y %PARENT_DIR%\src\src.pro %PARENT_DIR%\src\src.pro.orig
-set ISDEBUG=--debug
-@ECHO:CONFIG+=console>%PARENT_DIR%\src\src.pro
-TYPE %PARENT_DIR%\src\src.pro.orig>>%PARENT_DIR%\src\src.pro
-@ECHO:Building debug binaries with console>>%BUILDLOG%
-@goto mainloop
-
-:set32vars
-set ARCH=%ARCH32%
-set MINGWDIR=%MINGW32%
-set QTDIR=%QTDIR32%
-set BTYPE=W32
-@ECHO:* Building %BTYPE%-webkit^=%ISWEBKIT% psi+ binary *>>%BUILDLOG%
-@ECHO:_>>%BUILDLOG%
-@ECHO:%BTYPE% variables^:>>%BUILDLOG%
-@ECHO:QT4 in %QTDIR%>>%BUILDLOG%
-@ECHO:MINGW in %MINGWDIR%>>%BUILDLOG%
-@goto setcommonvars
-
-:set64vars
-set ARCH=%ARCH64%
-set MINGWDIR=%MINGW64%
-set QTDIR=%QTDIR64%
-set BTYPE=W64
-@ECHO:* Building %BTYPE%-webkit^=%ISWEBKIT% psi+ binary *>>%BUILDLOG%
-@ECHO:_>>%BUILDLOG%
-@ECHO:%BTYPE% variables^:>>%BUILDLOG%
-@ECHO:QT4 in %QTDIR%>>%BUILDLOG%
-@ECHO:MINGW in %MINGWDIR%>>%BUILDLOG%
-@goto setcommonvars
-
-:setcommonvars
-set JSONPATH=%PSIDEPSPREFIX%\qjson\%ARCH%
-@ECHO:QJSON library in %JSONPATH%>>%BUILDLOG%
-set QCADIR=%PSIDEPSPREFIX%\qca\%ARCH%
-@ECHO:QCA library in %QCADIR%>>%BUILDLOG%
-set ZLIBDIR=%PSIDEPSPREFIX%\zlib\%ARCH%
-@ECHO:ZLIB library in %ZLIBDIR%>>%BUILDLOG%
-set ASPELLDIR=%PSIDEPSPREFIX%\aspell\%ARCH%
-@ECHO:ASPELL library in %ASPELLDIR%>>%BUILDLOG%
-set LIBIDNDIR=%PSIDEPSPREFIX%\libidn\%ARCH%
-@ECHO:LIBIDN library in %LIBIDNDIR%>>%BUILDLOG%
-IF "%ISWEBKIT%" == "OK" SET WEBKITFLAG=--enable-webkit
-IF "%ISWEBKIT%" == "NO" SET WEBKITFLAG= 
-set PATH=%MINGWDIR%;%MINGWDIR%\bin;%QTDIR%;%QTDIR%\bin
-IF /I "%HISTYPE%" == "y" @goto setnewhis
-@goto makeit
-
-:setnewhis
-set HISTORYLIBS=--with-qjson-lib=%JSONPATH%\lib
-set HISTORYINC=--with-qjson-inc=%JSONPATH%\include
-@ECHO:%BTYPE% with new history>>%BUILDLOG%
-@goto makeit
-
-:archivate
-IF /I "%HISTYPE%" == "y" SET isNHis=-%nHistoryTemplate%
-IF "%ISWEBKIT%" == "OK" SET wbkPref=-webkit
-IF /I "%BTYPE%" == "W32" SET sysType=-win32
-IF /I "%BTYPE%" == "W64" SET sysType=-win64
-set INARCH=%PARENT_DIR%\psi-plus.exe
-IF NOT EXIST "%INARCH%" (
-	@ECHO:ERROR NO %INARCH% BINARY FOUND
-	@ECHO:ERROR NO %INARCH% BINARY FOUND>>%BUILDLOG%
-	@goto exit
-)
-set EXITARCH=%BUILDDIR%\psi-plus-%psiver%.%revision%%wbkPref%%isNHis%%sysType%.7z
-%SEVENZIP%\7z.exe a -t7z %EXITARCH% %INARCH% %SEVENZFLAGS%
-@ECHO:Archive file %EXITARCH% created>>%BUILDLOG%
-@ECHO:_>>%BUILDLOG%
-@goto mainloop
-
-:makeit
-IF EXIST "%PARENT_DIR%\Makefile" (
-	%MINGWDIR%\bin\mingw32-make clean
-	%MINGWDIR%\bin\mingw32-make distclean
-	@ECHO:Sources was cleaned>>%BUILDLOG%
-)
-IF /I "%BTYPE%%ISWEBKIT%" == "W64NO" @ECHO %psiver%.%revision%-64 ^(%PSI_DATE%^)>%PARENT_DIR%\version
-IF /I "%BTYPE%%ISWEBKIT%" == "W64OK" @ECHO %psiver%.%revision%-webkit-64 ^(%PSI_DATE%^)>%PARENT_DIR%\version
-IF /I "%BTYPE%%ISWEBKIT%" == "W32NO" @ECHO %psiver%.%revision% ^(%PSI_DATE%^)>%PARENT_DIR%\version
-IF /I "%BTYPE%%ISWEBKIT%" == "W32OK" @ECHO %psiver%.%revision%-webkit ^(%PSI_DATE%^)>%PARENT_DIR%\version
-IF /I "%BTYPE%" == "W32" %QCONF32%
-IF /I "%BTYPE%" == "W64" %QCONF64%
-configure %ISDEBUG% %CONFDEFAULTS% %WEBKITFLAG% --qtdir=%QTDIR% --with-zlib-inc=%ZLIBDIR%\include --with-zlib-lib=%ZLIBDIR%\lib --with-qca-inc=%QCADIR%\include --with-qca-lib=%QCADIR%\lib --disable-xss --disable-qdbus --with-aspell-inc=%ASPELLDIR%\include --with-aspell-lib=%ASPELLDIR%\lib --with-idn-inc=%LIBIDNDIR%\include --with-idn-lib=%LIBIDNDIR%\lib %HISTORYLIBS% %HISTORYINC%
-@ECHO:%BTYPE% webkit^=%ISWEBKIT% configured>>%BUILDLOG%
-mingw32-make -j5
-@ECHO:%BTYPE% webkit^=%ISWEBKIT% compiled>>%BUILDLOG%
-IF /I "%BTYPE%%ISWEBKIT%" == "W64NO" SET BUILT64=OK
-IF /I "%BTYPE%%ISWEBKIT%" == "W64OK" SET BUILTW64=OK
-IF /I "%BTYPE%%ISWEBKIT%" == "W32NO" SET BUILT32=OK
-IF /I "%BTYPE%%ISWEBKIT%" == "W32OK" SET BUILTW32=OK
-@goto archivate
-
-:plugins
-setlocal EnableDelayedExpansion
-set /p ANS2="Do you want to build psi+ plugins [y/n(default)]"
-IF /I "%ANS2%" == "y" (
-	@ECHO:_>>%BUILDLOG%
-	@ECHO:* Building psi+ W32-plugins *>>%BUILDLOG%
-	cd %PARENT_DIR%
-	set pl32=%PARENT_DIR%\plugins\w32
-	set pl64=%PARENT_DIR%\plugins\w64
-	mkdir !pl32! && mkdir !pl64!
-	set CMAKEDIR=%BUILDDIR%\cmake\i386
-	set LIBGCRYPT_ROOT=%PSIDEPSPREFIX%\libgcrypt
-	set LIBGPGERROR_ROOT=%PSIDEPSPREFIX%\libgpg-error
-	set LIBOTR_ROOT=%PSIDEPSPREFIX%\libotr
-	set LIBTIDY_ROOT=%PSIDEPSPREFIX%\libtidy
-	set ARCH=i386
-	set BTYPE=Release
-	IF /I "%BINTYPE%" == "y" set BTYPE=Debug
-	set PATH=%MINGW32%;%MINGW32%\bin;%QTDIR32%;%QTDIR32%\bin;!CMAKEDIR!\bin
-	set BDIR=build_!ARCH!_!BTYPE!
-	if exist !BDIR! rmdir /S /Q !BDIR!
-	mkdir !BDIR! && cd !BDIR!
-	!CMAKEDIR!\bin\cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=!pl32! -DCMAKE_BUILD_TYPE=!BTYPE! -DLIBGCRYPT_ROOT=!LIBGCRYPT_ROOT!\!ARCH! -DLIBGPGERROR_ROOT=!LIBGPGERROR_ROOT!\!ARCH! -DLIBOTR_ROOT=!LIBOTR_ROOT!\!ARCH! -DLIBTIDY_ROOT=!LIBTIDY_ROOT!\!ARCH! ..
-	mingw32-make -j5 && mingw32-make install
-	set INPL=!pl32!\psi-plus\plugins\*.dll
-	set EXPL=%BUILDDIR%\psi-plus-%psiver%.%revision%-plugins-%bin32Template%.7z
-	%SEVENZIP%\7z.exe a -t7z !EXPL! !INPL! %SEVENZFLAGS%
-	@ECHO:Archive file !EXPL! created>>%BUILDLOG%
-
-	cd %PARENT_DIR%
-	@ECHO:_>>%BUILDLOG%
-	@ECHO:* Building psi+ W64-plugins *>>%BUILDLOG%
-	set ARCH=x86_64
-	set PATH=%MINGW64%;%MINGW64%\bin;%QTDIR64%;%QTDIR64%\bin;!CMAKEDIR!\bin
-	set BDIR=build_!ARCH!_!BTYPE!
-	if exist !BDIR! rmdir /S /Q !BDIR! 
-	mkdir !BDIR! && cd !BDIR!
-	!CMAKEDIR!\bin\cmake -G "MinGW Makefiles" -DCMAKE_INSTALL_PREFIX=!pl64! -DCMAKE_BUILD_TYPE=!BTYPE! -DLIBGCRYPT_ROOT=!LIBGCRYPT_ROOT!\!ARCH! -DLIBGPGERROR_ROOT=!LIBGPGERROR_ROOT!\!ARCH! -DLIBOTR_ROOT=!LIBOTR_ROOT!\!ARCH! -DLIBTIDY_ROOT=!LIBTIDY_ROOT!\!ARCH! ..
-	mingw32-make -j5 && mingw32-make install
-	set INPL=!pl64!\psi-plus\plugins\*.dll
-	set EXPL=%BUILDDIR%\psi-plus-%psiver%.%revision%-plugins-%bin64Template%.7z
-	%SEVENZIP%\7z.exe a -t7z !EXPL! !INPL! %SEVENZFLAGS%
-	@ECHO:Archive file !EXPL! created>>%BUILDLOG%
-	cd %PARENT_DIR%
-)
-set ISPLUGINS=OK
-@goto mainloop
-
-:onlyplugins
-SET BUILT32=OK
-SET BUILT64=OK
-SET BUILTW32=OK
-SET BUILTW64=OK
-@goto mainloop
-
-:goyandex
-setlocal EnableDelayedExpansion
-set /p ANS4="Do you want to copy build data to YandexDisk [y/n(default)]"
-IF /I "%ANS4%" == "y" (
-	set YADISKPATH=%USERPROFILE%\YandexDisk\psi-plus
-	COPY /Y %BUILDDIR%\psi-plus-plugins-%bin32Template%.7z !YADISKPATH!\%bin32Template%
-	COPY /Y %BUILDDIR%\psi-plus-%psiver%.%revision%*%bin32Template%.7z !YADISKPATH!\%bin32Template%
-	COPY /Y %BUILDDIR%\psi-plus-plugins-%bin64Template%.7z !YADISKPATH!\%bin64Template%
-	COPY /Y %BUILDDIR%\psi-plus-%psiver%.%revision%*%bin64Template%.7z !YADISKPATH!\%bin64Template%
-)
-IF /I "%BINTYPE%" == "y" COPY /Y %PARENT_DIR%\src\src.pro.orig %PARENT_DIR%\src\src.pro 
-@goto exit
-
-:exit
-pause
-'
-    echo "${makepsi}" > ${new_src}/make-psiplus.cmd
-    tar -pczf ${tar_name}.tar.gz ${tar_name}
-    rm -rf ${new_src}
-  fi
-}
-#
 compile_psiplus ()
 {
+  curd=$(pwd)
   prepare_src
-  run_libpsibuild compile_psi 2>${buildpsi}/errors.txt
+  cd ${orig_src}
+  echo "***Build started***">${buildpsi}/build.log
+  echo "--Starting ${qconf_bin}">>${buildpsi}/build.log
+  ${qconf_bin} 2>>${buildpsi}/build.log
+  args="--prefix=/usr --enable-plugins --enable-whiteboarding ${iswebkit} ${no_enchant}"
+  echo "--Starting configure with args
+${args}  
+">>${buildpsi}/build.log
+  ./configure ${args} 2>>${buildpsi}/build.log
+  echo "--Starting make">>${buildpsi}/build.log
+  make -j${cpu_count} 2>>${buildpsi}/build.log || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
+  echo "***Build finished***">>${buildpsi}/build.log
+  cd ${curd}
 }
 #
 qmakecmd ()
 {
   if [ -f "/usr/bin/qmake" ] || [ -f "/usr/local/bin/qmake" ]; then
-    qmake
+    qmake || die
   else
     if [ -f "/usr/bin/qmake-qt4" ] || [ -f "/usr/local/bin/qmake-qt4" ]; then
-      qmake-qt4
+      qmake-qt4 || die
     else
-      echo "ERROR qmake not found"
+      echo -e "${red}ERROR qmake not found${nocolor}"
     fi
   fi
 }
@@ -529,7 +319,7 @@ build_plugins ()
   echo "*******************************"
   echo "Plugins compiled succesfully!!!"
   echo "*******************************"
-  echo "Do you want to install psi+ plugins into ${psi_homeplugdir} [y/n(default)]"
+  echo -e "${blue}Do you want to install psi+ plugins into ${psi_homeplugdir}${nocolor} ${pink}[y/n(default)]${nocolor}"
   read isinstall
   if [ "${isinstall}" == "y" ]; then
     check_dir ${psi_homeplugdir}
@@ -546,11 +336,8 @@ make_plugin ()
   if [ ! -z "$1" ]; then
     local currdir=$(pwd)
     cd "$1"
-    if [ -d "/usr/lib/ccache/bin" ] || [ -d "/usr/lib64/ccache/bin" ]; then
-      QMAKE_CCACHE_CMD="QMAKE_CXX=ccache g++"
-    fi
-    if [ ! -z "$(ls .obj | grep -e '.o$')" ]; then make && make distclean; fi
-    qmakecmd -t ${QMAKE_CCACHE_CMD} && make && cp -f *.so ${tmpplugs}/
+    if [ ! -z "$(ls .obj | grep -e '.o$')" ]; then make clean && make distclean; fi
+    qmakecmd -t ${QMAKE_CCACHE_CMD} && make -j${cpu_count} && cp -f *.so ${tmpplugs}/
     cd ${currdir}
   fi
 }
@@ -592,7 +379,7 @@ build_cmake_plugins ()
   local b_dir=${orig_src}/build
   check_dir ${b_dir}
   cd ${b_dir}
-  echo "Do you want to install psi+ plugins into ${psi_homeplugdir} [y/n(default)]"
+  echo -e "${blue}Do you want to install psi+ plugins into ${psi_homeplugdir}${nocolor} ${pink}[y/n(default)]${nocolor}"
   read isinstall
   if [ "${isinstall}" != "y" ]; then
     pl_preffix=${orig_src}
@@ -601,14 +388,14 @@ build_cmake_plugins ()
   local cmake_flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${pl_preffix} -DPLUGINS_PATH=${pl_suffix} -DBUILD_PLUGINS=${DEF_PLUG_LIST}"
   echo " "; echo "Build psi+ plugins using CMAKE started..."; echo " "
   cmake ${cmake_flags} ..
-  make && make install && echo_done
+  make -j${cpu_count} && make install && echo_done
   cd ${orig_src}
   rm -rf ${b_dir}
 }
 #
 build_deb_package ()
 {
-  if [ ! -f "${orig_src}/psi.pro" ]; then
+  if [ ! -f "${orig_src}/psi-plus" ]; then
     compile_psiplus
   fi
   echo "Building Psi+ DEB package with checkinstall"
@@ -625,9 +412,6 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru.'
 prepare_spec ()
 {
   local rev=$(cd ${buildpsi}/git-plus/; echo $(($(git describe --tags | cut -d - -f 2))))
-  if [ ! -z ${iswebkit} ]; then
-    webkit="--enable-webkit"
-  fi
   if [ ! -z ${qconf_bin} ] && [ -f "${qconf_bin}" ]; then
     qconfcmd=${qconf_bin}
   fi
@@ -668,7 +452,7 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru
 
 %build
 ${qconfcmd}
-./configure --prefix=\"%{_prefix}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR --enable-plugins ${webkit} --release --no-separate-debug-info
+./configure --prefix=\"%{_prefix}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR --enable-plugins ${iswebkit} ${no_enchant} --release --no-separate-debug-info
 %{__make} %{?_smp_mflags}
 
 
@@ -738,8 +522,8 @@ build_rpm_package ()
 prepare_dev ()
 {
   local psidev=$buildpsi/psidev
-  local orig=$psidev/git.orig
-  local new=$psidev/git
+  local orig=$psidev/psi.orig
+  local new=$psidev/psi
   rm -rf $orig
   rm -rf $new
   cd ${buildpsi}
@@ -758,27 +542,38 @@ prepare_dev ()
   fi
   if [ ! -f mkpatch ]; then
     wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/mkpatch" || die "Failed to update mkpatch";
+    sed "s/maintenance\/scripts\/posix\/psidiff\.ignore/psidiff\.ignore/g" -i ${psidev}/mkpatch
   fi
   if [ ! -f psidiff.ignore ]; then
     wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/psidiff.ignore" || die "Failed to update psidiff.ignore";
   fi
   local patchlist=$(ls ${buildpsi}/git-plus/patches/ | grep diff)
   cd ${orig}
-  echo "Enter maximum patch number to patch orig src"
+  echo "---------------------
+Patching original src
+---------------------">${psidev}/patching.log
+  echo -e "${blue}Enter maximum patch number to patch orig src${nocolor}"
   read patchnumber
   for patchfile in ${patchlist}; do
       if [  ${patchfile:0:4} -lt ${patchnumber} ]; then
-        echo  ${patchfile}
-        patch -p1 < ${buildpsi}/git-plus/patches/${patchfile}
+        echo  "${patchfile}">>${psidev}/patching.log
+        msg="${green}[OK]${nocolor}"
+        patch -p1 --input=${buildpsi}/git-plus/patches/${patchfile} >>${psidev}/patching.log || msg="${red}[NO]${nocolor}"
+        echo -e "${patchfile} ${msg}"
       fi
   done
   cd ${new}
-  echo "Enter maximum patch number to patch work src"
+  echo "---------------------
+Patching work src
+---------------------">>${psidev}/patching.log
+  echo -e "${blue}Enter maximum patch number to patch work src${nocolor}"
   read patchnumber
   for patchfile in ${patchlist}; do
       if [  ${patchfile:0:4} -lt ${patchnumber} ]; then
-        echo  ${patchfile}
-        patch -p1 < ${buildpsi}/git-plus/patches/${patchfile}
+        echo  "${patchfile}">>${psidev}/patching.log
+        msg="${green}[OK]${nocolor}"
+        patch -p1 --input=${buildpsi}/git-plus/patches/${patchfile} >>${psidev}/patching.log || msg="${red}[NO]${nocolor}"
+        echo -e "${patchfile} ${msg}"
       fi
   done
 }
@@ -969,19 +764,19 @@ set_config ()
   fi
   local loop=1
   while [ ${loop} = 1 ];  do
-    echo "Choose action TODO:"
-    echo "--[1] - Set WebKit version to use (current: ${use_webkit})"
-    echo "--[2] - Set iconsets list needed to build"
-    echo "--[3] - Set Offline Mode (current: ${is_offline})"
-    echo "--[4] - Skip Invalid patches (current: ${skip_patches})"
-    echo "--[5] - Set list of plugins needed to build (for all use *)"
-    echo "--[6] - Set use aspell instead of enchant (current: ${noenchant})"
-    echo "--[7] - Set psi+ sources path (current: ${buildpsi})"
-    echo "--[8] - Print option values"
-    echo "--[0] - Do nothing"
+    echo -e "${blue}Choose action TODO:${nocolor}
+--${pink}[1]${nocolor} - Set WebKit version to use (current: ${use_webkit})
+--${pink}[2]${nocolor} - Set iconsets list needed to build
+--${pink}[3]${nocolor} - Set Offline Mode (current: ${is_offline})
+--${pink}[4]${nocolor} - Skip Invalid patches (current: ${skip_patches})
+--${pink}[5]${nocolor} - Set list of plugins needed to build (for all use *)
+--${pink}[6]${nocolor} - Set use aspell instead of enchant (current: ${noenchant})
+--${pink}[7]${nocolor} - Set psi+ sources path (current: ${buildpsi})
+--${pink}[8]${nocolor} - Print option values
+--${pink}[0]${nocolor} - Do nothing"
     read deistvo
     case ${deistvo} in
-      "1" ) echo "Do you want use WebKit [y/n] ?"
+      "1" ) echo -e "Do you want use WebKit ${pink}[y/n]${nocolor} ?"
             read variable
             if [ "$variable" == "y" ]; then
               iswebkit="--enable-webkit"
@@ -997,7 +792,7 @@ set_config ()
             else
               use_iconsets="system clients activities moods affiliations roster"
             fi;;
-      "3" ) echo "Do you want use Offline Mode [y/n] ?"
+      "3" ) echo -e "Do you want use Offline Mode ${pink}[y/n]${nocolor} ?"
             read variable
             if [ "$variable" == "y" ]; then
               isoffline=1
@@ -1006,7 +801,7 @@ set_config ()
               isoffline=0
               is_offline="n"
             fi;;
-      "4" ) echo "Do you want to skip invalid patches when patching [y/n] ?"
+      "4" ) echo -e "Do you want to skip invalid patches when patching ${pink}[y/n]${nocolor} ?"
             read variable
             if [ "$variable" == "y" ]; then
               skip_invalid=1
@@ -1022,7 +817,7 @@ set_config ()
             else
               use_plugins=""
             fi;;
-      "6" ) echo "Do you want use aspell spellcheck engine instead on enchant [y/n] ?"
+      "6" ) echo -e "Do you want use aspell spellcheck engine instead on enchant ${pink}[y/n]${nocolor} ?"
             read variable
             if [ "$variable" == "y" ]; then
               no_enchant="--disable-enchant"
@@ -1040,15 +835,15 @@ set_config ()
             else
               buildpsi=${default_buildpsi}
             fi;;            
-      "8" ) echo "==Options=="
-            echo "WebKit = ${use_webkit}"
-            echo "Iconsets = ${use_iconsets}"
-            echo "Offline Mode = ${is_offline}"
-            echo "Skip Invalid Patches = ${skip_patches}"
-            echo "Plugins = ${use_plugins}"
-            echo "No Enchant = ${noenchant}"
-            echo "Psi+ sources path = ${buildpsi}"
-            echo "===========";;
+      "8" ) echo -e "${blue}==Options==${nocolor}
+${green}WebKit${nocolor} = ${yellow}${use_webkit}${nocolor}
+${green}Iconsets${nocolor} = ${yellow}${use_iconsets}${nocolor}
+${green}Offline Mode${nocolor} = ${yellow}${is_offline}${nocolor}
+${green}Skip Invalid Patches${nocolor} = ${yellow}${skip_patches}${nocolor}
+${green}Plugins${nocolor} = ${yellow}${use_plugins}${nocolor}
+${green}No Enchant${nocolor} = ${yellow}${noenchant}${nocolor}
+${green}Psi+ sources path${nocolor} = ${yellow}${buildpsi}${nocolor}
+${blue}===========${nocolor}";;
       "0" ) clear
             loop=0;;
     esac
@@ -1069,39 +864,37 @@ set_config ()
 #
 print_menu ()
 {
-  local menu_text='Choose action TODO!
-[1] - Download All needed source files to build psi+
-[2] - Prepare psi+ sources
----[21] - Prepare psi+ source package to build in OS Windows
-[3] - Build psi+ binary
----[31] - Build and install psi+ plugins
-[4] - Build Debian package with checkinstall
-[5] - Build openSUSE RPM-package
----[51] - Build plugins openSUSE RPM-package
-[6] - Set libpsibuild options
-[7] - Prepare psi+ sources for development
-[8] - Build psi+ plugins using CMAKE
-[9] - Get help on additional actions
-[0] - Exit'
-  echo "${menu_text}"
+  echo -e "${blue}Choose action TODO!${nocolor}
+${pink}[1]${nocolor} - Download All needed source files to build psi+
+${pink}[2]${nocolor} - Prepare psi+ sources
+${pink}[3]${nocolor} - Build psi+ binary
+---${pink}[31]${nocolor} - Build and install psi+ plugins
+${pink}[4]${nocolor} - Build Debian package with checkinstall
+${pink}[5]${nocolor} - Build openSUSE RPM-package
+---${pink}[51]${nocolor} - Build plugins openSUSE RPM-package
+${pink}[6]${nocolor} - Set libpsibuild options
+${pink}[7]${nocolor} - Prepare psi+ sources for development
+${pink}[8]${nocolor} - Build psi+ plugins using CMAKE
+${pink}[9]${nocolor} - Get help on additional actions
+${pink}[0]${nocolor} - Exit"
 }
 #
 get_help ()
 {
-  echo "---------------HELP-----------------------"
-  echo "[ia] - Install all resources to $psi_datadir"
-  echo "[ii] - Install iconsets to $psi_datadir"
-  echo "[is] - Install skins to $psi_datadir"
-  echo "[iz] - Install sounds to to $psi_datadir"
-  echo "[it] - Install themes to $psi_datadir"
-  echo "[il] - Install locales to $psi_datadir"
-  echo "[bl] - Just build locale files without installing"
-  echo "[ba] - Download all sources and build psi+ binary with plugins"
-  echo "[ur] - Update resources"
-  echo "[bs] - Backup ${buildpsi##*/} directory in ${buildpsi%/*}"
-  echo "[pw] - Prepare psi+ workspace (clean ${buildpsi}/build dir)" 
-  echo "-------------------------------------------"
-  echo "Press Enter to continue..."
+  echo -e "${red}---------------HELP-----------------------${nocolor}
+${pink}[ia]${nocolor} - Install all resources to $psi_datadir
+${pink}[ii]${nocolor} - Install iconsets to $psi_datadir
+${pink}[is]${nocolor} - Install skins to $psi_datadir
+${pink}[iz]${nocolor} - Install sounds to to $psi_datadir
+${pink}[it]${nocolor} - Install themes to $psi_datadir
+${pink}[il]${nocolor} - Install locales to $psi_datadir
+${pink}[bl]${nocolor} - Just build locale files without installing
+${pink}[ba]${nocolor} - Download all sources and build psi+ binary with plugins
+${pink}[ur]${nocolor} - Update resources
+${pink}[bs]${nocolor} - Backup ${buildpsi##*/} directory in ${buildpsi%/*}
+${pink}[pw]${nocolor} - Prepare psi+ workspace (clean ${buildpsi}/build dir)
+${red}-------------------------------------------${nocolor}
+${blue}Press Enter to continue...${nocolor}"
   read
 }
 #
@@ -1112,7 +905,6 @@ choose_action ()
   case ${vibor} in
     "1" ) down_all;;
     "2" ) prepare_src;;
-    "21" ) prepare_win;;
     "3" ) compile_psiplus;;
     "31" ) build_plugins;;
     "4" ) build_deb_package;;
@@ -1145,6 +937,7 @@ if [ ! -f "${config_file}" ]; then
   set_config
 fi
 find_qconf
+find_ccache
 set_options
 clear
 #
