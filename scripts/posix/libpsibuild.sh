@@ -330,6 +330,7 @@ check_env() {
     if [ -z "${PSILIBDIR}" ]; then # --libdir is not present in argv
       PSILIBDIR="${COMPILE_PREFIX}/lib"
       [ "`uname -m`" = "x86_64" ] && [ -d "${COMPILE_PREFIX}"/lib64 ] && PSILIBDIR="${COMPILE_PREFIX}/lib64"
+      log "LIBDIR=${PSILIBDIR}"
       CONF_OPTS="${CONF_OPTS} --libdir=${PSILIBDIR}";
     fi
   fi
