@@ -282,6 +282,14 @@ check_env() {
   find_qt_util uic; # we don't use it dirrectly but its required.
   find_qt_util rcc; # we don't use it dirrectly but its required.
 
+  # export QTDIR for all qconf based tools
+  if [ -z "${QTDIR}" ]; then
+    qtbindir="$("${QMAKE}" -query QT_INSTALL_BINS)"
+    if [ -n "${qtbindir}" -a "$(basename "${qtbindir}" 2>/dev/null)" = bin ]; then
+      export QTDIR=$(dirname "${qtbindir}" 2>/dev/null)
+    fi
+  fi
+
   # QConf
   if [ -n "${QCONFDIR}" -a -n "`PATH="${PATH}:${QCONFDIR}" qconf 2>/dev/null`" ]; then
     QCONF="${QCONFDIR}/qconf"
