@@ -25,9 +25,9 @@ exit 1
 # OPTIONS / НАСТРОЙКИ
 
 # build and store directory / каталог для сорсов и сборки
-#PSI_DIR="${HOME}/psi"
+#PSI_BUILD_DIR="${HOME}/psi"
 cd `dirname $0`
-PSI_DIR=`pwd`
+PSI_BUILD_DIR=`pwd`
 
 # official repository / репа псины
 GIT_REPO_PSI=git://git.psi-im.org/psi.git
@@ -62,22 +62,22 @@ v=`svn --version 2>/dev/null` || die "You should install subversion first. / С�
 echo "OK"
 
 echo -n "init directories.."
-if [ ! -d "${PSI_DIR}" ]
+if [ ! -d "${PSI_BUILD_DIR}" ]
 then
-  mkdir "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"
+  mkdir "${PSI_BUILD_DIR}" || die "can't create work directory ${PSI_BUILD_DIR}"
 fi
 
-cd "${PSI_DIR}"
+cd "${PSI_BUILD_DIR}"
 if [ ! -d psi ]
 then
-  mkdir psi || die "can't create directory for git sources ${PSI_DIR}/psi"
+  mkdir psi || die "can't create directory for git sources ${PSI_BUILD_DIR}/psi"
 fi
 if [ -d build ]
 then
   echo -n "removing old build directory.."
-  rm -rf build || die "can't delete old build directory ${PSI_DIR}/build"
+  rm -rf build || die "can't delete old build directory ${PSI_BUILD_DIR}/build"
 fi
-mkdir build || die "can't create build directory ${PSI_DIR}/build"
+mkdir build || die "can't create build directory ${PSI_BUILD_DIR}/build"
 echo "OK"
 
 if [ -d "psi/.git" ]
@@ -99,15 +99,15 @@ else
 fi
 
 echo "exporting sources"
-cd "${PSI_DIR}"/psi
-git archive --format=tar HEAD | ( cd "${PSI_DIR}/build" ; tar xf - )
+cd "${PSI_BUILD_DIR}"/psi
+git archive --format=tar HEAD | ( cd "${PSI_BUILD_DIR}/build" ; tar xf - )
 (
-	export ddir="${PSI_DIR}/build"
+	export ddir="${PSI_BUILD_DIR}/build"
 	git submodule foreach '( git archive --format=tar HEAD ) | ( cd "${ddir}/${path}" ; tar xf - )'
 )
 echo "downloading psi+.."
 
-cd "${PSI_DIR}"
+cd "${PSI_BUILD_DIR}"
 if [ -d psi+ ]
 then
   svn up psi+ || die "psi+ update failed"
@@ -128,24 +128,24 @@ mv build/iconsets-psi-plus/system/default/psiplus build/iconsets/system/default/
 
 PATCHES=`ls -1 build/patches/*diff 2>/dev/null`
 
-cd "${PSI_DIR}/build/patches" && ls -1 *.diff > series
+cd "${PSI_BUILD_DIR}/build/patches" && ls -1 *.diff > series
 
-cd "${PSI_DIR}/build"
+cd "${PSI_BUILD_DIR}/build"
 rev=`svnversion "../psi+"`
 sed "s/.xxx/.${rev}/" -i patches/9999-psiplus-application-info.diff
 
 #очищаем виндовый хлам
-find "${PSI_DIR}/build" -name 'win32'  | xargs rm -rf $1
+find "${PSI_BUILD_DIR}/build" -name 'win32'  | xargs rm -rf $1
 
 #Ну кто так файлы кладет в svn
-cp -R "${PSI_DIR}/build/plugins" "${PSI_DIR}/build/src/"
-rm -rf "${PSI_DIR}/build/plugins"
+cp -R "${PSI_BUILD_DIR}/build/plugins" "${PSI_BUILD_DIR}/build/src/"
+rm -rf "${PSI_BUILD_DIR}/build/plugins"
 
 #к сожалению из-за лицензии
-#rm -rf "${PSI_DIR}/build/iconsets-psi-plus/clients"
+#rm -rf "${PSI_BUILD_DIR}/build/iconsets-psi-plus/clients"
 
-rm -rf "${PSI_DIR}/psi-plus-0.15~svn${rev}"
-mv "${PSI_DIR}/build" "${PSI_DIR}/psi-plus-0.15~svn${rev}"
-cd ${PSI_DIR}
+rm -rf "${PSI_BUILD_DIR}/psi-plus-0.15~svn${rev}"
+mv "${PSI_BUILD_DIR}/build" "${PSI_BUILD_DIR}/psi-plus-0.15~svn${rev}"
+cd ${PSI_BUILD_DIR}
 tar -cjf "psi-plus-0.15~svn${rev}.tar.bz2" "psi-plus-0.15~svn${rev}"
-rm -rf "${PSI_DIR}/psi-plus-0.15~svn${rev}"
+rm -rf "${PSI_BUILD_DIR}/psi-plus-0.15~svn${rev}"
