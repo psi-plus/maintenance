@@ -454,7 +454,7 @@ git_fetch() {
   local target="$2"
   local comment="$3"
   local allowmeit="${4:-0}"
-  local curd=`pwd`
+  local curd="`pwd`"
   local forcesubmodule=0
   [ -d "${target}/.git" ] && [ "$(cd "${target}" && git config --get remote.origin.url)" = "${remote}" ] && {
     [ $WORK_OFFLINE = 0 ] && {
@@ -594,8 +594,8 @@ prepare_sources() {
      fi
   done
 
-  rev_date_list="$(cd ${PSI_DIR}/git/; git log -n1 --date=short --pretty=format:'%ad')
-                 $(cd ${PSI_DIR}/git-plus/; git log -n1 --date=short --pretty=format:'%ad')"
+  rev_date_list="$(cd "${PSI_DIR}/git/"; git log -n1 --date=short --pretty=format:'%ad')
+                 $(cd "${PSI_DIR}/git-plus/"; git log -n1 --date=short --pretty=format:'%ad')"
   rev_date=$(echo "${rev_date_list}" | sort -r | head -n1)
 
   case "${CONF_OPTS}" in
