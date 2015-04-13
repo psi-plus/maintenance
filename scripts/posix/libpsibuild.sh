@@ -52,8 +52,8 @@ SVN_UP="${SVN_UP:-git_svn_pull}"
 
 # convert INSTALL_ROOT to absolute path
 case "${INSTALL_ROOT}" in /*) ;; *) INSTALL_ROOT="$(pwd)/${INSTALL_ROOT}"; ;; esac
-# convert PSI_BUILD_DIR to absolute path
-[ -n "${PSI_BUILD_DIR}" ] && case "${PSI_BUILD_DIR}" in /*) ;; *) PSI_BUILD_DIR="$(pwd)/${PSI_BUILD_DIR}"; ;; esac
+# convert PSI_DIR to absolute path
+[ -n "${PSI_DIR}" ] && case "${PSI_DIR}" in /*) ;; *) PSI_DIR="$(pwd)/${PSI_DIR}"; ;; esac
 
 [ -n "${PLUGINS_PREFIXES}" ] && plugprefset=1
 PLUGINS_PREFIXES="${PLUGINS_PREFIXES:-generic}" # will be updated later while detecting platform specific settings
@@ -230,8 +230,8 @@ check_env() {
     ;;
   esac
    
-  PSI_BUILD_DIR="${PSI_BUILD_DIR:-${HOME}/psi}"
-  PATCH_LOG="${PATCH_LOG:-${PSI_BUILD_DIR}/psipatch.log}"
+  PSI_DIR="${PSI_DIR:-${HOME}/psi}"
+  PATCH_LOG="${PATCH_LOG:-${PSI_DIR}/psipatch.log}"
   CONFIGURE="${CONFIGURE:-configure}"
 
   
@@ -294,7 +294,7 @@ check_env() {
   if [ -n "${QCONFDIR}" -a -n "`PATH="${PATH}:${QCONFDIR}" qconf 2>/dev/null`" ]; then
     QCONF="${QCONFDIR}/qconf"
   else
-    export PATH="${PATH}:${PSI_BUILD_DIR}/qconf"
+    export PATH="${PATH}:${PSI_DIR}/qconf"
     for qc in qt-qconf qconf-qt4 qconf; do
       v=`$qc --version 2>/dev/null |grep affinix` && QCONF=$qc
     done
@@ -371,12 +371,12 @@ validate_translations() {
 }
 
 prepare_workspace() {
-  mkdir -p "${PSI_BUILD_DIR}" || die "can't create work directory ${PSI_BUILD_DIR}"
-  rm -rf "${PSI_BUILD_DIR}"/build
-  [ -d "${PSI_BUILD_DIR}"/build ] && \
-    die "can't delete old build directory ${PSI_BUILD_DIR}/build"
-  mkdir "${PSI_BUILD_DIR}"/build || \
-    die "can't create build directory ${PSI_BUILD_DIR}/build"
+  mkdir -p "${PSI_DIR}" || die "can't create work directory ${PSI_DIR}"
+  rm -rf "${PSI_DIR}"/build
+  [ -d "${PSI_DIR}"/build ] && \
+    die "can't delete old build directory ${PSI_DIR}/build"
+  mkdir "${PSI_DIR}"/build || \
+    die "can't create build directory ${PSI_DIR}/build"
   log "Created base directory structure"
 }
 
@@ -395,7 +395,7 @@ svn_fetch_set() {
   local items="$3"
   local subdir="$4"
   local curd=`pwd`
-  cd "${PSI_BUILD_DIR}"
+  cd "${PSI_DIR}"
   [ -n "${remote}" ] || die "invalid remote path in set fetching"
   if [ ! -d "${remote}" ]; then
     mkdir -p "${remote}"
@@ -492,13 +492,13 @@ git_fetch() {
 }
 
 fetch_build_deps_sources() {
-  cd "${PSI_BUILD_DIR}"
+  cd "${PSI_DIR}"
   [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "${QCONF_REPO}" qconf "QConf"
   [ "${BUILD_MISSING_QCA}" ] && svn_fetch "${QCA_REPO}" qca "QCA"
 }
 
 fetch_sources() {
-  cd "${PSI_BUILD_DIR}"
+  cd "${PSI_DIR}"
   git_fetch "${GIT_REPO_PSI}" git "Psi"
   git_fetch "${GIT_REPO_PLUS}" git-plus "Psi+ additionals"
 
@@ -514,11 +514,11 @@ fetch_sources() {
 }
 
 # accepts list of plugins in single var return list of corresponding directories
-# plugins should be already downloaded into "${PSI_BUILD_DIR}/plugins"
+# plugins should be already downloaded into "${PSI_DIR}/plugins"
 # ex: validate_plugins_list "gnome3support redirector" -> "unix/gnome3supportplugin dev/redirectorplugin" 
 validate_plugins_list() { 
   local requested_plugins="$1"
-  local plugins_repo_dir="${PSI_BUILD_DIR}/plugins"
+  local plugins_repo_dir="${PSI_DIR}/plugins"
   [ -d "$plugins_repo_dir" ] || die "Expected plugins repo in ${plugins_repo_dir}"
   [ -z "${requested_plugins}" -o ! -d "$plugins_repo_dir" ] && return 0;
   local actual_plugins=""
@@ -570,22 +570,22 @@ spatch() {
 
 prepare_sources() {
   log "Exporting sources"
-  cd "${PSI_BUILD_DIR}"/git
-  git archive --format=tar HEAD | ( cd "${PSI_BUILD_DIR}/build" ; tar xf - )
+  cd "${PSI_DIR}"/git
+  git archive --format=tar HEAD | ( cd "${PSI_DIR}/build" ; tar xf - )
   (
-    export ddir="${PSI_BUILD_DIR}/build"
+    export ddir="${PSI_DIR}/build"
     git submodule foreach "( git archive --format=tar HEAD ) \
         | ( cd \"${ddir}/\${path}\" ; tar xf - )"
   )
 
-  cd "${PSI_BUILD_DIR}"
+  cd "${PSI_DIR}"
   rev=$(cd git-plus/; git describe --tags | cut -d - -f 2)
   PATCHES=`ls -1 git-plus/patches/*diff 2>/dev/null`
   PATCHES="${PATCHES} ${EXTRA_PATCHES}"
-  cd "${PSI_BUILD_DIR}/build"
+  cd "${PSI_DIR}/build"
   [ -e "$PATCH_LOG" ] && rm "$PATCH_LOG"
   for p in $PATCHES; do
-     spatch "${PSI_BUILD_DIR}/${p}"
+     spatch "${PSI_DIR}/${p}"
      if [ "$?" != 0 ]
      then
        [ $SKIP_INVALID_PATCH = "0" ] \
@@ -594,8 +594,8 @@ prepare_sources() {
      fi
   done
 
-  rev_date_list="$(cd ${PSI_BUILD_DIR}/git/; git log -n1 --date=short --pretty=format:'%ad')
-                 $(cd ${PSI_BUILD_DIR}/git-plus/; git log -n1 --date=short --pretty=format:'%ad')"
+  rev_date_list="$(cd ${PSI_DIR}/git/; git log -n1 --date=short --pretty=format:'%ad')
+                 $(cd ${PSI_DIR}/git-plus/; git log -n1 --date=short --pretty=format:'%ad')"
   rev_date=$(echo "${rev_date_list}" | sort -r | head -n1)
 
   case "${CONF_OPTS}" in
@@ -611,17 +611,17 @@ prepare_sources() {
     src/plugins/psiplugin.pri
 
   # prepare icons
-  cp -a "${PSI_BUILD_DIR}"/git-plus/iconsets "${PSI_BUILD_DIR}/build"
-  cp "${PSI_BUILD_DIR}"/git-plus/app.ico "${PSI_BUILD_DIR}/build/win32"
+  cp -a "${PSI_DIR}"/git-plus/iconsets "${PSI_DIR}/build"
+  cp "${PSI_DIR}"/git-plus/app.ico "${PSI_DIR}/build/win32"
 }
 
 prepare_plugins_sources() {
-  [ -d "${PSI_BUILD_DIR}/build/src/plugins/generic" ] || \
+  [ -d "${PSI_DIR}/build/src/plugins/generic" ] || \
     die "preparing plugins requires prepared psi+ sources"
   for name in ${PLUGIN_DIRS}; do
-    mkdir -p `dirname "${PSI_BUILD_DIR}/build/src/plugins/$name"`
-    cp -a "${PSI_BUILD_DIR}/plugins/$name" \
-      "${PSI_BUILD_DIR}/build/src/plugins/$name"
+    mkdir -p `dirname "${PSI_DIR}/build/src/plugins/$name"`
+    cp -a "${PSI_DIR}/plugins/$name" \
+      "${PSI_DIR}/build/src/plugins/$name"
   done
 }
 
@@ -632,7 +632,7 @@ prepare_all() {
 
 compile_deps() {
   if [ ! -f "${QCONF}" -a "${BUILD_MISSING_QCONF}" = 1 ]; then
-    cd "${PSI_BUILD_DIR}/qconf"
+    cd "${PSI_DIR}/qconf"
 	./${CONFIGURE} || die "failed to configure qconf"
 	"$MAKE" $MAKEOPT || die "failed to make qconf"
 	export PATH="${PATH}:$PWD"
@@ -640,7 +640,7 @@ compile_deps() {
 	QCONF="${QCONFDIR}/qconf"
   fi
   if  [ "${BUILD_MISSING_QCA}" = 1 ]; then
-    cd "${PSI_BUILD_DIR}/qca"
+    cd "${PSI_DIR}/qca"
 	"$QCONF"
 	./${CONFIGURE} || die "failed to cofigure qca"
 	"$MAKE" $MAKEOPT || die "failed to make qca"
@@ -648,7 +648,7 @@ compile_deps() {
 }
 
 compile_psi() {
-  cd "${PSI_BUILD_DIR}/build"
+  cd "${PSI_DIR}/build"
   "$QCONF"
   log "./${CONFIGURE} ${CONF_OPTS}"
   ./${CONFIGURE} ${CONF_OPTS} || die "configure failed"
@@ -660,7 +660,7 @@ compile_plugins() {
 
   for name in ${PLUGIN_DIRS}; do
     log "Compiling ${name} plugin.."
-    cd  "${PSI_BUILD_DIR}/build/src/plugins/$name"
+    cd  "${PSI_DIR}/build/src/plugins/$name"
     "$QMAKE" "PREFIX=${COMPILE_PREFIX}" && "$MAKE" $MAKEOPT || {
       warning "Failed to make plugin ${name}! Skipping.."
       failed_plugins="${failed_plugins} ${name}"
@@ -678,22 +678,22 @@ install_psi() {
   case "`uname`" in MINGW*) return 0; ;; esac # disable on windows, must be reimplemented
   log "Installing psi.."
   BATCH_CODE="${BATCH_CODE}
-cd \"${PSI_BUILD_DIR}/build\";
+cd \"${PSI_DIR}/build\";
 $MAKE  INSTALL_ROOT=\"${INSTALL_ROOT}\" install || die \"Failed to install Psi+\""
-  datadir=`grep PSI_DATADIR "${PSI_BUILD_DIR}/build/conf.pri" 2>/dev/null`
+  datadir=`grep PSI_DATADIR "${PSI_DIR}/build/conf.pri" 2>/dev/null`
   datadir="${datadir#*=}"
   if [ -n "${datadir}" -a -n "$TRANSLATIONS" ]; then
     BATCH_CODE="${BATCH_CODE}
 mkdir -p \"${INSTALL_ROOT}${datadir}/translations\""
     for l in $TRANSLATIONS; do
-      f="${PSI_BUILD_DIR}/langs/translations/psi_$l"
+      f="${PSI_DIR}/langs/translations/psi_$l"
       #qtf="langs/$l/qt_$l"
       [ -n "${LRELEASE}" -a -f "${f}.ts" ] && "${LRELEASE}" "${f}.ts" 2> /dev/null
       #[ -n "${LRELEASE}" -a -f "${qtf}.ts" ] && "${LRELEASE}" "${qtf}.ts" 2> /dev/null
       [ -f "${f}.qm" ] && BATCH_CODE="${BATCH_CODE}
 cp \"${f}.qm\" \"${INSTALL_ROOT}${datadir}/translations\""
       #[ -f "${qtf}.qm" ] && BATCH_CODE="${BATCH_CODE}
-#cp \"${PSI_BUILD_DIR}/${qtf}.qm\" \"${INSTALL_ROOT}${datadir}\""
+#cp \"${PSI_DIR}/${qtf}.qm\" \"${INSTALL_ROOT}${datadir}\""
     done
   fi
   [ "${batch_mode}" = 1 ] || exec_install_batch
@@ -709,7 +709,7 @@ install_plugins() {
       *)
         log "Installing ${name} plugin.."
         BATCH_CODE="${BATCH_CODE}
-cd \"${PSI_BUILD_DIR}/build/src/plugins/$name\";
+cd \"${PSI_DIR}/build/src/plugins/$name\";
 $MAKE  INSTALL_ROOT=\"${INSTALL_ROOT}\" install || die \"Failed to install ${name} plugin..\""
         ;;
     esac
@@ -728,7 +728,7 @@ reset_install_batch() {
 }
 
 exec_install_batch() {
-  cd "${PSI_BUILD_DIR}"
+  cd "${PSI_DIR}"
 
   echo "#!/usr/bin/env sh
 die() {

@@ -20,7 +20,7 @@
 # OPTIONS / НАСТРОЙКИ
 
 # build and store directory / каталог для сорсов и сборки
-PSI_BUILD_DIR="${PSI_BUILD_DIR}" # leave empty for ${HOME}/psi on *nix or /c/psi on windows
+PSI_DIR="${PSI_DIR}" # leave empty for ${HOME}/psi on *nix or /c/psi on windows
 
 # icons for downloads / иконки для скачивания
 ICONSETS="system clients activities moods affiliations roster"
@@ -30,7 +30,7 @@ ICONSETS="system clients activities moods affiliations roster"
 WORK_OFFLINE=${WORK_OFFLINE:-0}
 
 # log of applying patches / лог применения патчей
-PATCH_LOG="" # PSI_BUILD_DIR/psipatch.log by default (empty for default)
+PATCH_LOG="" # PSI_DIR/psipatch.log by default (empty for default)
 
 # skip patches which applies with errors / пропускать глючные патчи
 SKIP_INVALID_PATCH="${SKIP_INVALID_PATCH:-0}"

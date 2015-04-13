@@ -161,7 +161,7 @@ read_options ()
 #
 set_options ()
 {
-  PSI_BUILD_DIR="${buildpsi}"
+  PSI_DIR="${buildpsi}"
   ICONSETS=${use_iconsets}
   WORK_OFFLINE=${WORK_OFFLINE:-$isoffline}
   PATCH_LOG=""
