@@ -758,9 +758,30 @@ $BATCH_CODE
 priveleged_exec() {
   local script="${1}"
   local dest_user="${2}"
-  log "Executing: su -m \"${dest_user}\" -c \"${script}\""
-  log "please enter ${dest_user}'s password.."
-  su -m "${dest_user}" -c "${script}" || die "install failed"
+  local cmd
+  local n
+  local cmd1="sudo \"${script}\""
+  local cmd2="su -m root -c \"${script}\""
+  local cmd3="su -m \"${dest_user}\" -c \"${script}\""
+
+  log
+  log "We are going to install everything now. Please choose auth method:"
+  [ "${dest_user}" != "root" ] && log "3) su ${dest_user}"
+  while true; do
+    log "  0) cancel install (start ${script} manually when ready)"
+    log "  1) sudo"
+    log "  2) su root"
+    read n
+    case "$n" in
+      0) return; ;;
+      [1-3]) cmd=$(eval echo \$cmd${n}); [ -n "$cmd" ] && break; ;;
+      *) log "Wrong choice. try again.."
+    esac
+  done
+
+  log "Executing: \"${cmd}\""
+  [ "${n}" = 3 ] && log "please enter ${dest_user}'s password.."
+  eval $cmd || die "install failed"
 }
 
 install_all() {
