@@ -600,18 +600,24 @@ ${desc}
 %setup
 
 %build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{buildroot}%{_datadir} -DPLUGINS_PATH=/psi-plus/plugins .
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{buildroot}%{_libdir} -DPLUGINS_PATH=/psi-plus/plugins .
 %{__make} %{?_smp_mflags} 
 
 %install
 [ \"%{buildroot}\" != \"/\"] && rm -rf %{buildroot}
 %{__make} install INSTALL_ROOT=\"%{buildroot}\"
 
+if [ \"%{_target_cpu}\" = \"x86_64\" ] && [ -d \"/usr/lib64\" ]; then
+  mkdir -p %{buildroot}/usr/lib64
+else
+  mkdir -p %{buildroot}/usr/lib
+fi
+
 %clean
 [ \"%{buildroot}\" != \"/\" ] && rm -rf %{buildroot}
 
 %files
-%{_datadir}/psi-plus/plugins
+%{_libdir}/psi-plus/plugins
 "
   echo "${specfile}" > ${rpmspec}/${progname}.spec
 }
