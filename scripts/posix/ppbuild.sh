@@ -455,7 +455,7 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru
 
 %build
 ${qconfcmd}
-./configure --prefix=\"%{_prefix}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR --enable-plugins ${iswebkit} ${no_enchant} --release --no-separate-debug-info
+./configure --prefix=\"%{_prefix}\" --libdir=\"%{_libdir}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR --enable-plugins ${iswebkit} ${no_enchant} --release --no-separate-debug-info
 %{__make} %{?_smp_mflags}
 
 
@@ -470,6 +470,9 @@ ${qconfcmd}
 %{__install} -Dp -m0644 iconsets/system/default/logo_128.png \
     %{buildroot}%{_datadir}/pixmaps/psi-plus.png ||:               
 
+mkdir -p %{buildroot}%{_datadir}/psi-plus
+mkdir -p %{buildroot}%{_bindir}
+mkdir -p %{buildroot}%{_datadir}/applications
 
 %post
 touch --no-create %{_datadir}/icons/hicolor || :
@@ -525,8 +528,8 @@ build_rpm_package ()
 prepare_dev ()
 {
   local psidev=$buildpsi/psidev
-  local orig=$psidev/git.orig
-  local new=$psidev/git
+  local orig=$psidev/psi.orig
+  local new=$psidev/psi
   rm -rf $orig
   rm -rf $new
   cd ${buildpsi}
