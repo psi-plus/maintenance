@@ -8,6 +8,7 @@ bindirs="/usr/bin
 ${home}/bin" #список каталогов где могут быть найдены бинарники
 qconf_cmds="qconf
 qconf-qt4
+qconf-qt5
 qt-qconf" #список возможных имён бинарника qconf
 lib_prefixes="/usr/lib
 /usr/lib64
@@ -48,13 +49,15 @@ DEF_CMAKE_INST_SUFFIX="share/psi+/plugins"
 DEF_PLUG_LIST="ALL"
 #тип сборки плагинов
 DEF_CMAKE_BUILD_TYPE="Release"
+#Qt5
+QT4_BUILD="OFF"
 
 #WARNING: следующие переменные будут изменены в процессе работы скрипта автоматически
 buildpsi=${default_buildpsi} #инициализация переменной
 orig_src=${buildpsi}/build #рабочий каталог для компиляции psi+
 patches=${buildpsi}/git-plus/patches #путь к патчам psi+, необходим для разработки
 inst_path=${buildpsi}/${inst_suffix} #только для пакетирования
-cmake_files_dir=${buildpsi}/psi-plus-plugins-cmake #файлы CMAKE для сборки плагинов
+cmake_files_dir=${buildpsi}/psi-plus-cmake #файлы CMAKE для сборки плагинов
 #
 
 #ENVIRONMENT VARIABLES/ПЕРЕМЕННЫЕ СРЕДЫ
@@ -177,7 +180,7 @@ update_variables ()
   orig_src=${buildpsi}/build
   patches=${buildpsi}/git-plus/patches
   inst_path=${buildpsi}/${inst_suffix}
-  cmake_files_dir=${buildpsi}/psi-plus-plugins-cmake
+  cmake_files_dir=${buildpsi}/psi-plus-cmake
 }
 #
 die() { echo "$@"; exit 1; }
@@ -344,7 +347,7 @@ make_plugin ()
 #
 fetch_cmake_files ()
 {
-  local repo_url="https://github.com/Vitozz/psi-plus-plugins-cmake.git"
+  local repo_url="https://github.com/Vitozz/psi-plus-cmake.git"
   
   cd ${buildpsi}
   if [ ! -d "${cmake_files_dir}" ]; then
@@ -385,7 +388,7 @@ build_cmake_plugins ()
     pl_preffix=${orig_src}
     pl_suffix="plugins"
   fi  
-  local cmake_flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${pl_preffix} -DPLUGINS_PATH=${pl_suffix} -DBUILD_PLUGINS=${DEF_PLUG_LIST}"
+  local cmake_flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${pl_preffix} -DONLY_PLUGINS=ON -DPLUGINS_PATH=${pl_suffix} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DBUILD_DEV=OFF -DQT4_BUILD=${QT4_BUILD}"
   echo " "; echo "Build psi+ plugins using CMAKE started..."; echo " "
   cmake ${cmake_flags} ..
   make -j${cpu_count} && make install && echo_done
@@ -452,7 +455,7 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru
 
 %build
 ${qconfcmd}
-./configure --prefix=\"%{_prefix}\" --libdir=\"%{_libdir}\" --enable-plugins ${iswebkit} ${no_enchant} --release --no-separate-debug-info
+./configure --prefix=\"%{_prefix}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR --enable-plugins ${iswebkit} ${no_enchant} --release --no-separate-debug-info
 %{__make} %{?_smp_mflags}
 
 
@@ -467,9 +470,6 @@ ${qconfcmd}
 %{__install} -Dp -m0644 iconsets/system/default/logo_128.png \
     %{buildroot}%{_datadir}/pixmaps/psi-plus.png ||:               
 
-mkdir -p %{buildroot}%{_datadir}/psi-plus
-mkdir -p %{buildroot}%{_bindir}
-mkdir -p %{buildroot}%{_datadir}/applications
 
 %post
 touch --no-create %{_datadir}/icons/hicolor || :
@@ -525,8 +525,8 @@ build_rpm_package ()
 prepare_dev ()
 {
   local psidev=$buildpsi/psidev
-  local orig=$psidev/psi.orig
-  local new=$psidev/psi
+  local orig=$psidev/git.orig
+  local new=$psidev/git
   rm -rf $orig
   rm -rf $new
   cd ${buildpsi}
@@ -603,7 +603,7 @@ ${desc}
 %setup
 
 %build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{buildroot}%{_libdir} -DPLUGINS_PATH=/psi-plus/plugins .
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{buildroot}%{_libdir} -DONLY_PLUGINS=ON -DPLUGINS_PATH=/psi-plus/plugins .
 %{__make} %{?_smp_mflags} 
 
 %install
