@@ -1,6 +1,6 @@
 #!/bin/bash
 cd "`dirname $0`"/psi
 (
-git submodule foreach --recursive 'git --no-pager diff --cached --src-prefix=a/$path/ --dst-prefix=b/$path/'
-git --no-pager diff --cached
+LANG=C git submodule foreach --recursive 'git --no-pager diff --cached --src-prefix=a/$path/ --dst-prefix=b/$path/'
+LANG=C git --no-pager diff --cached
 ) | grep -vP '^(index .*[0-9]+|Entering.*|diff --git.*)$'
