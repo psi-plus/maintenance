@@ -579,7 +579,7 @@ prepare_sources() {
   )
 
   cd "${PSI_DIR}"
-  rev=$(cd git-plus/; git describe --tags | cut -d - -f 2)
+  rev=$(cd git-plus/; git describe --tags | cut -d - -f 2).$(cd git/; git describe --tags | cut -d - -f 2)
   PATCHES=`ls -1 git-plus/patches/*diff 2>/dev/null`
   PATCHES="${PATCHES} ${EXTRA_PATCHES}"
   cd "${PSI_DIR}/build"
