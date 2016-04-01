@@ -580,12 +580,12 @@ prepare_sources() {
 
   cd "${PSI_DIR}"
   rev=$(cd git-plus/; git describe --tags | cut -d - -f 2).$(cd git/; git describe --tags | cut -d - -f 2)
-  PATCHES=`ls -1 git-plus/patches/*diff 2>/dev/null`
+  PATCHES="$(for f in git-plus/patches/*diff; do readlink -f "$f"; done)"
   PATCHES="${PATCHES} ${EXTRA_PATCHES}"
   cd "${PSI_DIR}/build"
   [ -e "$PATCH_LOG" ] && rm "$PATCH_LOG"
   for p in $PATCHES; do
-     spatch "${PSI_DIR}/${p}"
+     spatch "${p}"
      if [ "$?" != 0 ]
      then
        [ $SKIP_INVALID_PATCH = "0" ] \
