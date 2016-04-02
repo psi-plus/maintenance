@@ -57,6 +57,9 @@ case "${INSTALL_ROOT}" in /*) ;; *) INSTALL_ROOT="$(pwd)/${INSTALL_ROOT}"; ;; es
 
 [ -n "${PLUGINS_PREFIXES}" ] && plugprefset=1
 PLUGINS_PREFIXES="${PLUGINS_PREFIXES:-generic}" # will be updated later while detecting platform specific settings
+
+# convert extra patches to absolute paths
+EXTRA_PATCHES="$(for f in $EXTRA_PATCHES; do readlink -f "$f"; done)"
 #######################
 # FUNCTIONS / ФУНКЦИИ #
 #######################
