@@ -14,7 +14,7 @@ OTRPLUGIN_DIR=$2
 
 OTR_DIR=libotr-3.2.0
 OTR_FILE=libotr-3.2.0.tar.gz
-OTR_URL="http://www.cypherpunks.ca/otr/$OTR_FILE"
+OTR_URL="https://otr.cypherpunks.ca/$OTR_FILE"
 GPGERROR_DIR=libgpg-error-1.10
 GPGERROR_FILE=libgpg-error-1.10.tar.gz
 GPGERROR_URL="ftp://ftp.gnupg.org/gcrypt/libgpg-error/$GPGERROR_FILE"
@@ -36,11 +36,11 @@ build_lib() {
 	target_platform=$target_arch-apple-darwin
 	arch_prefix=$OTRDEPS_DIR/$target_arch
 	cd $OTRDEPS_DIR/$lib_dir
-	make clean >/dev/null
+	make clean &>/dev/null
 	#CFLAGS="-I$OTRDEPS_DIR/$target_arch/include" LDFLAGS="-L$OTRDEPS_DIR/$target_arch/lib"
-	CC="gcc -arch $target_arch" CXX="g++ -arch $target_arch" ./configure -q --host=$target_platform --prefix=$arch_prefix $3
-	make >/dev/null
-	make install >/dev/null
+	CC="gcc -arch $target_arch" CXX="g++ -arch $target_arch" ./configure -q --host=$target_platform --prefix=$arch_prefix $3 &>/dev/null
+	make &>/dev/null
+	make install &>/dev/null
 }
 
 die() { echo "$@"; exit 1; }
@@ -59,9 +59,10 @@ prep_deps() {
 }
 
 mkdir -p $OTRDEPS_DIR || die "Error creating $OTRDEPS_DIR!"
- 
+
 cd $OTRDEPS_DIR
 if [ ! -f $GPGERROR_FILE ]; then
+    echo "Downloading and building libgpg-error..."
     curl -o $GPGERROR_FILE $GPGERROR_URL
     tar jxvf $GPGERROR_FILE
     for a in $TARGET_ARCHES; do
@@ -71,6 +72,7 @@ if [ ! -f $GPGERROR_FILE ]; then
 fi
 
 if [ ! -f $GCRYPT_FILE ]; then
+    echo "Downloading and building libgcrypt..."
     curl -o $GCRYPT_FILE $GCRYPT_URL
     tar jxvf $GCRYPT_FILE
     for a in $TARGET_ARCHES; do
@@ -81,6 +83,7 @@ fi
 
 
 if [ ! -f $OTR_FILE ]; then
+    echo "Downloading and building libotr..."
 	curl -o $OTR_FILE $OTR_URL
 	tar jxvf $OTR_FILE
 	for a in $TARGET_ARCHES; do
@@ -141,10 +144,8 @@ cd $OTRPLUGIN_DIR
 #export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$OTRDEPS_DIR/uni/lib
 echo "INCLUDEPATH += $OTRDEPS_DIR/uni/include" >> otrplugin.pro
 echo "LIBS += -L$OTRDEPS_DIR/uni/lib" >> otrplugin.pro
-make clean >/dev/null
-$QTDIR/bin/qmake >/dev/null
-make >/dev/null
+make clean &>/dev/null
+$QTDIR/bin/qmake &>/dev/null
+make &>/dev/null
 
 prep_deps
-
-
