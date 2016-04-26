@@ -7,6 +7,9 @@
 # do not update anything from repositories until required
 WORK_OFFLINE=${WORK_OFFLINE:-0}
 
+# Qt major version 4,5,... (could be overriden with --qtselect as well)
+QT_MAJOR_VERSION=${QT_MAJOR_VERSION:-4}
+
 # skip patches which applies with errors / пропускать глючные патчи
 SKIP_INVALID_PATCH=${SKIP_INVALID_PATCH:-0}
 
@@ -44,7 +47,7 @@ GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
 
 LANGS_REPO_URI="git://github.com/psi-plus/psi-plus-l10n.git"
 
-QCONF_REPO="https://delta.affinix.com/svn/trunk/qconf@816"
+QCONF_REPO="https://github.com/psi-plus/qconf.git"
 QCA_REPO="svn://anonsvn.kde.org/home/kde/trunk/kdesupport/qca@1311233"
 
 SVN_FETCH="${SVN_FETCH:-git_svn_clone}"
@@ -147,6 +150,10 @@ check_env() {
         ;;
       "--with-qca"*)
 	    HAS_QCA_CONF_PATH=1
+        ;;
+      "--qtselect="*)
+        QT_MAJOR_VERSION=${1#--qtselect=}
+        ;;
     esac
     shift
   done
@@ -265,7 +272,7 @@ check_env() {
   find_qt_util() {
     local name=$1
     result=""
-    for un in $name-qt4 qt4-${name} ${name}4 $name; do
+    for un in $name-qt${QT_MAJOR_VERSION} qt${QT_MAJOR_VERSION}-${name} ${name}${QT_MAJOR_VERSION} $name; do
       [ -n "`$un -v 2>&1 |grep Qt`" ] && { result="$un"; break; }
     done
     if [ -z "${result}" ]; then
@@ -298,7 +305,7 @@ check_env() {
     QCONF="${QCONFDIR}/qconf"
   else
     export PATH="${PATH}:${PSI_DIR}/qconf"
-    for qc in qt-qconf qconf-qt4 qconf; do
+    for qc in qt-qconf qconf-qt${QT_MAJOR_VERSION} qconf; do
       v=`$qc --version 2>/dev/null |grep affinix` && QCONF=$qc
     done
     [ -z "${QCONF}" -a ! "${BUILD_MISSING_QCONF}" = 1 ] && die "You should install "\
@@ -496,7 +503,7 @@ git_fetch() {
 
 fetch_build_deps_sources() {
   cd "${PSI_DIR}"
-  [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "${QCONF_REPO}" qconf "QConf"
+  [ "${BUILD_MISSING_QCONF}" = 1 ] && git_fetch "${QCONF_REPO}" qconf "QConf"
   [ "${BUILD_MISSING_QCA}" ] && svn_fetch "${QCA_REPO}" qca "QCA"
 }
 
