@@ -1,0 +1,1002 @@
+#!/bin/bash
+#
+#####################################################################
+#
+#                   Psi-Plus OS X build script.
+#
+#####################################################################
+#
+# Script writted and debugged with love by Stanislav N. aka pztrn
+# <pztrn at pztrn dot name>.
+#
+# Requirements:
+#   * git
+#   * xcode (including CLI tools)
+#   * Qt built from source (not homebrew, not installed from official package)
+
+#####################################################################
+# Options.
+# All of these options can be changed manually.
+
+# Root directory for sources and build process.
+PSI_DIR="${HOME}/psi"
+# Directory for dependencies.
+DEPS_DIR="${PSI_DIR}/deps"
+
+# Iconsets that will be installed into bundle.
+ICONSETS="system clients activities moods affiliations roster"
+
+# Translations to install. Can be overrided with --bundle-all-translations
+# CLI parameter.
+TRANSLATIONS_TO_INSTALL="en"
+
+# Configure options.
+# These options will be passed to ./configure script.
+# Do not change them until you know what are you doing!
+CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss --verbose"
+
+# Psi version.
+PSI_VERSION="0.16"
+
+#####################################################################
+# CLI options.
+# These options are controlled by CLI parameters (see "psibuild --help").
+# You should not change them, unless you want to do something by
+# default.
+
+# Build from git, or from snapshot?
+# Controlled with "--build-from-snapshot" parameter.
+BUILD_FROM_SNAPSHOT=0
+
+# Enable Webkit build?
+# Controlled with "--enable-webkit" parameter.
+ENABLE_WEBKIT=0
+
+# Bundle translations?
+# Controlled with "--bundle-all-translations" parameter.
+BUNDLE_ALL_TRANSLATIONS=0
+
+# Enable unstable (dev) plugins?
+# Controlled with "--enable-dev-plugins" parameter.
+ENABLE_DEV_PLUGINS=0
+
+# Make portable version?
+# Controlled with "--make-portable" parameter.
+PORTABLE=0
+
+# Skip failed or invalid patches?
+# Controlled with "--skip-bad-patches" parameter.
+SKIP_BAD_PATCHES=0
+
+# Prefer Qt5? By default we will try to search for Qt4.
+# Controlled with "--prefer-qt5" parameter.
+PREFER_QT5=0
+
+#####################################################################
+# Sources.
+# Do not change this.
+
+# Psi sources.
+GIT_REPO_PSI=git://github.com/psi-im/psi.git
+GIT_REPO_PSI_SNAPSHOTTED=git://github.com/psi-plus/psi-plus-snapshots.git
+GIT_REPO_PLUS=git://github.com/psi-plus/main.git
+GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
+GIT_REPO_MAINTENANCE=git://github.com/psi-plus/maintenance.git
+GIT_REPO_RESOURCES=git://github.com/psi-plus/resources.git
+GIT_REPO_LANGS=git://github.com/psi-plus/psi-plus-l10n.git
+
+# Dependencies
+GIT_REPO_PSIDEPS=git://github.com/psi-im/psideps.git
+GIT_REPO_DEP_QCONF=git://github.com/psi-plus/qconf.git
+GIT_REPO_DEP_QCA_QT5=git://anongit.kde.org/qca.git
+
+#####################################################################
+# Other parameters
+# Parallel building.
+MAKEOPTS=${MAKEOPT:--j$((`sysctl -n hw.ncpu`+1)) -s}
+
+# Skip generic patches. Useful when we're building from snapshot
+# sources.
+SKIP_GENERIC_PATCHES=0
+
+#####################################################################
+#
+#                               The Code
+#
+#####################################################################
+# Logger help functions.
+die() { echo; echo -e " \033[1;41m!!!\033[0m ERROR: \033[1;31m$@\033[0m"; \
+exit 1; }
+error() { echo; echo -e " \033[1;41m!!!\033[0m ERROR: \033[1;31m$@\033[0m"; }
+warning() { echo; echo -e " \033[1;43m!\033[0m WARNING: \033[1;33m$@\033[0m"; }
+log() { echo -e "\033[1;32m *\033[0m $@"; }
+
+#####################################################################
+# This function executes when some action failed. This action should
+# redirect output to some log.
+# Parameters that required to be passed:
+#   * $1 - action that failed
+#   * $2 - log path
+#####################################################################
+function action_failed()
+{
+    local action=$1
+    local log_path=$2
+    error "${action} failed."
+    if [ "${log_path}" != "None" ]; then
+        error "Last 10 lines from log:"
+        cat "${log_path}" | tail -n 10
+    fi
+    exit 1
+}
+
+#####################################################################
+# Patch helper.
+#####################################################################
+function apply_patch()
+{
+    local patch=$1
+    local patch_file=`echo ${patch} | awk -F"/" {'print $NF'}`
+    local patch_logs_dir="${PSI_DIR}/logs/patches/"
+    if [ ! -d $"{patch_logs_dir}" ]; then
+        mkdir -p "${patch_logs_dir}"
+    fi
+    local patch_log="${patch_logs_dir}/${patch_file}.log"
+    log "Applying patch '${patch}'..."
+    patch -p1 -i "${patch}" >> "${patch_log}" 2>&1
+    if [ $? -ne 0 ]; then
+        if [ ${SKIP_BAD_PATCHES} -eq 0 ]; then
+            die "Patch failed. Cannot continue. Use --skip-bad-patches to\
+skip patches that cannot be applied."
+        else
+            log "Patch failed. See '${patch_log}' for details."
+        fi
+    fi
+}
+
+#####################################################################
+# This function checks that environment are good for building Psi+.
+# It'll check some environment variables (like QTDIR), as well as
+# presence of required utilities.
+#####################################################################
+function check_environment()
+{
+    # Just a checking of OS where we launched this script. We shouldn't
+    # allow anyone to runit anywhere besides OS X, isn't it?
+    if [ `uname` != "Darwin" ]; then
+        error "This script intended to be launched only on OS X!"
+        die "Do you want your data to be vanished?"
+    fi
+    # Some Qt4/Qt5 local vars.
+    local qt4_found=0
+    local qt4_path=""
+    local qt4_version=""
+    local qt5_found=0
+    local qt5_path=""
+    local qt5_version=""
+    log "Checking environment..."
+    # We should not even try to build as root. At all.
+    if [ `whoami` == "root" ]; then
+        die "Psi+ should not be built as root. Restart build process \
+as normal user!"
+    fi
+    # Checking Qt presence and it's version.
+    # If QTDIR environment variable wasn't defined - we will try to
+    # autodetect installed Qt version.
+    if [ ! -z "${QTDIR}" ]; then
+        # QTDIR defined - skipping autodetection.
+        log "Qt path passed: ${QTDIR}"
+        local qt_v=`echo ${QTDIR} | awk -F"/" {' print $(NF) '}`
+        if [ ${#qt_v} -eq 0 ]; then
+            local qt_v=`echo ${QTDIR} | awk -F"/" {' print $(NF-1) '}`
+        fi
+        use_qt "${qt_v}" "${QTDIR}"
+    else
+        # Try to autodetect installed versions. We should detect one version
+        # for Qt4 and one version for Qt5.
+        # We are wanting self-compiled version of Qt4/5, so searching in
+        # default prefix location (/usr/local/Trolltech/ for Qt4 and /usr/local/
+        # for Qt5).
+        log "QTDIR not defined, trying to autodetect Qt version..."
+        if [ ! -d "/usr/local/Trolltech" ]; then
+            qt4_found=0
+        else
+            qt4_found=1
+        fi
+
+        local possible_qt5=`ls -1 /usr/local | grep "Qt-5*"`
+        if [ ${#possible_qt5} -ne 0 ]; then
+            qt5_found=1
+        else
+            qt5_found=0
+        fi
+
+        # Detect Qt4 path and version.
+        if [ ${qt4_found} -eq 1 ]; then
+            # Detecting installed Qt4 version.
+            # We are relying on assumption that Qt4 is installed in
+            # /usr/local/Trolltech. If you're installed Qt4 in other prefix
+            # you should specify QTDIR manually.
+            qt4_version=`ls /usr/local/Trolltech | grep Qt | awk '{print $NF}' | cut -d "-" -f 2`
+            if [ "${#qt4_version}" -eq 0 ]; then
+                log "Could not detect installed Qt4 version."
+            else
+                log "Detected Qt4 version: ${qt4_version}"
+            fi
+        fi
+
+        # Detect Qt5 path and version
+        if [ ${qt5_found} -eq 1 ]; then
+            # Detecting installed Qt5 version.
+            # We are relying on assumption that Qt5 is installed in
+            # /usr/local/. If you're installed Qt5 in other prefix
+            # you should specify QTDIR manually.
+            qt5_version=`echo ${possible_qt5} | grep Qt | awk '{print $NF}' | cut -d "-" -f 2`
+            if [ "${#qt5_version}" -eq 0 ]; then
+                log "Could not detect installed Qt5 version."
+            else
+                log "Detected Qt5 version: ${qt5_version}"
+            fi
+        fi
+
+        # If we found both Qt4 and Qt5, and "--prefer-qt5" wasn't passed - ask
+        # user which Qt version should we use.
+        if [ ${qt4_found} -eq 1 -a ${qt5_found} -eq 1 -a ${PREFER_QT5} -eq 0 ]; then
+            echo -n -e " \033[1;43m!\033[0m Detected both Qt4 and Qt5. Please, enter \"1\" to use Qt4, and \"2\" to use Qt5. "
+            read -n 1 qt_to_use
+            echo
+            if [ "${qt_to_use}" == "1" ]; then
+                log "Will use Qt4."
+                use_qt "${qt4_version}" "/usr/local/Trolltech/Qt-${qt4_version}"
+            elif [ "${qt_to_use}" == "2" ]; then
+                log "Will use Qt5."
+                use_qt "${qt5_version}" "/usr/local/Qt-${qt5_version}"
+            fi
+        elif [ ${qt4_found} -eq 1 -a ${qt5_found} -eq 1 -a ${PREFER_QT5} -eq 1 ]; then
+            log "Found both Qt4 and Qt5, but \"--prefer-qt5\" parameter was passed. Forcing Qt5."
+            use_qt "${qt5_version}" "/usr/local/Qt-${qt5_version}"
+        else
+            if [ ${qt4_found} -eq 1 -a ${qt5_found} -eq 0 ]; then
+                log "Will use Qt4."
+                use_qt "${qt4_version}" "/usr/local/Trolltech/Qt-${qt4_version}"
+            elif [ ${qt4_found} -eq 0 -a ${qt5_found} -eq 1 ]; then
+                log "Will use Qt5."
+                use_qt "${qt5_version}" "/usr/local/Qt-${qt5_version}"
+            fi
+        fi
+    fi
+}
+
+#####################################################################
+# This function checks for tools required to build Psi+.
+# It relies on QTDIR variable, that checked (or created) in
+# check_environment function.
+#####################################################################
+function check_tools_presence()
+{
+    # Detecting make binary path.
+    # It cannot be overrided from environment.
+    MAKE=`whereis make | awk {' print $1'}`
+
+    # Detecting qmake binary path.
+    # It cannot be overrided from environment.
+    QMAKE="${QTDIR}/bin/qmake"
+    if [ ! -f "${QMAKE}" ]; then
+        die "qmake not found! Please, install Qt from sources!"
+    fi
+    log "Found qmake binary: '${QMAKE}'"
+
+    # Detecting lrelease binary path.
+    # It cannot be overrided from environment.
+    LRELEASE="${QTDIR}/bin/lrelease"
+    if [ ! -f "${LRELEASE}" ]; then
+        die "lrelease not found! Please, install Qt from sources!"
+    fi
+    log "Found lrelease binary: '${LRELEASE}'"
+
+    # Detecting git binary path.
+    # It can be overrided with GIT environment variable (e.g.
+    # GIT=/usr/bin/git)
+    if [ ! -z "${GIT}" ]; then
+        log "Found git binary (from env): ${GIT}"
+    else
+        # We know default git path.
+        GIT="/usr/bin/git"
+        # Check that binary exists. Just in case :)
+        if [ ! -f "${GIT}" ]; then
+            die "Git binary not found! Why you deleted it?"
+        fi
+        log "Found git binary: '${GIT}'"
+    fi
+
+    # Detect PlistBuddy, which is used for making portable version of Psi+.
+    if [ ${PORTABLE} = 1 ]; then
+        if [ -x "/usr/libexec/PlistBuddy" ]; then
+		    log "Found PlistBuddy"
+        else
+            die "PlistBuddy not found. This tool is required to make Psi+ be portable."
+        fi
+	fi
+}
+
+#####################################################################
+# This function will compile plugins.
+#####################################################################
+function compile_plugins()
+{
+    log "Compiling plugins..."
+    cd "${PSI_DIR}/build/src/plugins"
+
+    # Logs directory check.
+    if [ ! -d "${PSI_DIR}/logs/plugins/" ]; then
+        mkdir -p "${PSI_DIR}/logs/plugins/"
+    fi
+
+    # qmake config for plugins.
+    cat >> psiplugin.pri << "EOF"
+contains(QT_CONFIG,x86):CONFIG += x86
+contains(QT_CONFIG,x86_64):CONFIG += x86_64
+EOF
+
+    # Compile plugins
+    local PLUGINS=`ls -1 ${PSI_DIR}/build/src/plugins/generic/ | grep -v "videostatusplugin"`
+    for plugin in ${PLUGINS}; do
+        if [ "${plugin}" == "otrplugin" ]; then
+            # We should launch separate compilation script for otrplugin
+            # which will download and compile some dependencies for it, and
+            # then will compile plugin itself.
+            OTRDEPS_DIR="${PSI_DIR}/otrdeps"
+			sh ${PSI_DIR}/maintenance/scripts/macosx/otrdeps.sh ${OTRDEPS_DIR} ${PSI_DIR}/build/src/plugins/generic/${plugin} 2>/dev/null || die "make ${plugin} plugin failed"
+        else
+            # This is default plugin compilation sequence.
+            cd "${PSI_DIR}/build/src/plugins/generic/${plugin}"
+            log "Compiling ${plugin} plugin"
+            ${QMAKE} ${plugin}.pro >> "${PSI_DIR}/logs/plugins/${plugin}-qmake.log" 2>&1
+            if [ $? -ne 0 ]; then
+                action_failed "Configuring ${plugin}" "${PSI_DIR}/logs/plugins/${plugin}-qmake.log"
+            fi
+            ${MAKE} ${MAKEOPTS} >> "${PSI_DIR}/logs/plugins/${plugin}-make.log" 2>&1
+            if [ $? -ne 0 ]; then
+                action_failed "Building ${plugin}" "${PSI_DIR}/logs/plugins/${plugin}-make.log"
+            fi
+        fi
+    done
+}
+
+#####################################################################
+# This function will compile sources.
+#####################################################################
+function compile_sources()
+{
+    cd "${PSI_DIR}/build"
+
+    log "Running qconf..."
+    QTDIR="${QTDIR}" ${QCONF} >> "${PSI_DIR}/logs/psi-qconf.log" 2>&1
+    if [ $? -ne 0 ]; then
+        action_failed "Configuring Psi sources" "${PSI_DIR}/logs/psi-qconf.log"
+    fi
+
+    cd "${PSI_DIR}/build/admin/build"
+    # Generate configure_opts that will contain all options we will pass
+    # to ./configure later (including CONF_OPTS).
+    log "Creating configure parameters..."
+    local configure_opts="${CONF_OPTS} --disable-sparkle"
+    if [ ${ENABLE_WEBKIT} -eq 1 ]; then
+        local configure_opts="${configure_opts} --enable-webkit"
+    fi
+
+    # Put configure_opts into some scripts.
+    sed -i "" "s@./configure@& ${configure_opts}@g" build_package.sh
+	sed -i "" "s@./configure@& ${configure_opts}@g" devconfig.sh
+	sed -i "" 's@echo "$(VERSION)@& (\@\@DATE\@\@)@g' Makefile
+
+    # Compile it!
+    log "Starting psi-plus compilation. Logs redirected to '${PSI_DIR}/logs/psi-make.log'..."
+    ${MAKE} ${MAKEOPTS} VERSION=${VERSION_STRING_RAW} >> "${PSI_DIR}/logs/psi-make.log" 2>&1
+    if [ $? -ne 0 ]; then
+        action_failed "Compiling Psi" "${PSI_DIR}/logs/psi-make.log"
+    fi
+}
+
+#####################################################################
+# This function copying compiled data, translations and other assets
+# into bundle.
+#####################################################################
+function copy_resources()
+{
+    log "Copying resources into bundle..."
+    PSIAPP_DIR="${PSI_DIR}/build/admin/build/dist/psi-${VERSION_STRING_RAW}-mac/Psi+.app/Contents"
+    cd "${PSIAPP_DIR}/Resources/"
+
+    log "Copying Psi resources..."
+    cp -r "${PSI_DIR}/build/sound" .
+	cp -r "${PSI_DIR}/build/themes" .
+
+    log "Copying themes..."
+    for item in `ls -1 ${PSI_DIR}/build/themes/`; do
+        cp -R "${PSI_DIR}/build/themes/${item}" "${PSIAPP_DIR}/Resources/themes/${item}"
+    done
+
+    log "Copying translations..."
+
+	mkdir -p translations
+	cp -R "${PSI_DIR}/translations/compiled/" "${PSIAPP_DIR}/Resources/translations/"
+
+    log "Copying Psi+ resources..."
+    for item in `ls -1 "${PSI_DIR}/resources"`; do
+        cp -a "${PSI_DIR}/resources/${item}" "${PSIAPP_DIR}/Resources/"
+    done
+    cp "${PSI_DIR}/build/client_icons.txt" "${PSIAPP_DIR}/Resources/"
+
+	log "Copying plugins..."
+	if [ ! -d "${PSIAPP_DIR}/Resources/plugins" ]; then
+    		mkdir -p "${PSIAPP_DIR}/Resources/plugins"
+	fi
+
+    local PLUGINS=`ls -1 ${PSI_DIR}/build/src/plugins/generic/ | grep -v "videostatusplugin"`
+	for plugin in ${PLUGINS}; do
+        log "Installing plugin ${plugin}"
+		cd "${PSI_DIR}/build/src/plugins/generic/${plugin}/"
+        cp *.dylib "${PSIAPP_DIR}/Resources/plugins/"
+    done
+
+    log "Copying libraries..."
+    PSIPLUS_PLUGINS=`ls $PSIAPP_DIR/Resources/plugins`
+	QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtWebKit QtSvg"
+	QT_FRAMEWORK_VERSION=4
+	for f in ${QT_FRAMEWORKS}; do
+		for p in ${PSIPLUS_PLUGINS}; do
+			install_name_tool -change "${QTDIR}/lib/${f}.framework/Versions/${QT_FRAMEWORK_VERSION}/${f}" "@executable_path/../Frameworks/${f}.framework/Versions/${QT_FRAMEWORK_VERSION}/${f}" "${PSIAPP_DIR}/Resources/plugins/${p}"
+		done
+	done
+
+	if [ ${ENABLE_DEV_PLUGINS} -eq 1 ]; then
+		otr_deps=`ls $OTRDEPS_DIR/uni/lib | grep "dylib"`
+		for d in $otr_deps; do
+			cp -a "$OTRDEPS_DIR/uni/lib/$d" "${PSIAPP_DIR}/Frameworks/$d"
+		done
+	fi
+}
+
+#####################################################################
+# This function created neccessary directory structure and defines
+# variables for each of four subdirectories.
+#####################################################################
+function create_directories()
+{
+    log "Creating directory structure..."
+
+    # Root directory for build process.
+    if [ ! -d "${PSI_DIR}" ]; then
+        log "Creating root directory: '${PSI_DIR}'"
+		mkdir -p "${PSI_DIR}" || die "Can't create work directory ${PSI_DIR}!"
+	fi
+
+    # Directory for dependencies handling.
+	if [ ! -d "${DEPS_DIR}" ]; then
+        log "Creating directory for dependencies: '${DEPS_DIR}'"
+		mkdir -p "${DEPS_DIR}" || die "Can't create work directory ${DEPS_DIR}!"
+	fi
+
+    # Directory for build process.
+    if [ -d "${PSI_DIR}/build" ]; then
+        log "Build directory exists, removing..."
+        rm -rf "${PSI_DIR}/build"
+    fi
+    log "Creating build directory: '${PSI_DIR}/build'"
+    mkdir -p "${PSI_DIR}/build"
+
+    # Directory for logs.
+    PSIBUILD_LOGS_PATH="${PSI_DIR}/logs"
+    if [ -d "${PSIBUILD_LOGS_PATH}" ]; then
+        log "Logs directory exists, removing..."
+        rm -rf "${PSIBUILD_LOGS_PATH}"
+    fi
+    log "Creating logs directory: '${PSIBUILD_LOGS_PATH}'"
+    mkdir -p "${PSIBUILD_LOGS_PATH}"
+
+}
+
+#####################################################################
+# This function installs required for build tools in ${PSI_DIR}/deps
+# directory.
+#####################################################################
+function install_build_deps()
+{
+    log "Installing build dependencies..."
+    # QConf.
+    if [ ${QT_VERSION_MAJOR} -eq 4 ]; then
+        local QCONFDIR="${PSI_DIR}/qconf-qt4"
+        export QMAKESPEC="macx-g++"
+    else
+        local QCONFDIR="${PSI_DIR}/qconf-qt5"
+    fi
+
+    if [ -f "${QCONFDIR}/qconf" ]; then
+        # Okay, qconf already compiled.
+        QCONF="${QCONFDIR}/qconf"
+        log "Found qconf binary: '${QCONF}'"
+    else
+        # qconf isn't found.
+        log "Installing qconf..."
+        mkdir -p "${QCONFDIR}" && cd $_
+        if [ ! -d ".git" ]; then
+            git clone "${GIT_REPO_DEP_QCONF}" .
+        else
+            git pull
+        fi
+        local qconf_conf_opts="--qtdir=${QTDIR}"
+        ./configure ${qconf_conf_opts}
+        if [ $? -ne 0 ]; then
+            action_failed "QConf sources configuration" "None"
+        fi
+        ${MAKE} ${MAKEOPTS} >> "${PSI_DIR}/logs/qconf-make.log" 2>&1
+        if [ $? -ne 0 ]; then
+            action_failed "QConf compilation" "${PSI_DIR}/logs/qconf-make.log"
+        fi
+        QCONF="${QCONFDIR}/qconf"
+    fi
+}
+
+#####################################################################
+# This function creates DMG file.
+#####################################################################
+function make_bundle() {
+	log "Making standalone bundle..."
+	cd "${PSI_DIR}/build/admin/build"
+    # Creating DMG image from template.
+	cp -f "${PSI_DIR}/maintenance/scripts/macosx/template.dmg.bz2" "template.dmg.bz2"
+    # Compose filename for DMG file.
+    # Version string for usage in filename should contain webkit flag.
+    # This how resulted DMG will be named.
+    DMG_FILENAME="psi-plus-${VERSION_STRING_RAW}-qt${QT_VERSION_MAJOR}-${SOURCE_TYPE}-${BUILD_DATE}-macosx.dmg"
+    # pack_dmg.sh will create DMG image, copy resulted bundle in it.
+	sh pack_dmg.sh "${DMG_FILENAME}" "Psi+" "dist/psi-${VERSION_STRING_RAW}-mac"
+
+	cp -f "${DMG_FILENAME}" "${PSI_DIR}/${DMG_FILENAME}"
+	log "You can find bundle in ${PSI_DIR}/${DMG_FILENAME}"
+
+    # Portable version requires more actions.
+    # WARNING: this code is completely untested! It might, or might not work!
+    if [ ${PORTABLE} = 1 ]; then
+		PORT_DMG="${DMG_FILENAME}"
+		WC_DIR="wc"
+		WC_DMG="wc.dmg"
+		rm -fr "$WC_DIR"
+		hdiutil convert "${DMG_FILENAME}" -quiet -format UDRW -o "$WC_DMG"
+		hdiutil attach "$WC_DMG" -noautoopen -quiet -mountpoint "$WC_DIR"
+		mv "$WC_DIR/Psi+.app" "$WC_DIR/Portable Psi+.app"
+		mkdir -p "$WC_DIR/Portable Psi+.app/gpg"
+		pushd "$WC_DIR/Portable Psi+.app/Contents"
+		/usr/libexec/PlistBuddy -c 'Add :LSEnvironment:PSIDATADIR string "Portable Psi+.app/Psi+"' Info.plist
+		/usr/libexec/PlistBuddy -c 'Add :LSEnvironment:GNUPGHOME string "Portable Psi+.app/gpg"' Info.plist
+		/usr/libexec/PlistBuddy -c 'Set :CFBundleName string "Portable Psi+"' Info.plist
+		popd
+		rm -fr "$WC_DIR/.DS_Store" "$WC_DIR/Applications" "$WC_DIR/.background" "$WC_DIR/.fseventsd"
+		diskutil rename "$WC_DIR" "Portable Psi+"
+		diskutil eject "$WC_DIR"
+		hdiutil convert "$WC_DMG" -quiet -format UDZO -imagekey zlib-level=9 -o "$PORT_DMG"
+		cp -f ${DMG_FILENAME} "${PSI_DIR}/${DMG_FILENAME}" && rm -f ${DMG_FILENAME}
+		log "You can find next bundle in ${PSI_DIR}/${DMG_FILENAME}"
+	fi
+	rm -f ${DMG_FILENAME}
+}
+
+#####################################################################
+# This function obtains Psi and Psi+ sources.
+#####################################################################
+function obtain_sources()
+{
+    log "Getting sources..."
+    # Psi sources
+    if [ ! -d "${PSI_DIR}/psi" ]; then
+        log "Creating directory for Psi sources..."
+        mkdir -p "${PSI_DIR}/psi"
+    fi
+    log "Getting Psi sources..."
+    # Type of source. Can be "snapshot" or "git"
+    SOURCE_TYPE=""
+
+    # Build from snapshot sources of Psi, or from git?
+    if [ ${BUILD_FROM_SNAPSHOT} -eq 1 ]; then
+        SOURCE_TYPE="snapshot"
+        PSI_SOURCE_DIR="${PSI_DIR}/psi/snapshot"
+    else
+        SOURCE_TYPE="git"
+        PSI_SOURCE_DIR="${PSI_DIR}/psi/git"
+    fi
+
+    log "Psi sources directory: '${PSI_SOURCE_DIR}'"
+
+    # Just a build date.
+    BUILD_DATE=`date +'%Y-%m-%d'`
+
+    # Separate clone-pull algo for Psi sources.
+    if [ ! -d "${PSI_SOURCE_DIR}/.git" ]; then
+        # Clone sources.
+        if [ "${SOURCE_TYPE}" == "snapshot" ]; then
+            log "Using snapshotted sources"
+            git clone ${GIT_REPO_PSI_SNAPSHOTTED} ${PSI_SOURCE_DIR}
+        elif [ "${SOURCE_TYPE}" == "git" ]; then
+            log "Using git sources"
+            git clone ${GIT_REPO_PSI} ${PSI_SOURCE_DIR}
+        else
+            # Something bad happen, and SOURCE_TYPE contains something strange
+            # and unexpected.
+            die "Unknown Psi source type: '${SOURCE_TYPE}'"
+        fi
+    else
+        # Update sources.
+        log "Found already cloned sources, updating..."
+        cd ${PSI_SOURCE_DIR}
+        git pull
+    fi
+
+    # Check git exitcode. If it is not zero - we should not continue.
+    if [ $? -ne 0 ]; then
+        die "Git failed."
+    fi
+
+    # Obtain submodules.
+    log "Updating submodules..."
+    cd "${PSI_SOURCE_DIR}"
+    git submodule update --init
+
+    # Obtain psi dependencies.
+    if [ ! -d "${PSI_DIR}/psideps" ]; then
+        log "Obtaining Psi dependencies..."
+        git clone ${GIT_REPO_PSIDEPS} "${PSI_DIR}/psideps"
+    else
+        log "Updating Psi dependencies..."
+        cd "${PSI_DIR}/psideps"
+        git pull
+    fi
+
+    # Obtain other sources.
+    for item in PLUS PLUGINS MAINTENANCE RESOURCES; do
+        local var="GIT_REPO_${item}"
+        local source_address="${!var}"
+        local lower_item=`echo ${item} | awk {' print tolower($0) '}`
+        log "Obtaining sources for '${lower_item}'..."
+
+        if [ ! -d "${PSI_DIR}/${lower_item}" ]; then
+            mkdir -p "${PSI_DIR}/${lower_item}"
+        fi
+
+        if [ -d "${PSI_DIR}/${lower_item}/.git" ]; then
+            log "Previous sources found, updating..."
+            cd "${PSI_DIR}/${lower_item}"
+            git pull
+        else
+            git clone ${source_address} "${PSI_DIR}/${lower_item}"
+        fi
+
+        # Check git exitcode. If it is not zero - we should not continue.
+        if [ $? -ne 0 ]; then
+            die "Git failed."
+        fi
+    done
+    echo ${SOURCE_TYPE} > "${PSI_SOURCE_DIR}/source_type"
+
+    log "Obtaining translations..."
+    if [ ! -d "${PSI_DIR}/translations" ]; then
+        mkdir -p "${PSI_DIR}/translations"
+        git clone ${GIT_REPO_LANGS} "${PSI_DIR}/translations"
+    else
+        cd "${PSI_DIR}/translations"
+        git pull
+    fi
+
+    log "Fetching dependencies..."
+    PSI_FETCH="${PSI_SOURCE_DIR}/admin/fetch.sh"
+    . "${PSI_SOURCE_DIR}/admin/build/package_info"
+
+    cd "${PSI_DIR}"
+    mkdir -p packages deps
+    if [ ! -f "packages/${growl_file}" ]
+    then
+        sh ${PSI_FETCH} ${growl_url} packages/${growl_file}
+        cd deps && unzip ../packages/${growl_file} && cd ..
+    fi
+    if [ ! -f "packages/${gstbundle_mac_file}" ]
+    then
+        sh ${PSI_FETCH} ${gstbundle_mac_url} packages/${gstbundle_mac_file}
+        cd deps && tar jxvf ../packages/${gstbundle_mac_file} && cd ..
+    fi
+    if [ ! -f "packages/${psimedia_mac_file}" ]
+    then
+        sh ${PSI_FETCH} ${psimedia_mac_url} packages/${psimedia_mac_file}
+        cd deps && tar jxvf ../packages/${psimedia_mac_file} && cd ..
+    fi
+    if [ ! -f "packages/${qca_mac_file}" ]
+    then
+        sh ${PSI_FETCH} ${qca_mac_url} packages/${qca_mac_file}
+        cd deps && tar jxvf ../packages/${qca_mac_file} && cd ..
+    fi
+
+}
+
+#####################################################################
+# This function parses CLI parameters and set some variables
+# dedicated for them.
+#####################################################################
+function parse_cli_parameters()
+{
+    log "Parsing CLI parameters..."
+    log "======================================== BUILD PARAMETERS"
+    local cliparams=$@
+
+    # Build from snapshot or git?
+    if [ "${cliparams/build-from-snapshot}" != "${cliparams}" ]; then
+        log "Building from snapshotted sources"
+        BUILD_FROM_SNAPSHOT=1
+        SKIP_GENERIC_PATCHES=1
+    else
+        log "Building from git sources"
+        BUILD_FROM_SNAPSHOT=0
+        SKIP_GENERIC_PATCHES=0
+    fi
+
+    # Webkit build.
+    if [ "${cliparams/enable-webkit}" != "${cliparams}" ]; then
+        log "Enabling Webkit build"
+        ENABLE_WEBKIT=1
+    else
+        log "Will not build webkit version"
+        ENABLE_WEBKIT=0
+    fi
+
+    # All translations.
+    if [ "${cliparams/bundle-all-translations}" != "${cliparams}" ]; then
+        log "Enabling bundling all translations"
+        BUNDLE_ALL_TRANSLATIONS=1
+    else
+        log "Will install only these translations: ${TRANSLATIONS_TO_INSTALL}"
+        BUNDLE_ALL_TRANSLATIONS=0
+    fi
+
+    # Dev plugins.
+    if [ "${cliparams/enable-dev-plugins}" != "${cliparams}" ]; then
+        log "Enabling unstable (dev) plugins"
+        ENABLE_DEV_PLUGINS=1
+    else
+        log "Will not build unstable (dev) plugins"
+        ENABLE_DEV_PLUGINS=0
+    fi
+
+    # Portable?
+    if [ "${cliparams/make-portable}" != "${cliparams}" ]; then
+        log "Enabling portable mode"
+        PORTABLE=1
+    else
+        log "Will not be portable"
+        PORTABLE=0
+    fi
+
+    # Skip bad patches?
+    if [ "${cliparams/skip-bad-patches}" != "${cliparams}" ]; then
+        log "Will not apply bad patches."
+        SKIP_BAD_PATCHES=1
+    else
+        log "Will not continue on bad patch"
+        SKIP_BAD_PATCHES=0
+    fi
+
+    # Prefer Qt5?
+    if [ "${cliparams/prefer-qt5}" != "${cliparams}" ]; then
+        log "Will prefer Qt5, if available"
+        PREFER_QT5=1
+    else
+        log "Will prefer Qt4, if available"
+        PREFER_QT5=0
+    fi
+    log "========================================"
+}
+
+#####################################################################
+# This function prepares sources to be built.
+#####################################################################
+function prepare_sources()
+{
+    log "Preparing sources..."
+
+    # Copy data to build directory.
+    log "Copying sources to build directory..."
+    cp -a "${PSI_SOURCE_DIR}/" "${PSI_DIR}/build"
+
+    # Create version string.
+    log "Creating version string for about dialog..."
+    # Snapshotted thing already have everything for version string.
+    if [ "${SOURCE_TYPE}" == "git" ]; then
+        PSI_REVISION=`cd "${PSI_SOURCE_DIR}" && git describe --tags | cut -d - -f 2`
+        PSI_PLUS_REVISION=`cd "${PSI_DIR}/plus" && git describe --tags | cut -d - -f 2`
+        PSI_PLUS_TAG=`cd "${PSI_DIR}/plus" && git describe --tags | cut -d - -f 1`
+        VERSION_STRING_RAW="${PSI_PLUS_TAG}.${PSI_PLUS_REVISION}.${PSI_REVISION}"
+        if [ ${ENABLE_WEBKIT} -eq 1 ]; then
+            VERSION_STRING_RAW="${VERSION_STRING_RAW}-webkit"
+        fi
+    else
+        VERSION_STRING_RAW=`cd "${PSI_SOURCE_DIR}" && git describe --tags | cut -d - -f 2`
+        if [ ${ENABLE_WEBKIT} -eq 1 ]; then
+            VERSION_STRING_RAW="${VERSION_STRING_RAW}-webkit"
+        fi
+    fi
+    VERSION_STRING="${VERSION_STRING_RAW} ($(date +"%Y-%m-%d"))"
+
+    log "Version string: ${VERSION_STRING}"
+    log "Raw version string (will be used e.g. in filename): ${VERSION_STRING_RAW}"
+    echo ${VERSION_STRING} > "${PSI_DIR}/build/version"
+
+    log "Removing default plugins, they do not work as expected"
+    rm -rf "${PSI_DIR}/build/src/plugins/generic"
+
+    log "Copying iconsets to build directory..."
+    cp -a "${PSI_DIR}/plus/iconsets" "${PSI_DIR}/build"
+
+    log "Copying generic plugins to build directory..."
+    mkdir -p "${PSI_DIR}/build/src/plugins/generic"
+    for plugin in `ls ${PSI_DIR}/plugins/generic/`; do
+        cp -R "${PSI_DIR}/plugins/generic/${plugin}" "${PSI_DIR}/build/src/plugins/generic"
+    done
+
+    if [ ${ENABLE_DEV_PLUGINS} -eq 1 ]; then
+        log "Copying unstable (dev) plugins to build directory..."
+        cp -a "${PSI_DIR}/plugins/dev/" "${PSI_DIR}/build/src/plugins/generic"
+        #for plugin in `ls ${PSI_DIR}/plugins/dev/`; do
+        #    cp -R "${PSI_DIR}/plugins/dev/${plugin}" "${PSI_DIR}/build/src/plugins/generic"
+        #done
+    fi
+
+    log "Applying patches..."
+    local patches_common=`ls -1 ${PSI_DIR}/plus/patches/*diff 2>/dev/null`
+    local patches_osx=`ls -1 ${PSI_DIR}/plus/patches/mac/*diff 2>/dev/null`
+
+    cd "${PSI_DIR}/build"
+    # Applying generic patches.
+    # This should be skipped if we're building from snapshot, because source
+    # was already patched with generic patches.
+    if [ ${SKIP_GENERIC_PATCHES} -eq 0 ]; then
+        log "Applying common patches..."
+        for item in ${patches_common[@]}; do
+            apply_patch "${item}"
+        done
+    fi
+
+    # OS X patches. Should always be applied.
+    log "Applying OS X patches..."
+    for item in ${patches_osx[@]}; do
+        apply_patch "${item}"
+    done
+
+    # Sed magic. Quick'n'easy.
+    log "Executing some sed magic..."
+    sed -i "" "s/.xxx/.${PSI_PLUS_REVISION}/" src/applicationinfo.cpp
+	sed -i "" "s:target.path.*:target.path = ${PSILIBDIR}/psi-plus/plugins:" src/plugins/psiplugin.pri
+
+    sed -i "" "s/<string>psi<\/string>/<string>psi-plus<\/string>/g" mac/Info.plist.in
+	sed -i "" "s/<\!--<dep type='sparkle'\/>-->/<dep type='sparkle'\/>/g" psi.qc
+
+	sed -i "" "s/base\/psi.app/base\/psi-plus.app/" admin/build/prep_dist.sh
+	sed -i "" "s/base\/Psi.app/base\/Psi+.app/" admin/build/prep_dist.sh
+	sed -i "" "s/MacOS\/psi/MacOS\/psi-plus/" admin/build/prep_dist.sh
+	sed -i "" "s/QtXml QtGui/QtXml QtGui QtWebKit QtSvg/" admin/build/prep_dist.sh
+	sed -i "" "s/.\/pack_dmg.sh/# .\/pack_dmg.sh/" admin/build/Makefile
+
+    if [ ${ENABLE_WEBKIT} == 1 ]; then
+        sed -i "" "s/psi-plus-mac.xml/psi-plus-wk-mac.xml/" src/applicationinfo.cpp
+    fi
+
+    # Removing "--std=gnu99" definition.
+    # This is required for building with clang, apparently. It will not be built
+    # without this.
+    sed -i "" "/\*g\+\+\*\:QMAKE_OBJECTIVE_CFLAGS/d" "${PSI_DIR}/build/src/libpsi/tools/globalshortcut/globalshortcut.pri"
+
+    log "Copying application icon..."
+	cp -f "${PSI_DIR}/maintenance/scripts/macosx/application.icns" "${PSI_DIR}/build/mac/application.icns"
+
+    log "Adding translations..."
+    local available_translations=`ls ${PSI_DIR}/translations/translations | grep -v en | sed s/psi_// | sed s/.ts//`
+
+    if [ ! -d "${PSI_DIR}/translations/compiled" ]; then
+        mkdir -p "${PSI_DIR}/translations/compiled"
+    fi
+
+    if [ ${BUNDLE_ALL_TRANSLATIONS} -eq 1 ]; then
+        log "Preparing all available translations..."
+        for translation in ${available_translations[@]}; do
+            log "Compiling translation for ${translation}..."
+            cp -f "${PSI_DIR}/translations/translations/psi_${translation}.ts" "${PSI_DIR}/translations/compiled/"
+            ${LRELEASE} "${PSI_DIR}/translations/compiled/psi_${translation}.ts" &>/dev/null
+            rm "${PSI_DIR}/translations/compiled/psi_${translation}.ts"
+        done
+    fi
+
+    log "Copying dependencies..."
+    cd "${PSI_DIR}/build/admin/build"
+    cp -a "${PSI_DIR}/packages/" packages/
+    cp -a "${PSI_DIR}/deps/" deps/
+
+    # We have some self-compiled dependencies for Qt5. Add them to psi.pro.
+    if [ ${QT_VERSION_MAJOR} -eq 5 ]; then
+        echo "INCLUDEPATH += ${PSI_DIR}/build/admin/build/deps/qca-qt5/include" >> "${PSI_DIR}/build/psi.pro"
+    fi
+}
+
+#####################################################################
+# This function exports Qt version.
+#####################################################################
+function use_qt()
+{
+    local version=$1
+    local path=$2
+    local path=`echo ${path} | sed -e "s/\/\//\//"`
+    export QTDIR="${path}"
+    export QT_VERSION="${version}"
+    export QT_VERSION_MAJOR="${version:0:1}"
+    log "Will use Qt-${QT_VERSION} located at '${QTDIR}'"
+}
+
+#####################################################################
+# This function just shows help text when "--help" or "-h" was passed
+# as parameters.
+#####################################################################
+function help() {
+    echo "Psi+ build script for OS X.
+https://github.com/psi-plus/maintenance
+
+Available parameters:
+
+Building options:
+    --build-from-snapshot       Build Psi+ from snapshots rather than from git.
+
+    --make-portable             Make Psi+ bundle be portable. WARNING: completely
+                                untested thing. Might eat your magic mouse or
+                                trackpad.
+
+    --prefer-qt5                Prefer building with Qt5 rather than Qt4. By
+                                default we will prefer Qt4, if both are
+                                installed.
+
+    --skip-bad-patches          Do not exit if bad patch appears.
+
+Feature options:
+    --bundle-all-translations   Bundle all translations. By default only english
+                                will be bundled.
+
+    --enable-dev-plugins        Build unstable (dev) plugins.
+
+    --enable-webkit             Build webkit version. By default non-webkit
+                                version will be built.
+"
+}
+
+
+# Prefer Qt5? By default we will try to search for Qt4.
+# Controlled with "--prefer-qt5" parameter.
+PREFER_QT5=0
+
+case $1 in
+    --help)
+        help
+    ;;
+    -h)
+        help
+    ;;
+    *)
+        time_build_start=`date +'%s'`
+        parse_cli_parameters $@
+        check_environment
+        check_tools_presence
+        create_directories
+        install_build_deps
+        obtain_sources
+        prepare_sources
+        compile_sources
+        compile_plugins
+        copy_resources
+        make_bundle
+        time_build_end=`date +'%s'`
+        time_build_delta=$[ ${time_build_end} - ${time_build_start} ]
+        log "Build time: ${time_build_delta} seconds."
+    ;;
+esac
