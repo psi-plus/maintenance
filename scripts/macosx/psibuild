@@ -155,6 +155,43 @@ skip patches that cannot be applied."
 }
 
 #####################################################################
+# This function bundle library with rewriting of all neccessary links
+# and paths. Also work on psi-plus binary itself.
+#####################################################################
+function bundle_library()
+{
+    local path=$1
+    shift
+    local libs=$@
+    for library in ${libs[@]}; do
+        # Filename of library.
+        local lfname=`echo ${library} | awk -F"/" {' print $NF '}`
+        # Check libs deps
+        deps=`otool -L ${library} | awk {' print $1 '} | grep -v "/usr/lib\|/System/Library"`
+        for dep in ${deps[@]}; do
+            # If we have dependency name not equal to library name, and
+            # even not containing it.
+            if [ "${dep/${lfname}}" == "${dep}" ]; then
+                # If it is not already bundled.
+                if [ "${dep/executable_path}" == "${dep}" ]; then
+                    log "Found unbundled depencency '${dep}' for library '${lfname}'"
+                    local lib_path=`echo $dep | awk {' print $1 '}`
+                    local lib_name=`echo $lib_path | awk -F"/" {' print $NF '}`
+                    install_name_tool -change "${lib_path}" "@executable_path/../Frameworks/${lib_name}" "${library}"
+                    cp -a "${dep}" "${path}" &>/dev/null
+                    # We should make a symlink if cp failed. This means that
+                    # $dep is a file in current directory.
+                    if [ $? -ne 1 ]; then
+                        cd "${PSIAPP_DIR}/Frameworks"
+                        ln -s "${dep}" "${lfname}"
+                    fi
+                fi
+            fi
+        done
+    done
+}
+
+#####################################################################
 # This function checks that environment are good for building Psi+.
 # It'll check some environment variables (like QTDIR), as well as
 # presence of required utilities.
@@ -396,6 +433,36 @@ function compile_sources()
     if [ $? -ne 0 ]; then
         action_failed "Compiling Psi" "${PSI_DIR}/logs/psi-make.log"
     fi
+}
+
+#####################################################################
+# This function will bundle neccessary libraries.
+#####################################################################
+function copy_libraries()
+{
+    log "Bundling neccessary libraries..."
+
+    # Bundle libraries from /usr/local, if any.
+    local brew_libs_to_bundle=`otool -L ${PSIAPP_DIR}/MacOS/psi-plus | grep "/usr/local" | awk {' print $1 '}`
+    log "Bundling Homebrew-installed libraries, if neccessary..."
+
+    for lib in ${brew_libs_to_bundle[@]}; do
+        local lib_path=`echo $lib | awk {' print $1 '}`
+        local lib_name=`echo $lib_path | awk -F"/" {' print $NF '}`
+        log "Bundling homebrew library: ${lib_name}"
+        install_name_tool -change "${lib_path}" "@executable_path/../Frameworks/${lib_name}" "${PSIAPP_DIR}/MacOS/psi-plus"
+        cp -a "${lib}" "${PSIAPP_DIR}/Frameworks"
+    done
+
+    # Go thru all bundled libraries, and check for dependencies.
+    # If something is outside of bundle - install it.
+    log "Bundling Qt library dependencies..."
+    QTLIBS=`find ${PSIAPP_DIR}/Frameworks -type f -name "Qt*" | grep -v ".prl"`
+    bundle_library "${PSIAPP_DIR}/Frameworks" ${QTLIBS[@]}
+
+    LIBS=`find ${PSIAPP_DIR}/Frameworks -type f -name "*.dylib"`
+    log "Bundling libraries dependencies..."
+    bundle_library "${PSIAPP_DIR}/Frameworks" ${LIBS[@]}
 }
 
 #####################################################################
@@ -994,6 +1061,7 @@ case $1 in
         compile_sources
         compile_plugins
         copy_resources
+        copy_libraries
         make_bundle
         time_build_end=`date +'%s'`
         time_build_delta=$[ ${time_build_end} - ${time_build_start} ]
