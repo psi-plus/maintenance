@@ -81,7 +81,7 @@ if %ERRORLEVEL% neq 0 @echo failed to set revision&goto :failExit
 
 cd "%WORKDIR%\build"
 qconf
-configure --enable-plugins --enable-whiteboarding --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
+configure  --enable-whiteboarding --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%MINGWDIR%\include --with-aspell-lib=%MINGWDIR%\lib
 @echo ================================
 @echo Compiler is ready for fight! B-)
 @echo ================================

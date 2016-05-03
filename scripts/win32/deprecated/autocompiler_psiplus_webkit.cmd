@@ -121,7 +121,7 @@ CD psi
 REN iris\conf_win.pri.example conf_win.pri
 qconf
 IF ERRORLEVEL 1 ECHO Unable to configure & GOTO :reversing_to_psi
-configure --enable-plugins --with-openssl-inc=%OPENSSLDir%\outinc --with-openssl-lib=%OPENSSLDir%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%QTDIR%\..\mingw\include --with-aspell-lib=%QTDIR%\..\mingw\lib --enable-webkit
+configure  --with-openssl-inc=%OPENSSLDir%\outinc --with-openssl-lib=%OPENSSLDir%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%QTDIR%\..\mingw\include --with-aspell-lib=%QTDIR%\..\mingw\lib --enable-webkit
 IF ERRORLEVEL 1 ECHO Unable to configure & GOTO :reversing_to_psi
 CD ..
 GOTO :compiling

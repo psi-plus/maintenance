@@ -216,7 +216,6 @@ IF %MakeClassic%==1 (
 	CALL qconf.cmd
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !qconf failed>> logs.txt & GOTO :exit
 	configure ^
-	--enable-plugins ^
 	--with-aspell-inc=%MINGWDIR%\include ^
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
@@ -273,7 +272,6 @@ IF %MakeClassicDebug%==1 (
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !qconf failed>> logs.txt & GOTO :exit
 	configure ^
 	--debug ^
-	--enable-plugins ^
 	--with-aspell-inc=%MINGWDIR%\include ^
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
@@ -329,7 +327,6 @@ IF %MakeWebkit%==1 (
 	IF ERRORLEVEL 1 ECHO QConf failed & CD .. & ECHO !QConf failed>> logs.txt & GOTO :exit
 	configure ^
 	--enable-webkit ^
-	--enable-plugins ^
 	--with-aspell-inc=%MINGWDIR%\include ^
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^
@@ -387,7 +384,6 @@ IF %MakeWebkitDebug%==1 (
 	configure ^
 	--debug ^
 	--enable-webkit ^
-	--enable-plugins ^
 	--with-aspell-inc=%MINGWDIR%\include ^
 	--with-aspell-lib=%MINGWDIR%\lib ^
 	--with-zlib-inc=%ZLIBDIR%\include ^

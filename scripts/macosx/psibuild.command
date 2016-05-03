@@ -523,9 +523,9 @@ src_compile() {
 	fi
 	if [ $ENABLE_WEBKIT != 0 ]; then
 		rev="${rev}-webkit"
-		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss --enable-webkit $CONF_OPTS"
+		CONF_OPTS="--disable-qdbus  --enable-whiteboarding --disable-xss --enable-webkit $CONF_OPTS"
 	else
-		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss $CONF_OPTS"
+		CONF_OPTS="--disable-qdbus  --enable-whiteboarding --disable-xss $CONF_OPTS"
 	fi
 
 	sed -i "" "s@./configure@& ${CONF_OPTS}@g" build_package.sh

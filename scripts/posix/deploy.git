@@ -135,7 +135,6 @@ git add -A
 
 ( cd "${WORK_DIR}"; "$QCONF"; )
 
-[ "${UP_TO%%-*}" -ge 8000 ] && configure_opts="${configure_opts} --enable-plugins"
 ( cd "${WORK_DIR}"; ./configure --disable-growl --debug --prefix=/usr --no-separate-debug-info --qtdir=/usr $configure_opts )
 
 for proj in psi.pro.user*; do cp "$proj" "${WORK_DIR}" 2>/dev/null; done

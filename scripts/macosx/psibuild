@@ -33,7 +33,7 @@ TRANSLATIONS_TO_INSTALL="en"
 # Configure options.
 # These options will be passed to ./configure script.
 # Do not change them until you know what are you doing!
-CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss --verbose"
+CONF_OPTS="--disable-qdbus  --enable-whiteboarding --disable-xss --verbose"
 
 # Psi version.
 PSI_VERSION="0.16"

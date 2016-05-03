@@ -14,7 +14,7 @@ QT_MAJOR_VERSION=${QT_MAJOR_VERSION:-4}
 SKIP_INVALID_PATCH=${SKIP_INVALID_PATCH:-0}
 
 # configure options / опции скрипта configure
-DEFAULT_CONF_OPTS="${DEFAULT_CONF_OPTS:---enable-plugins --enable-whiteboarding}"
+DEFAULT_CONF_OPTS="${DEFAULT_CONF_OPTS:---enable-whiteboarding}"
 CONF_OPTS="${DEFAULT_CONF_OPTS} ${CONF_OPTS}"
 
 # install root / каталог куда устанавливать (полезно для пакаджеров)
@@ -329,8 +329,8 @@ check_env() {
   esac
 
   # Plugins
-  local plugins_enabled=0
-  case "${CONF_OPTS}" in *--enable-plugins*) plugins_enabled=1; ;; *) ;; esac
+  local plugins_enabled=1
+  case "${CONF_OPTS}" in *--disable-plugins*) plugins_enabled=0; ;; *) ;; esac
   [ -n "${PLUGINS}" ] && [ "${plugins_enabled}" = 0 ] && {
     warning "WARNING: there are selected plugins but plugins are disabled in"
     warning "configuration options. no one will be built"

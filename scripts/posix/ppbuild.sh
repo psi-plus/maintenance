@@ -284,7 +284,7 @@ compile_psiplus ()
   echo "***Build started***">${buildpsi}/build.log
   echo "--Starting ${qconf_bin}">>${buildpsi}/build.log
   ${qconf_bin} 2>>${buildpsi}/build.log
-  args="--prefix=/usr --enable-plugins --enable-whiteboarding ${iswebkit} ${no_enchant}"
+  args="--prefix=/usr  --enable-whiteboarding ${iswebkit} ${no_enchant}"
   echo "--Starting configure with args
 ${args}  
 ">>${buildpsi}/build.log
@@ -455,7 +455,7 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru
 
 %build
 ${qconfcmd}
-./configure --prefix=\"%{_prefix}\" --libdir=\"%{_libdir}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR --enable-plugins ${iswebkit} ${no_enchant} --release --no-separate-debug-info
+./configure --prefix=\"%{_prefix}\" --libdir=\"%{_libdir}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR  ${iswebkit} ${no_enchant} --release --no-separate-debug-info
 %{__make} %{?_smp_mflags}
 
 
