@@ -425,7 +425,7 @@ compile_psiplus ()
   echo "***Build started***">${buildlog}
   echo "--Starting ${qconf_bin}">>${buildlog}
   ${qconf_bin} 2>>${buildlog}
-  args="--prefix=/usr --qtselect=${qt_ver} --enable-plugins --enable-whiteboarding ${iswebkit} ${spell_flag}"
+  args="--prefix=/usr --qtselect=${qt_ver} --enable-whiteboarding ${iswebkit} ${spell_flag}"
   echo "--Starting configure with args
 ${args}  
 ">>${buildlog}
