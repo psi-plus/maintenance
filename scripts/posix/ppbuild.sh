@@ -611,7 +611,7 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru
 
 %build
 ${qconfcmd}
-./configure --prefix=\"%{_prefix}\" --libdir=\"%{_libdir}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR --enable-plugins ${iswebkit} ${spell_flag} --release --no-separate-debug-info
+./configure --prefix=\"%{_prefix}\" --libdir=\"%{_libdir}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR ${iswebkit} ${spell_flag} --release --no-separate-debug-info
 %{__make} %{?_smp_mflags}
 
 
