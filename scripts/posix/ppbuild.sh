@@ -14,10 +14,21 @@ lib_prefixes="/usr/lib
 /usr/lib64
 /usr/local/lib
 /usr/local/lib64" #список каталогов для поиска библиотек
+#guthub repositories
+psi_url="https://github.com/psi-im/psi.git"
+psi_plus_url="https://github.com/psi-plus/main.git"
+plugins_url="https://github.com/psi-plus/plugins.git"
+langs_url="https://github.com/psi-plus/psi-plus-l10n.git"
+psi_cmake_url="https://github.com/Vitozz/psi-plus-cmake.git"
 def_prefix="/usr" #префикс для сборки пси+
 libpsibuild_url="https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh"
 #DEFAULT OPTIONS/ОПЦИИ ПО УМОЛЧАНИЮ
+qt_ver=5
 no_enchant="--disable-enchant"
+no_aspell="--disable-aspell"
+no_hunspell="--disable-hunspell"
+spell_flag="${no_aspell} ${no_enchant}"
+spellchek_engine="hunspell"
 iswebkit=""
 use_iconsets="system clients activities moods affiliations roster"
 isoffline=0
@@ -51,6 +62,8 @@ DEF_PLUG_LIST="ALL"
 DEF_CMAKE_BUILD_TYPE="Release"
 #Qt5
 QT4_BUILD="OFF"
+#Use libpsibuild.sh to prepare sources
+USE_LIBPSIBUILD=0
 
 #WARNING: следующие переменные будут изменены в процессе работы скрипта автоматически
 buildpsi=${default_buildpsi} #инициализация переменной
@@ -83,6 +96,42 @@ rpmsrc=${rpmbuilddir}/SOURCES
 qconf_bin="qconf"
 qconf_dir="/usr/bin"
 #
+
+fetch_url ()
+{
+  local last_dir=$(pwd)
+  local fetch_dir=""
+  local f_url=""
+  local fetch_log=${buildpsi}/fetch.log
+  if [ ! -z "$2" ]; then
+    fetch_dir=$2
+  fi
+  if [ ! -z "$1" ]; then
+    f_url=$1
+    if [ "$(ls -A ${fetch_dir})" ]; then
+      cd ${fetch_dir}
+      git reset --hard
+      git pull
+      git submodule update
+      cd ${last_dir}
+    else
+      git clone ${f_url} ${fetch_dir}
+      cd ${fetch_dir}
+      git submodule init
+      git submodule update
+      cd ${last_dir}
+    fi
+  fi
+}
+
+fetch_all ()
+{
+  fetch_url ${psi_url} ${buildpsi}/git
+  fetch_url ${psi_plus_url} ${buildpsi}/git-plus
+  fetch_url ${plugins_url} ${buildpsi}/plugins
+  fetch_url ${langs_url} ${buildpsi}/langs
+  fetch_url ${psi_cmake_url} ${buildpsi}/psi-plus-cmake
+}
 
 find_qconf ()
 {
@@ -120,6 +169,7 @@ find_ccache ()
   done
   
   if [ ! -z "${ccache_path}" ]; then
+    echo -e "${pink}ccache utility found in :${nocolor} ${ccache_path}"; echo ""
     PATH="${ccache_path}:${PATH}"
     QMAKE_CCACHE_CMD="QMAKE_CXX=ccache g++"
   fi
@@ -142,8 +192,10 @@ read_options ()
       "2" ) isoffline=$(echo ${line});;
       "3" ) skip_invalid=$(echo ${line});;
       "4" ) pluginlist=$(echo ${line});;
-      "5" ) no_enchant=$(echo ${line});;
+      "5" ) spellchek_engine=$(echo ${line});;
       "6" ) buildpsi=$(echo ${line});;
+      "7" ) qt_ver=$(echo ${line});;
+      "8" ) qconf_bin=$(echo ${line});;
       esac
       let "inc+=1"
     done < ${config_file}
@@ -181,6 +233,18 @@ update_variables ()
   patches=${buildpsi}/git-plus/patches
   inst_path=${buildpsi}/${inst_suffix}
   cmake_files_dir=${buildpsi}/psi-plus-cmake
+  if [ "${qt_ver}" == "5" ]; then
+    QT4_BUILD="OFF"
+  else
+    QT4_BUILD="ON"
+  fi
+  if [ "${spellchek_engine}" == "hunspell" ]; then
+    spell_flag="${no_aspell} ${no_enchant}"
+  elif [ "${spellchek_engine}" == "aspell" ]; then
+    spell_flag="${no_hunspell} ${no_enchant}"
+  else
+    spell_flag="${no_aspell} ${no_hunspell}"
+  fi
 }
 #
 die() { echo "$@"; exit 1; }
@@ -227,20 +291,96 @@ down_all ()
   check_dir ${buildpsi}/git
   check_dir ${buildpsi}/git-plus
   check_dir ${buildpsi}/plugins
-  run_libpsibuild fetch_all
+  check_dir ${buildpsi}/psi-plus-cmake
+  if [ $USE_LIBPSIBUILD -ne 0 ]; then
+    run_libpsibuild fetch_all
+  else
+    fetch_all
+  fi
+}
+#
+patch_psi ()
+{
+  local patchlist=$(ls ${buildpsi}/git-plus/patches/ | grep diff)
+  local patchnumber=10000
+  local bdir=$(pwd)
+  local msg=""
+  local patchlogfile=${buildpsi}/${bdir##*/}${2##*/}_patch.log
+  if [ ! -z "$1" ]; then
+    patchnumber=$1
+  fi
+  echo "--Start patching--">${patchlogfile}
+  do_patch ()
+  {
+    if [ ! -z "$1" ]; then
+      echo "==${1##*/}==">>${patchlogfile}
+      msg="${green}[OK]${nocolor}"
+      patch -p1 --input=$1>>${patchlogfile} || msg="${red}[NO]${nocolor}"
+      echo -e "${1##*/} ${msg}"
+    fi
+  }
+  if [ -z "$2" ]; then
+    for patchfile in ${patchlist}; do
+      if [  ${patchfile:0:4} -lt ${patchnumber} ]; then
+        do_patch ${buildpsi}/git-plus/patches/${patchfile}
+      fi
+    done
+  else
+    do_patch $2
+  fi
+}
+#
+prepare_psi_src ()
+{
+  if [ ! -z "$1" ]; then
+    git archive --format=tar HEAD | ( cd $1 ; tar xf - )
+    (
+      export ddir="$1"
+      git submodule foreach "( git archive --format=tar HEAD ) \
+| ( cd \"${ddir}/\${path}\" ; tar xf - )"
+    )
+  fi
+}
+#
+prepare_workspace ()
+{
+  local last_dir=$(pwd)
+  echo "Deleting ${orig_src}"
+  rm -rf ${orig_src}
+  check_dir ${orig_src}
+  cd ${buildpsi}/git
+  prepare_psi_src ${orig_src}
+  cp -a ${buildpsi}/git-plus/iconsets/* ${orig_src}/iconsets/
+  cp -a ${buildpsi}/plugins/* ${orig_src}/src/plugins/
+  cp -a ${buildpsi}/psi-plus-cmake/* ${orig_src}/
+  cd ${orig_src}
+  patch_psi
+  echo -e "${blue}Do you want to apply psi-new-history.patch${nocolor} ${pink}[y/n(default)]${nocolor}"
+  read ispatch
+  if [ "${ispatch}" == "y" ]; then
+    cd ${orig_src}
+    patch_psi 10000 ${patches}/dev/psi-new-history.patch
+    cd ${workdir}
+  fi
+  cd ${buildpsi}/git-plus
+  local rev="$(git describe --tags | cut -d - -f 2)"
+  local suffix=""
+  local builddate=$(LANG=en date +'%F')
+  if [ ! -z "${iswebkit}" ]; then
+    suffix="-webkit"
+  fi
+  local ver="${psi_version}.${rev}${suffix} (${builddate})"
+  echo $ver > ${orig_src}/version
 }
 #
 prepare_src ()
 {
   down_all
-  run_libpsibuild prepare_workspace
-  run_libpsibuild prepare_all
-  echo -e "${blue}Do you want to apply psi-new-history.patch${nocolor} ${pink}[y/n(default)]${nocolor}"
-  read ispatch
-  if [ "${ispatch}" == "y" ]; then
-    cd ${orig_src}
-    patch -p1 --input=${patches}/dev/psi-new-history.patch
-    cd ${workdir}
+  if [ $USE_LIBPSIBUILD -ne 0 ]; then
+    run_libpsibuild prepare_workspace
+    run_libpsibuild prepare_all
+  else
+    prepare_workspace
   fi
 }
 #
@@ -281,24 +421,25 @@ compile_psiplus ()
   curd=$(pwd)
   prepare_src
   cd ${orig_src}
-  echo "***Build started***">${buildpsi}/build.log
-  echo "--Starting ${qconf_bin}">>${buildpsi}/build.log
-  ${qconf_bin} 2>>${buildpsi}/build.log
-  args="--prefix=/usr  --enable-whiteboarding ${iswebkit} ${no_enchant}"
+  local buildlog=${buildpsi}/build.log
+  echo "***Build started***">${buildlog}
+  echo "--Starting ${qconf_bin}">>${buildlog}
+  ${qconf_bin} 2>>${buildlog}
+  args="--prefix=/usr --qtselect=${qt_ver} --enable-plugins --enable-whiteboarding ${iswebkit} ${spell_flag}"
   echo "--Starting configure with args
 ${args}  
-">>${buildpsi}/build.log
-  ./configure ${args} 2>>${buildpsi}/build.log
-  echo "--Starting make">>${buildpsi}/build.log
-  make -j${cpu_count} 2>>${buildpsi}/build.log || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
-  echo "***Build finished***">>${buildpsi}/build.log
+">>${buildlog}
+  ./configure ${args} 2>>${buildlog}
+  echo "--Starting make">>${buildlog}
+  make -j${cpu_count} 2>>${buildlog} || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
+  echo "***Build finished***">>${buildlog}
   cd ${curd}
 }
 #
 qmakecmd ()
 {
   if [ -f "/usr/bin/qmake" ] || [ -f "/usr/local/bin/qmake" ]; then
-    qmake || die
+    qmake -qt=${qt_ver} || die
   else
     if [ -f "/usr/bin/qmake-qt4" ] || [ -f "/usr/local/bin/qmake-qt4" ]; then
       qmake-qt4 || die
@@ -348,16 +489,7 @@ make_plugin ()
 fetch_cmake_files ()
 {
   local repo_url="https://github.com/Vitozz/psi-plus-cmake.git"
-  
-  cd ${buildpsi}
-  if [ ! -d "${cmake_files_dir}" ]; then
-    check_dir ${cmake_files_dir}
-    git clone ${repo_url} ${cmake_files_dir}
-  else
-    cd ${cmake_files_dir}
-    git reset --hard
-    git pull
-  fi
+  fetch_url ${repo_url} ${cmake_files_dir}
   cd ${buildpsi}
 }
 #
@@ -372,12 +504,14 @@ build_cmake_plugins ()
   }
   local pl_preffix=${DEF_CMAKE_INST_PREFIX}
   local pl_suffix=${DEF_CMAKE_INST_SUFFIX}
-  fetch_cmake_files
   if [ ! -f "${orig_src}/psi.pro" ]; then
     prepare_src
   fi
   check_dir ${orig_src}
-  cp -rf ${cmake_files_dir}/* ${orig_src}/
+  if [ $USE_LIBPSIBUILD -ne 0 ]; then
+    fetch_cmake_files
+    cp -rf ${cmake_files_dir}/* ${orig_src}/
+  fi
   cd ${orig_src}
   local b_dir=${orig_src}/build
   check_dir ${b_dir}
@@ -407,7 +541,29 @@ build_deb_package ()
 Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru.'
   cd ${orig_src}
   echo "${desc}" > description-pak
-  local requires=' "libaspell15 (>=0.60)", "libc6 (>=2.7-1)", "libgcc1 (>=1:4.1.1)", "libqca2", "libqt4-dbus (>=4.4.3)", "libqt4-network (>=4.4.3)", "libqt4-qt3support (>=4.4.3)", "libqt4-xml (>=4.4.3)", "libqtcore4 (>=4.4.3)", "libqtgui4 (>=4.4.3)", "libstdc++6 (>=4.1.1)", "libx11-6", "libxext6", "libxss1", "zlib1g (>=1:1.1.4)" '
+  #make spellcheck
+  local spell_dep=""
+  if [ "${spellchek_engine}" == "hunspell" ]; then
+    spell_dep="libhunspell-1.3-0"
+  elif [ "${spellchek_engine}" == "aspell" ]; then
+    spell_dep="libaspell15 '(>=0.60)'"
+  else
+    spell_dep="libenchant1c2a"
+  fi
+  if [ "${qt_ver}" == "4" ]; then
+    local webkitdep=""
+    if [ ! -z "${iswebkit}" ]; then
+      webkitdep=", libqt4-webkit '(>=4.4.3)'"
+    fi
+    qt_deps="libqt4-dbus '(>=4.4.3)', libqt4-network '(>=4.4.3)', libqt4-qt3support '(>=4.4.3)', libqt4-xml '(>=4.4.3)', libqtcore4 '(>=4.4.3)', libqtgui4 '(>=4.4.3)'${webkitdep}"
+  else
+    local webkitdep=""
+    if [ ! -z "${iswebkit}" ]; then
+      webkitdep=", libqt5webkit5"
+    fi
+    qt_deps="libqt5dbus5, libqt5network5, libqt5xml5 , libqt5core5a, libqt5gui5, libqt5widgets5, libqt5x11extras5${webkitdep}"
+  fi
+  local requires=" ${spell_dep}, 'libc6 (>=2.7-1)', 'libgcc1 (>=1:4.1.1)', 'libqca2', ${qt_deps}, 'libstdc++6 (>=4.1.1)', 'libx11-6', 'libxext6', 'libxss1', 'zlib1g (>=1:1.1.4)' "
   sudo checkinstall -D --nodoc --pkgname=psi-plus --pkggroup=net --pkgversion=${psi_version}.${rev} --pkgsource=${orig_src} --maintainer="thetvg@gmail.com" --requires="${requires}"
   cp -f ${orig_src}/*.deb ${buildpsi}
 }
@@ -455,7 +611,7 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru
 
 %build
 ${qconfcmd}
-./configure --prefix=\"%{_prefix}\" --libdir=\"%{_libdir}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR  ${iswebkit} ${no_enchant} --release --no-separate-debug-info
+./configure --prefix=\"%{_prefix}\" --libdir=\"%{_libdir}\" --bindir=\"%{_bindir}\" --datadir=\"%{_datadir}\" --qtdir=$QTDIR --enable-plugins ${iswebkit} ${spell_flag} --release --no-separate-debug-info
 %{__make} %{?_smp_mflags}
 
 
@@ -527,11 +683,11 @@ build_rpm_package ()
 #
 prepare_dev ()
 {
-  local psidev=$buildpsi/psidev
-  local orig=$psidev/psi.orig
-  local new=$psidev/psi
-  rm -rf $orig
-  rm -rf $new
+  local psidev=${buildpsi}/psidev
+  local orig=${psidev}/git.orig
+  local new=${psidev}/git
+  rm -rf ${orig}
+  rm -rf ${new}
   cd ${buildpsi}
   echo ${psidev}
   check_dir ${psidev}
@@ -540,48 +696,39 @@ prepare_dev ()
   if [ ! -d ${buildpsi}/git ]; then
     down_all
   fi
-  cp -r git/* ${orig}
-  cp -r git/* ${new}
+  cd ${buildpsi}/git
+  prepare_psi_src ${orig}
+  prepare_psi_src ${new}
   cd ${psidev}
-  if [ ! -f deploy ]; then
-    wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/deploy" || die "Failed to update deploy";
-  fi
-  if [ ! -f mkpatch ]; then
-    wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/mkpatch" || die "Failed to update mkpatch";
-    sed "s/maintenance\/scripts\/posix\/psidiff\.ignore/psidiff\.ignore/g" -i ${psidev}/mkpatch
-  fi
   if [ ! -f psidiff.ignore ]; then
     wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/psidiff.ignore" || die "Failed to update psidiff.ignore";
+  fi
+  if [ ! -f "${psidev}/mkpatch" ]; then
+    local mkpatch="#!/bin/bash
+diff -urpN -X "psidiff.ignore" git.orig git | sed '/\(.*айлы.*различаются\|Binary.*differ\)\|^diff -urpN/d' | sed 's/^\(\(---\|+++\)\s\+\S\+\).*/\1/'
+"
+    echo "${mkpatch}">${psidev}/mkpatch
+    chmod u+x ${psidev}/mkpatch
   fi
   local patchlist=$(ls ${buildpsi}/git-plus/patches/ | grep diff)
   cd ${orig}
   echo "---------------------
 Patching original src
----------------------">${psidev}/patching.log
+---------------------">${buildpsi}/${orig##*/}_patching.log
   echo -e "${blue}Enter maximum patch number to patch orig src${nocolor}"
   read patchnumber
-  for patchfile in ${patchlist}; do
-      if [  ${patchfile:0:4} -lt ${patchnumber} ]; then
-        echo  "${patchfile}">>${psidev}/patching.log
-        msg="${green}[OK]${nocolor}"
-        patch -p1 --input=${buildpsi}/git-plus/patches/${patchfile} >>${psidev}/patching.log || msg="${red}[NO]${nocolor}"
-        echo -e "${patchfile} ${msg}"
-      fi
-  done
+  if [ ! -z "$patchnumber" ]; then
+    patch_psi $patchnumber
+  fi
   cd ${new}
   echo "---------------------
 Patching work src
----------------------">>${psidev}/patching.log
+---------------------">>${buildpsi}/${new##*/}_patching.log
   echo -e "${blue}Enter maximum patch number to patch work src${nocolor}"
   read patchnumber
-  for patchfile in ${patchlist}; do
-      if [  ${patchfile:0:4} -lt ${patchnumber} ]; then
-        echo  "${patchfile}">>${psidev}/patching.log
-        msg="${green}[OK]${nocolor}"
-        patch -p1 --input=${buildpsi}/git-plus/patches/${patchfile} >>${psidev}/patching.log || msg="${red}[NO]${nocolor}"
-        echo -e "${patchfile} ${msg}"
-      fi
-  done
+  if [ ! -z "$patchnumber" ]; then
+    patch_psi $patchnumber
+  fi
 }
 #
 prepare_plugins_spec ()
@@ -631,7 +778,9 @@ fi
 build_rpm_plugins ()
 {
   local progname="psi-plus-plugins"
-  fetch_cmake_files
+  if [ $USE_LIBPSIBUILD -ne 0 ]; then
+    fetch_cmake_files
+  fi
   prepare_src
   check_dir ${orig_src}
   cp -rf ${cmake_files_dir}/* ${orig_src}/
@@ -659,8 +808,7 @@ build_rpm_plugins ()
 #
 get_resources ()
 {
-  cd ${buildpsi}
-  git clone git://github.com/psi-plus/resources.git
+  fetch_url "https://github.com/psi-plus/resources.git" ${buildpsi}/resources
 }
 #
 install_resources ()
@@ -721,20 +869,20 @@ install_themes ()
 #
 update_resources ()
 {
-  cd ${buildpsi}/resources
-  git pull
+  get_resources
 }
 #
 build_locales ()
 {
   local tr_path=${buildpsi}/langs/translations
-  run_libpsibuild fetch_sources
+  fetch_all
   if [ -d "${tr_path}" ]; then
     rm -f ${tr_path}/*.qm
-    if [ -f "/usr/bin/lrelease" ] || [ -f "/usr/local/bin/lrelease" ]; then
+    if [ -f "/usr/bin/qtchooser" ];then
+      lrelease -qt=${qt_ver} ${tr_path}/*.ts
+    elif [ -f "/usr/bin/lrelease" ] || [ -f "/usr/local/bin/lrelease" ]; then
       lrelease ${tr_path}/*.ts 
-    fi
-    if [ -f "/usr/bin/lrelease-qt4" ] || [ -f "/usr/local/bin/lrelease-qt4" ]; then
+    elif [ -f "/usr/bin/lrelease-qt4" ] || [ -f "/usr/local/bin/lrelease-qt4" ]; then
       lrelease-qt4 ${tr_path}/*.ts 
     fi
   fi 
@@ -768,12 +916,6 @@ set_config ()
   else
     skip_patches="y"
   fi
-  local noenchant="y"
-  if [ ! -z "${no_enchant}" ]; then
-    noenchant="y"
-  else
-    noenchant="n"
-  fi
   local loop=1
   while [ ${loop} = 1 ];  do
     echo -e "${blue}Choose action TODO:${nocolor}
@@ -782,9 +924,11 @@ set_config ()
 --${pink}[3]${nocolor} - Set Offline Mode (current: ${is_offline})
 --${pink}[4]${nocolor} - Skip Invalid patches (current: ${skip_patches})
 --${pink}[5]${nocolor} - Set list of plugins needed to build (for all use *)
---${pink}[6]${nocolor} - Set use aspell instead of enchant (current: ${noenchant})
+--${pink}[6]${nocolor} - Set psi+ spellcheck engine (current: ${spellchek_engine})
 --${pink}[7]${nocolor} - Set psi+ sources path (current: ${buildpsi})
---${pink}[8]${nocolor} - Print option values
+--${pink}[8]${nocolor} - Set qt version 4/5 (current: ${qt_ver})
+--${pink}[9]${nocolor} - Set qconf path (current: ${qconf_bin})
+--${pink}[a]${nocolor} - Print option values
 --${pink}[0]${nocolor} - Do nothing"
     read deistvo
     case ${deistvo} in
@@ -829,12 +973,14 @@ set_config ()
             else
               use_plugins=""
             fi;;
-      "6" ) echo -e "Do you want use aspell spellcheck engine instead on enchant ${pink}[y/n]${nocolor} ?"
+      "6" ) echo -e "Please set spellcheck engine for psi+. Available values:${pink}
+hunspell
+aspell
+enchant
+${nocolor} ?"
             read variable
-            if [ "$variable" == "y" ]; then
-              no_enchant="--disable-enchant"
-            else
-              no_enchant=""
+            if [ ! -z "$variable" ]; then
+              spellchek_engine=$variable
             fi;;
       "7" ) echo "Please set psi+ sources path (absolute path, or \$HOME/path)"
             read variable
@@ -846,15 +992,32 @@ set_config ()
               fi
             else
               buildpsi=${default_buildpsi}
-            fi;;            
-      "8" ) echo -e "${blue}==Options==${nocolor}
+            fi;;
+      "8" ) echo "Please set qt version 4 or 5"
+            read variable
+            if [ ! -z "${variable}" ]; then
+              qt_ver=${variable}
+            fi;;
+      "9" ) find_qconf
+            if [ ! -z "${qconf_bin}" ]; then
+               echo "Qconf utility found: ${qconf_bin}. Do you want to set it manually[y/n]?"
+               read variable
+               if [ "$variable" == "y" ]; then
+                 echo "Enter full path to qconf utility:"
+                 read qconf_bin
+               fi
+            fi
+            ;;
+      "a" ) echo -e "${blue}==Options==${nocolor}
 ${green}WebKit${nocolor} = ${yellow}${use_webkit}${nocolor}
 ${green}Iconsets${nocolor} = ${yellow}${use_iconsets}${nocolor}
 ${green}Offline Mode${nocolor} = ${yellow}${is_offline}${nocolor}
 ${green}Skip Invalid Patches${nocolor} = ${yellow}${skip_patches}${nocolor}
 ${green}Plugins${nocolor} = ${yellow}${use_plugins}${nocolor}
-${green}No Enchant${nocolor} = ${yellow}${noenchant}${nocolor}
+${green}Spellcheck engine${nocolor} = ${yellow}${spellchek_engine}${nocolor}
+${green}Qt Version${nocolor} = ${yellow}${qt_ver}${nocolor}
 ${green}Psi+ sources path${nocolor} = ${yellow}${buildpsi}${nocolor}
+${green}Qconf utility path${nocolor} = ${yellow}${qconf_bin}${nocolor}
 ${blue}===========${nocolor}";;
       "0" ) clear
             loop=0;;
@@ -869,8 +1032,10 @@ ${blue}===========${nocolor}";;
   else
     echo "$use_plugins" >> ${config_file}
   fi
-  echo "$no_enchant" >> ${config_file}
+  echo "$spellchek_engine" >> ${config_file}
   echo "$buildpsi" >> ${config_file}
+  echo "$qt_ver" >> ${config_file}
+  echo "$qconf_bin" >> ${config_file}
   update_variables
 }
 #
@@ -944,11 +1109,15 @@ choose_action ()
 #
 cd ${workdir}
 read_options
-check_libpsibuild
+if [ $USE_LIBPSIBUILD -ne 0 ]; then
+  check_libpsibuild
+fi
 if [ ! -f "${config_file}" ]; then
   set_config
 fi
-find_qconf
+if [ -z ${qconf_bin} ]; then
+  find_qconf
+fi
 find_ccache
 set_options
 clear
