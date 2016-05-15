@@ -61,7 +61,7 @@ DEF_PLUG_LIST="ALL"
 #тип сборки плагинов
 DEF_CMAKE_BUILD_TYPE="Release"
 #Qt5
-QT4_BUILD="OFF"
+USE_QT5="ON"
 #Use libpsibuild.sh to prepare sources
 USE_LIBPSIBUILD=0
 
@@ -234,9 +234,9 @@ update_variables ()
   inst_path=${buildpsi}/${inst_suffix}
   cmake_files_dir=${buildpsi}/psi-plus-cmake
   if [ "${qt_ver}" == "5" ]; then
-    QT4_BUILD="OFF"
+    USE_QT5="ON"
   else
-    QT4_BUILD="ON"
+    USE_QT5="OFF"
   fi
   if [ "${spellchek_engine}" == "hunspell" ]; then
     spell_flag="${no_aspell} ${no_enchant}"
@@ -364,12 +364,15 @@ prepare_workspace ()
   fi
   cd ${buildpsi}/git-plus
   local rev="$(git describe --tags | cut -d - -f 2)"
+  cd ${buildpsi}/git
+  local psirev="$(git describe --tags | cut -d - -f 2)"
+  cd ${buildpsi}/git-plus
   local suffix=""
   local builddate=$(LANG=en date +'%F')
   if [ ! -z "${iswebkit}" ]; then
     suffix="-webkit"
   fi
-  local ver="${psi_version}.${rev}${suffix} (${builddate})"
+  local ver="${psi_version}.${rev}.${psirev}${suffix} (${builddate})"
   echo $ver > ${orig_src}/version
 }
 #
@@ -522,7 +525,7 @@ build_cmake_plugins ()
     pl_preffix=${orig_src}
     pl_suffix="plugins"
   fi  
-  local cmake_flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${pl_preffix} -DONLY_PLUGINS=ON -DPLUGINS_PATH=${pl_suffix} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DBUILD_DEV=OFF -DQT4_BUILD=${QT4_BUILD}"
+  local cmake_flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${pl_preffix} -DONLY_PLUGINS=ON -DPLUGINS_PATH=${pl_suffix} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DBUILD_DEV=OFF -DUSE_QT5=${USE_QT5}"
   echo " "; echo "Build psi+ plugins using CMAKE started..."; echo " "
   cmake ${cmake_flags} ..
   make -j${cpu_count} && make install && echo_done
@@ -753,7 +756,7 @@ ${desc}
 %setup
 
 %build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{buildroot}%{_libdir} -DONLY_PLUGINS=ON -DPLUGINS_PATH=/psi-plus/plugins .
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{buildroot}%{_libdir} -DUSE_QT5=${USE_QT5} -DONLY_PLUGINS=ON -DPLUGINS_PATH=/psi-plus/plugins .
 %{__make} %{?_smp_mflags} 
 
 %install
@@ -786,7 +789,8 @@ build_rpm_plugins ()
   cp -rf ${cmake_files_dir}/* ${orig_src}/
   cd ${buildpsi}
   local rev=$(cd ${buildpsi}/git-plus/; echo $(($(git describe --tags | cut -d - -f 2))))
-  local rpmver=${psi_version}.${rev}
+  local psirev=$(cd ${buildpsi}/git/; echo $(($(git describe --tags | cut -d - -f 2))))
+  local rpmver=${psi_version}.${rev}.${psirev}
   local allpluginsdir=${buildpsi}/${progname}-${rpmver}
   local package_name="${progname}-${rpmver}.tar.gz"
   local summary="Plugins for psi-plus-${rpmver}"
