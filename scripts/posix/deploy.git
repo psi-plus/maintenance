@@ -63,7 +63,7 @@ while [ -n "$1" ]; do
   shift
 done
 
-qconfs="qt-qconf qconf-qt4 qconf"
+qconfs="${QCONF} qt-qconf qconf-qt4 qconf"
 for qc in $qconfs; do QCONF="`which ${qc} 2>/dev/null`"; [ -n "$QCONF" ] && break; done
 [ -z "$QCONF" ] && die "neither of ${qconfs} is found"
 
@@ -76,12 +76,26 @@ PATCHES=`(cd "${PATCHES_DIR}"; ls -1 *diff) 2>/dev/null`
 [ -d "${GIT_DIR}/.git" ] || die "${GIT_DIR} is not git repo"
 
 
-
-ZENITY_LIST=`echo "${PATCHES}" | sed 's/.*/FALSE \0/'`
-UP_TO=`zenity --title 'Patch selector' --text 'Apply patches up to?' \
+ZENITY="$(which zenity)"
+if [ -n "${ZENITY}" ]; then
+  ZENITY_LIST=`echo "${PATCHES}" | sed 's/.*/FALSE \0/'`
+  UP_TO=`zenity --title 'Patch selector' --text 'Apply patches up to?' \
 	--list --radiolist --column '' --column Patch --height 440 \
 	--width 600 ${ZENITY_LIST}`
-[ "$?" != 0 ] && die "aborted"
+  [ "$?" != 0 ] && die "aborted"
+else
+  echo "Zenity is not found. trying console interface..."
+  echo
+  echo "${PATCHES}"
+  echo
+  echo "Select end patch number. (a/enter=all, any other=exit)"
+  read -r val
+  case "$val" in 
+   ""|a) UP_TO="$(echo "$PATCHES" | tail -n 1)"; ;;
+   [0-9]*) UP_TO="$(echo "$PATCHES" | grep ^${val} | head -n 1)"; ;;
+  esac
+  [ -n "${UP_TO}" ] || die "End patch is not selected. Abort"
+fi
 
 prepare_dir "${WORK_DIR}"
 
@@ -97,7 +111,8 @@ then
   cd "${WORK_DIR}"
   for p in $PATCHES; do
      [ "${p}" = "${UP_TO}" ] && [ "$edit_mode" = 1 ] && commit_tree "before ${p}"
-     git apply -p1 "${PATCHES_DIR}/${p}" || {
+     echo "Apply $p"
+	 git apply -p1 "${PATCHES_DIR}/${p}" || {
        broken=1
        echo -n "Patch ${p} can't be applied cleanly. "
        answer="n"
