@@ -8,14 +8,16 @@
 WORK_OFFLINE=${WORK_OFFLINE:-0}
 
 # Qt major version 4,5,... (could be overriden with --qtselect as well)
-QT_MAJOR_VERSION=${QT_MAJOR_VERSION:-4}
+QT_VERSIONS_PRIORITY=${QT_MAJOR_VERSION:-5 4}
+
+# QT_VERSIONS_PRIORITY or --qtselect is the only valid (--qtselect is in priority)
+QT_VERSION_FORCED=0
 
 # skip patches which applies with errors / пропускать глючные патчи
 SKIP_INVALID_PATCH=${SKIP_INVALID_PATCH:-0}
 
 # configure options / опции скрипта configure
 DEFAULT_CONF_OPTS="${DEFAULT_CONF_OPTS:---enable-whiteboarding}"
-CONF_OPTS="${DEFAULT_CONF_OPTS} ${CONF_OPTS}"
 
 # install root / каталог куда устанавливать (полезно для пакаджеров)
 INSTALL_ROOT="${INSTALL_ROOT:-/}"
@@ -61,8 +63,12 @@ case "${INSTALL_ROOT}" in /*) ;; *) INSTALL_ROOT="$(pwd)/${INSTALL_ROOT}"; ;; es
 [ -n "${PLUGINS_PREFIXES}" ] && plugprefset=1
 PLUGINS_PREFIXES="${PLUGINS_PREFIXES:-generic}" # will be updated later while detecting platform specific settings
 
+PLUGINS_ENABLED=1 # computed from passed command line in set_psi_env
+WEBKIT_ENABLED=0 # computed from passed command line in set_psi_env
+
 # convert extra patches to absolute paths
 EXTRA_PATCHES="$(for f in $EXTRA_PATCHES; do readlink -f "$f"; done)"
+
 #######################
 # FUNCTIONS / ФУНКЦИИ #
 #######################
@@ -132,8 +138,22 @@ winpath2unix() {
   echo "/${drive}/${path//\\//}"
 }
 
-check_env() {
+replace_conf_arg() {
+  local num="${#CONF_OPTS[@]}"
+  [ $num = 0 ] && return
+  for i in $(seq 0 $(( "$num" - 1 ))); do
+    case "${CONF_OPTS[$i]}" in
+      "${1}="*) CONF_OPTS[$i]="${1}=${2}"; ;;
+      "${1} "*) CONF_OPTS[$i]="${1} ${2}"; ;;
+    esac
+  done
+}
+
+set_psi_env() {
   log "Testing environment.. "
+
+  CONF_OPTS=( "$@" )
+  CONF_OPTS+=( "${DEFAULT_CONF_OPTS[@]}" )
 
   unset COMPILE_PREFIX
   unset PSILIBDIR
@@ -152,7 +172,14 @@ check_env() {
 	    HAS_QCA_CONF_PATH=1
         ;;
       "--qtselect="*)
-        QT_MAJOR_VERSION=${1#--qtselect=}
+        QT_VERSIONS_PRIORITY=${1#--qtselect=}
+        QT_VERSION_FORCED=1
+        ;;
+      "--disable-plugins")
+        PLUGINS_ENABLED=0
+        ;;
+      "--enable-webkit")
+        WEBKIT_ENABLED=1
         ;;
     esac
     shift
@@ -220,7 +247,7 @@ check_env() {
     QCONFDIR="${QCONFDIR:-/c/local/QConf}"
     PATH="${QTDIR}/bin:${PATH}"
     CONFIGURE="configure.exe"
-    CONF_OPTS="${CONF_OPTS} --qtdir=${QTDIR}"
+    CONF_OPTS+=( --qtdir="${QTDIR}" )
 	BUILD_MISSING_QCONF=1
 	[ -z "${HAS_QCA_CONF_PATH}" ] && BUILD_MISSING_QCA=1
     ;;
@@ -272,9 +299,17 @@ check_env() {
   find_qt_util() {
     local name=$1
     result=""
-    for un in $name-qt${QT_MAJOR_VERSION} qt${QT_MAJOR_VERSION}-${name} ${name}${QT_MAJOR_VERSION} $name; do
-      [ -n "`$un -v 2>&1 |grep Qt`" ] && { result="$un"; break; }
+
+    qtest() { [ -n "`$1 -v 2>&1 |grep Qt`" ]; return $?; }
+
+    for v in ${QT_VERSIONS_PRIORITY}; do
+      for un in $full_name $name-qt${QT_MAJOR_VERSION} qt${QT_MAJOR_VERSION}-${name} ${name}${QT_MAJOR_VERSION}; do
+        [ -n "$qtbindir" ] && un="$qtbindir/$un" # we want all qt util to be in the same dir
+        qtest $un && { result="$un"; break 2; }
+      done
     done
+    qtest $name && result="$name"
+
     if [ -z "${result}" ]; then
       [ "$nonfatal" = 1 ] || die "You should install $name util as part of"\
         "Qt framework / Сначала установите утилиту $name из Qt framework"
@@ -286,7 +321,38 @@ check_env() {
 
   local result
   # qmake
-  find_qt_util qmake; QMAKE="${result}"
+  log "Preferred Qt versions: ${QT_VERSIONS_PRIORITY}"
+  if [ -z "$QMAKE" ]; then
+    qmake -v 2>/dev/null | grep -q 'QMake' && {
+      for v in ${QT_VERSIONS_PRIORITY}; do
+        log "Check Qt version ${v}"
+        qmake -qt=${v} -v | grep -q 'QMake version' && {
+          # in case of -qt error it say "Unknown option". So it's correct.
+          QMAKE="$(qmake -qt=${v} -query QT_INSTALL_BINS)/qmake"
+          [ -f "${QMAKE}" ] || QMAKE=""
+          break; # found valid Qt version with help of Qt Chooser
+        }
+      done
+    }
+  fi
+  log "qmake $QMAKE"
+  if [ -z "${QMAKE}" ]; then
+    find_qt_util qmake; QMAKE="${result}"
+  fi
+  qt_ver=$("$QMAKE" -query QT_VERSION); qt_major_ver=${qt_ver%%.*}
+  if [ "$QT_VERSION_FORCED" = 1 ]; then
+    local found=0
+    for v in ${QT_VERSIONS_PRIORITY}; do
+      [ "$v" = "${qt_major_ver}" ] && { found=1; break;} 
+    done
+    [ $found = 1 ] || die "Unable to find qmake for requeted Qt version"
+    replace_conf_arg --qtselect $qt_major_ver
+  else
+    CONF_OPTS+=( --qtselect=${qt_major_ver} )
+  fi
+  local qtbindir="$("${QMAKE}" -query QT_INSTALL_BINS)"
+  log "Use Qt version ${qt_ver} from $qtbindir"
+
   nonfatal=1 find_qt_util lrelease; LRELEASE="${result}"
   find_qt_util moc; # we don't use it dirrectly but its required.
   find_qt_util uic; # we don't use it dirrectly but its required.
@@ -294,7 +360,6 @@ check_env() {
 
   # export QTDIR for all qconf based tools
   if [ -z "${QTDIR}" ]; then
-    qtbindir="$("${QMAKE}" -query QT_INSTALL_BINS)"
     if [ -n "${qtbindir}" -a "$(basename "${qtbindir}" 2>/dev/null)" = bin ]; then
       export QTDIR=$(dirname "${qtbindir}" 2>/dev/null)
     fi
@@ -329,9 +394,7 @@ check_env() {
   esac
 
   # Plugins
-  local plugins_enabled=1
-  case "${CONF_OPTS}" in *--disable-plugins*) plugins_enabled=0; ;; *) ;; esac
-  [ -n "${PLUGINS}" ] && [ "${plugins_enabled}" = 0 ] && {
+  [ -n "${PLUGINS}" ] && [ "${PLUGINS_ENABLED}" = 0 ] && {
     warning "WARNING: there are selected plugins but plugins are disabled in"
     warning "configuration options. no one will be built"
     PLUGINS=""
@@ -343,13 +406,13 @@ check_env() {
 
   # Compile prefix
   if [ -n "${COMPILE_PREFIX}" ]; then
-    [ $have_prefix = 0 ] && CONF_OPTS="${CONF_OPTS} --prefix=$COMPILE_PREFIX"
+    [ $have_prefix = 0 ] && CONF_OPTS+=( --prefix="$COMPILE_PREFIX" )
     log "Compile prefix=${COMPILE_PREFIX}"
     if [ -z "${PSILIBDIR}" ]; then # --libdir is not present in argv
       PSILIBDIR="${COMPILE_PREFIX}/lib"
       [ "`uname -m`" = "x86_64" ] && [ -d "${COMPILE_PREFIX}"/lib64 ] && PSILIBDIR="${COMPILE_PREFIX}/lib64"
       log "LIBDIR=${PSILIBDIR}"
-      CONF_OPTS="${CONF_OPTS} --libdir=${PSILIBDIR}";
+      CONF_OPTS+=( --libdir="${PSILIBDIR}" )
     fi
   fi
 
@@ -608,14 +671,7 @@ prepare_sources() {
                  $(cd "${PSI_DIR}/git-plus/"; git log -n1 --date=short --pretty=format:'%ad')"
   rev_date=$(echo "${rev_date_list}" | sort -r | head -n1)
 
-  case "${CONF_OPTS}" in
-    *--enable-webkit*)
-      echo "0.16.${rev}-webkit ($(echo ${rev_date}))" > version
-      ;;
-    *)
-      echo "0.16.${rev} ($(echo ${rev_date}))" > version
-      ;;
-  esac
+  echo "0.16.${rev}$([ "$WEBKIT_ENABLED" = 1 ] && echo "-webkit") ($(echo ${rev_date}))" > version
   sed -i${SED_INPLACE_ARG} \
     "s:target.path.*:target.path = ${PSILIBDIR}/psi-plus/plugins:" \
     src/plugins/psiplugin.pri
@@ -660,8 +716,8 @@ compile_deps() {
 compile_psi() {
   cd "${PSI_DIR}/build"
   "$QCONF"
-  log "./${CONFIGURE} ${CONF_OPTS}"
-  ./${CONFIGURE} ${CONF_OPTS} || die "configure failed"
+  log "./${CONFIGURE} ${CONF_OPTS[@]}"
+  ./${CONFIGURE} "${CONF_OPTS[@]}" || die "configure failed"
   "$MAKE" $MAKEOPT || die "make failed"
 }
 

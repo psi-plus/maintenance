@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 #######################################################################
 #                                                                     #
 #       Universal build script of Psi+ under Linux                    #
@@ -35,9 +35,6 @@ PATCH_LOG="" # PSI_DIR/psipatch.log by default (empty for default)
 # skip patches which applies with errors / пропускать глючные патчи
 SKIP_INVALID_PATCH="${SKIP_INVALID_PATCH:-0}"
 
-# configure options / опции скрипта configure
-CONF_OPTS="${@}"
-
 # install root / каталог куда устанавливать (полезно для пакаджеров)
 INSTALL_ROOT="${INSTALL_ROOT:-/}"
 
@@ -69,7 +66,7 @@ fi
 #############
 # Go Go Go! #
 #############
-check_env $CONF_OPTS
+set_psi_env "$@"
 prepare_workspace
 fetch_all
 prepare_all
