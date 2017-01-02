@@ -832,11 +832,11 @@ priveleged_exec() {
 
   log
   log "We are going to install everything now. Please choose auth method:"
-  [ "${dest_user}" != "root" ] && log "3) su ${dest_user}"
   while true; do
     log "  0) cancel install (start ${script} manually when ready)"
     log "  1) sudo"
     log "  2) su root"
+    [ "${dest_user}" != "root" ] && log "  3) su ${dest_user}"
     read n
     case "$n" in
       0) return; ;;
@@ -846,7 +846,11 @@ priveleged_exec() {
   done
 
   log "Executing: \"${cmd}\""
-  [ "${n}" = 3 ] && log "please enter ${dest_user}'s password.."
+  case "$n" in
+    1) dest_user="$USER"; ;;
+    2) dest_user="root"; ;;
+  esac
+  log "Please enter ${dest_user}'s password.."
   eval $cmd || die "install failed"
 }
 
