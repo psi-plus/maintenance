@@ -272,7 +272,7 @@ run_libpsibuild ()
   if [ ! -z "$1" ]; then
     cd ${workdir}
     . ./libpsibuild.sh
-    check_env $CONF_OPTS
+    set_psi_env $CONF_OPTS
     $1
   fi
 }

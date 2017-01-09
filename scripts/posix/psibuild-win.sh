@@ -56,7 +56,7 @@ die() { echo "$@"; exit 1; }
 if [ -f ./libpsibuild.sh ]; then
   case "`git remote -v 2>/dev/null`" in
     *maintenance.git*) echo "We are in repo. libpsibuild update disabled";;
-    *) [ "$WORK_OFFLINE" = 0 ] || { rm libpsibuild.sh || die "delete error"; }
+    *) [ "$WORK_OFFLINE" = 1 ] || { rm libpsibuild.sh || die "delete error"; }
       ;;
   esac
 fi
@@ -70,7 +70,7 @@ PSI_DIR="/c/psibuild"
 #############
 # Go Go Go! #
 #############
-check_env $CONF_OPTS
+set_psi_env $CONF_OPTS
 prepare_workspace
 fetch_all
 prepare_all
