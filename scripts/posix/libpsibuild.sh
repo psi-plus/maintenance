@@ -298,17 +298,21 @@ set_psi_env() {
   
   find_qt_util() {
     local name=$1
+    local vp="${2:--v}"
     result=""
+    local vs=Qt
+    [ -n "$qt_ver" ] && vs="$qt_ver"
 
-    qtest() { [ -n "`$1 -v 2>&1 |grep Qt`" ]; return $?; }
+    qtest() { [ -n "$($1 $vp 2>&1 |grep "$vs")" ]; return $?; }
 
     for v in ${QT_VERSIONS_PRIORITY}; do
       for un in $full_name $name-qt${QT_MAJOR_VERSION} qt${QT_MAJOR_VERSION}-${name} ${name}${QT_MAJOR_VERSION}; do
         [ -n "$qtbindir" ] && un="$qtbindir/$un" # we want all qt util to be in the same dir
+        #echo "Check for $un"
         qtest $un && { result="$un"; break 2; }
       done
     done
-    qtest $name && result="$name"
+    [ -z "$result" ] && qtest $name && result="$name"
 
     if [ -z "${result}" ]; then
       [ "$nonfatal" = 1 ] || die "You should install $name util as part of"\
@@ -353,7 +357,7 @@ set_psi_env() {
   local qtbindir="$("${QMAKE}" -query QT_INSTALL_BINS)"
   log "Use Qt version ${qt_ver} from $qtbindir"
 
-  nonfatal=1 find_qt_util lrelease; LRELEASE="${result}"
+  nonfatal=1 find_qt_util lrelease -version; LRELEASE="${result}"
   find_qt_util moc; # we don't use it dirrectly but its required.
   find_qt_util uic; # we don't use it dirrectly but its required.
   find_qt_util rcc; # we don't use it dirrectly but its required.
