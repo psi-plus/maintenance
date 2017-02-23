@@ -17,7 +17,7 @@ lib_prefixes="/usr/lib
 #guthub repositories
 psi_url="https://github.com/psi-im/psi.git"
 psi_plus_url="https://github.com/psi-plus/main.git"
-plugins_url="https://github.com/psi-plus/plugins.git"
+plugins_url="https://github.com/psi-im/plugins.git"
 langs_url="https://github.com/psi-plus/psi-plus-l10n.git"
 psi_cmake_url="https://github.com/Vitozz/psi-plus-cmake.git"
 def_prefix="/usr" #префикс для сборки пси+

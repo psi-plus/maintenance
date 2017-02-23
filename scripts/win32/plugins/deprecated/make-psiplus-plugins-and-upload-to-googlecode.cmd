@@ -1,7 +1,7 @@
 @echo off
 setlocal
 set GIT=%GITDIR%\bin\git.exe
-"%GIT%" clone https://github.com/psi-plus/plugins.git
+"%GIT%" clone https://github.com/psi-im/plugins.git
 rd /S /Q psi\build\src\plugins\generic
 move /Y plugins\generic psi\build\src\plugins
 pause

@@ -79,7 +79,7 @@ IF NOT EXIST PsiPlus (
 	%GIT% clone https://github.com/psi-plus/main.git PsiPlus
 	IF ERRORLEVEL 1 ECHO Unable to cloning psiplus sources & ECHO !Cloning Psi+ sources failed>> logs.txt & RMDIR PsiPlus /S /Q & GOTO :exit
 	CD PsiPlus
-	%GIT% clone https://github.com/psi-plus/plugins.git
+	%GIT% clone https://github.com/psi-im/plugins.git
 	IF ERRORLEVEL 1 CD .. & ECHO Unable to cloning plugins sources & ECHO !Cloning Psi+ Plugins sources failed>> logs.txt & RMDIR PsiPlus /S /Q & GOTO :exit
 	SET Update=1
 	FOR /f "tokens=2 delims=-" %%x IN ('%GIT% describe --tags') DO ECHO %%x > ..\vPsiPlusNew

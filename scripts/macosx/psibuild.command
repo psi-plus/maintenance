@@ -67,7 +67,7 @@ PORTABLE=0
 # official repository / репозиторий официальной Psi
 GIT_REPO_PSI=git://github.com/psi-im/psi.git
 GIT_REPO_PLUS=git://github.com/psi-plus/main.git
-GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
+GIT_REPO_PLUGINS=git://github.com/psi-im/plugins.git
 GIT_REPO_MAINTENANCE=git://github.com/psi-plus/maintenance.git
 GIT_REPO_RESOURCES=git://github.com/psi-plus/resources.git
 
