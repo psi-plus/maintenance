@@ -141,7 +141,7 @@ winpath2unix() {
 replace_conf_arg() {
   local num="${#CONF_OPTS[@]}"
   [ $num = 0 ] && return
-  for i in $(seq 0 $(( "$num" - 1 ))); do
+  for i in $(seq 0 $(( $num - 1 ))); do
     case "${CONF_OPTS[$i]}" in
       "${1}="*) CONF_OPTS[$i]="${1}=${2}"; ;;
       "${1} "*) CONF_OPTS[$i]="${1} ${2}"; ;;
