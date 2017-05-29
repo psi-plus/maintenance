@@ -656,7 +656,7 @@ prepare_sources() {
   )
 
   cd "${PSI_DIR}"
-  rev=$(cd git-plus/; git describe --tags | cut -d - -f 2).$(cd git/; git describe --tags | cut -d - -f 2)
+  local rev=$(cd git/; git rev-parse --short HEAD).$(cd git-plus/; git rev-parse --short HEAD)
   PATCHES="$(for f in git-plus/patches/*diff; do readlink -f "$f"; done)"
   PATCHES="${PATCHES} ${EXTRA_PATCHES}"
   cd "${PSI_DIR}/build"
