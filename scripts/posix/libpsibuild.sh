@@ -675,7 +675,7 @@ prepare_sources() {
                  $(cd "${PSI_DIR}/git-plus/"; git log -n1 --date=short --pretty=format:'%ad')"
   rev_date=$(echo "${rev_date_list}" | sort -r | head -n1)
 
-  echo "0.16.${rev}$([ "$WEBKIT_ENABLED" = 1 ] && echo "-webkit") ($(echo ${rev_date}))" > version
+  echo "1.0.${rev}$([ "$WEBKIT_ENABLED" = 1 ] && echo "-webkit") ($(echo ${rev_date}))" > version
   sed -i${SED_INPLACE_ARG} \
     "s:target.path.*:target.path = ${PSILIBDIR}/psi-plus/plugins:" \
     src/plugins/psiplugin.pri

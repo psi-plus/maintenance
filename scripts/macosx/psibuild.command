@@ -32,7 +32,7 @@ DEPS_DIR="${PSI_DIR}/deps"
 ICONSETS="system clients activities moods affiliations roster"
 
 # psi version / версия psi
-version="0.16"
+version="1.0"
 
 # do not update anything from repositories until required
 WORK_OFFLINE=0
