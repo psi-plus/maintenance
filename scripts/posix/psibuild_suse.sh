@@ -14,7 +14,7 @@
 # qt4 tools libraries and headers (most probably "dev" packages) / qt4 тулзы либы и хидеры (наверное "dev" пакеты)
 # qca/QtCrypto - encryption libs / криптовальные либы
 
-sudo zypper in libqt5-qtbase-common-devel libidn-devel libqca-qt5 zlib-devel libqt5-qdbus xscreensaver aspell-devel libqt5-qtx11extras-devel libqt5-qtmultimedia-devel
+sudo zypper in libqt5-qtbase-common-devel libidn-devel libqca-qt5 libqca2-devel zlib-devel libqt5-qdbus xscreensaver aspell-devel libqt5-qtx11extras-devel libqt5-qtmultimedia-devel qconf
 
 # OPTIONS / НАСТРОЙКИ
 
