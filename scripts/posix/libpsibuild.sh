@@ -656,7 +656,6 @@ prepare_sources() {
   )
 
   cd "${PSI_DIR}"
-  local rev=$(cd git/; git rev-parse --short HEAD).$(cd git-plus/; git rev-parse --short HEAD)
   PATCHES="$(for f in git-plus/patches/*diff; do readlink -f "$f"; done)"
   PATCHES="${PATCHES} ${EXTRA_PATCHES}"
   cd "${PSI_DIR}/build"
@@ -671,11 +670,9 @@ prepare_sources() {
      fi
   done
 
-  rev_date_list="$(cd "${PSI_DIR}/git/"; git log -n1 --date=short --pretty=format:'%ad')
-                 $(cd "${PSI_DIR}/git-plus/"; git log -n1 --date=short --pretty=format:'%ad')"
-  rev_date=$(echo "${rev_date_list}" | sort -r | head -n1)
+  nightly_ver=$("${PSI_DIR}/git-plus/admin/psi-plus-nightly-version" "${PSI_DIR}/git/"  $([ "$WEBKIT_ENABLED" = 1 ] && echo "--webkit"))
+  echo "$nightly_ver" > version
 
-  echo "1.0.${rev}$([ "$WEBKIT_ENABLED" = 1 ] && echo "-webkit") ($(echo ${rev_date}))" > version
   sed -i${SED_INPLACE_ARG} \
     "s:target.path.*:target.path = ${PSILIBDIR}/psi-plus/plugins:" \
     src/plugins/psiplugin.pri
