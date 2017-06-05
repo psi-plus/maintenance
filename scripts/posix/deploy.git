@@ -50,7 +50,7 @@ commit_tree()
   echo "configure*" >> .gitignore
   git rm configure*
   "${QCONF}"
-  git submodule foreach 'git add .; [ -n "`git status |grep "nothing to commit"`" ] || git commit -am "${@}"'
+  git submodule foreach 'git add .; [ -n "`LANG=C git status |grep "nothing to commit"`" ] || git commit -am "${@}"'
   git add .; [ -n "`git status |grep "nothing to commit"`" ] || git commit -am "${@}";
 }
 
@@ -112,7 +112,7 @@ then
   for p in $PATCHES; do
      [ "${p}" = "${UP_TO}" ] && [ "$edit_mode" = 1 ] && commit_tree "before ${p}"
      echo "Apply $p"
-	 git apply -p1 "${PATCHES_DIR}/${p}" || {
+	    git apply -p1 "${PATCHES_DIR}/${p}" || {
        broken=1
        echo -n "Patch ${p} can't be applied cleanly. "
        answer="n"
