@@ -2,7 +2,7 @@
 setlocal
 set GIT=%GITDIR%\bin\git.exe
 @echo Cloning Psi+ Plugins sources
-"%GIT%" clone https://github.com/psi-plus/plugins.git
+"%GIT%" clone https://github.com/psi-im/plugins.git
 move /Y plugins\generic\attentionplugin psi\build\src\plugins\generic\attentionplugin
 move /Y plugins\generic\autoreplyplugin psi\build\src\plugins\generic\autoreplyplugin
 move /Y plugins\generic\birthdayreminderplugin psi\build\src\plugins\generic\birthdayreminderplugin

@@ -7,12 +7,17 @@
 # do not update anything from repositories until required
 WORK_OFFLINE=${WORK_OFFLINE:-0}
 
+# Qt major version 4,5,... (could be overriden with --qtselect as well)
+QT_VERSIONS_PRIORITY=${QT_MAJOR_VERSION:-5 4}
+
+# QT_VERSIONS_PRIORITY or --qtselect is the only valid (--qtselect is in priority)
+QT_VERSION_FORCED=0
+
 # skip patches which applies with errors / пропускать глючные патчи
 SKIP_INVALID_PATCH=${SKIP_INVALID_PATCH:-0}
 
 # configure options / опции скрипта configure
-DEFAULT_CONF_OPTS="${DEFAULT_CONF_OPTS:---enable-plugins --enable-whiteboarding}"
-CONF_OPTS="${DEFAULT_CONF_OPTS} ${CONF_OPTS}"
+DEFAULT_CONF_OPTS="${DEFAULT_CONF_OPTS:---enable-whiteboarding}"
 
 # install root / каталог куда устанавливать (полезно для пакаджеров)
 INSTALL_ROOT="${INSTALL_ROOT:-/}"
@@ -40,11 +45,11 @@ TRANSLATIONS="${TRANSLATIONS}"
 GIT_REPO_PSI=git://github.com/psi-im/psi.git
 
 GIT_REPO_PLUS=git://github.com/psi-plus/main.git
-GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
+GIT_REPO_PLUGINS=git://github.com/psi-im/plugins.git
 
 LANGS_REPO_URI="git://github.com/psi-plus/psi-plus-l10n.git"
 
-QCONF_REPO="https://delta.affinix.com/svn/trunk/qconf@816"
+QCONF_REPO="https://github.com/psi-plus/qconf.git"
 QCA_REPO="svn://anonsvn.kde.org/home/kde/trunk/kdesupport/qca@1311233"
 
 SVN_FETCH="${SVN_FETCH:-git_svn_clone}"
@@ -58,8 +63,12 @@ case "${INSTALL_ROOT}" in /*) ;; *) INSTALL_ROOT="$(pwd)/${INSTALL_ROOT}"; ;; es
 [ -n "${PLUGINS_PREFIXES}" ] && plugprefset=1
 PLUGINS_PREFIXES="${PLUGINS_PREFIXES:-generic}" # will be updated later while detecting platform specific settings
 
+PLUGINS_ENABLED=1 # computed from passed command line in set_psi_env
+WEBKIT_ENABLED=0 # computed from passed command line in set_psi_env
+
 # convert extra patches to absolute paths
 EXTRA_PATCHES="$(for f in $EXTRA_PATCHES; do readlink -f "$f"; done)"
+
 #######################
 # FUNCTIONS / ФУНКЦИИ #
 #######################
@@ -129,8 +138,22 @@ winpath2unix() {
   echo "/${drive}/${path//\\//}"
 }
 
-check_env() {
+replace_conf_arg() {
+  local num="${#CONF_OPTS[@]}"
+  [ $num = 0 ] && return
+  for i in $(seq 0 $(( $num - 1 ))); do
+    case "${CONF_OPTS[$i]}" in
+      "${1}="*) CONF_OPTS[$i]="${1}=${2}"; ;;
+      "${1} "*) CONF_OPTS[$i]="${1} ${2}"; ;;
+    esac
+  done
+}
+
+set_psi_env() {
   log "Testing environment.. "
+
+  CONF_OPTS=( "$@" )
+  CONF_OPTS+=( "${DEFAULT_CONF_OPTS[@]}" )
 
   unset COMPILE_PREFIX
   unset PSILIBDIR
@@ -147,6 +170,17 @@ check_env() {
         ;;
       "--with-qca"*)
 	    HAS_QCA_CONF_PATH=1
+        ;;
+      "--qtselect="*)
+        QT_VERSIONS_PRIORITY=${1#--qtselect=}
+        QT_VERSION_FORCED=1
+        ;;
+      "--disable-plugins")
+        PLUGINS_ENABLED=0
+        ;;
+      "--enable-webkit")
+        WEBKIT_ENABLED=1
+        ;;
     esac
     shift
   done
@@ -213,7 +247,7 @@ check_env() {
     QCONFDIR="${QCONFDIR:-/c/local/QConf}"
     PATH="${QTDIR}/bin:${PATH}"
     CONFIGURE="configure.exe"
-    CONF_OPTS="${CONF_OPTS} --qtdir=${QTDIR}"
+    CONF_OPTS+=( --qtdir="${QTDIR}" )
 	BUILD_MISSING_QCONF=1
 	[ -z "${HAS_QCA_CONF_PATH}" ] && BUILD_MISSING_QCA=1
     ;;
@@ -264,10 +298,22 @@ check_env() {
   
   find_qt_util() {
     local name=$1
+    local vp="${2:--v}"
     result=""
-    for un in $name-qt4 qt4-${name} ${name}4 $name; do
-      [ -n "`$un -v 2>&1 |grep Qt`" ] && { result="$un"; break; }
+    local vs=Qt
+    [ -n "$qt_ver" ] && vs="$qt_ver"
+
+    qtest() { [ -n "$($1 $vp 2>&1 |grep "$vs")" ]; return $?; }
+
+    for v in ${QT_VERSIONS_PRIORITY}; do
+      for un in $full_name $name-qt${QT_MAJOR_VERSION} qt${QT_MAJOR_VERSION}-${name} ${name}${QT_MAJOR_VERSION}; do
+        [ -n "$qtbindir" ] && un="$qtbindir/$un" # we want all qt util to be in the same dir
+        #echo "Check for $un"
+        qtest $un && { result="$un"; break 2; }
+      done
     done
+    [ -z "$result" ] && qtest $name && result="$name"
+
     if [ -z "${result}" ]; then
       [ "$nonfatal" = 1 ] || die "You should install $name util as part of"\
         "Qt framework / Сначала установите утилиту $name из Qt framework"
@@ -279,15 +325,45 @@ check_env() {
 
   local result
   # qmake
-  find_qt_util qmake; QMAKE="${result}"
-  nonfatal=1 find_qt_util lrelease; LRELEASE="${result}"
+  log "Preferred Qt versions: ${QT_VERSIONS_PRIORITY}"
+  if [ -z "$QMAKE" ]; then
+    qmake -v 2>/dev/null | grep -q 'QMake' && {
+      for v in ${QT_VERSIONS_PRIORITY}; do
+        log "Check Qt version ${v}"
+        qmake -qt=${v} -v | grep -q 'QMake version' && {
+          # in case of -qt error it say "Unknown option". So it's correct.
+          QMAKE="$(qmake -qt=${v} -query QT_INSTALL_BINS)/qmake"
+          [ -f "${QMAKE}" ] || QMAKE=""
+          break; # found valid Qt version with help of Qt Chooser
+        }
+      done
+    }
+  fi
+  log "qmake $QMAKE"
+  if [ -z "${QMAKE}" ]; then
+    find_qt_util qmake; QMAKE="${result}"
+  fi
+  qt_ver=$("$QMAKE" -query QT_VERSION); qt_major_ver=${qt_ver%%.*}
+  if [ "$QT_VERSION_FORCED" = 1 ]; then
+    local found=0
+    for v in ${QT_VERSIONS_PRIORITY}; do
+      [ "$v" = "${qt_major_ver}" ] && { found=1; break;} 
+    done
+    [ $found = 1 ] || die "Unable to find qmake for requeted Qt version"
+    replace_conf_arg --qtselect $qt_major_ver
+  else
+    CONF_OPTS+=( --qtselect=${qt_major_ver} )
+  fi
+  local qtbindir="$("${QMAKE}" -query QT_INSTALL_BINS)"
+  log "Use Qt version ${qt_ver} from $qtbindir"
+
+  nonfatal=1 find_qt_util lrelease -version; LRELEASE="${result}"
   find_qt_util moc; # we don't use it dirrectly but its required.
   find_qt_util uic; # we don't use it dirrectly but its required.
   find_qt_util rcc; # we don't use it dirrectly but its required.
 
   # export QTDIR for all qconf based tools
   if [ -z "${QTDIR}" ]; then
-    qtbindir="$("${QMAKE}" -query QT_INSTALL_BINS)"
     if [ -n "${qtbindir}" -a "$(basename "${qtbindir}" 2>/dev/null)" = bin ]; then
       export QTDIR=$(dirname "${qtbindir}" 2>/dev/null)
     fi
@@ -298,7 +374,7 @@ check_env() {
     QCONF="${QCONFDIR}/qconf"
   else
     export PATH="${PATH}:${PSI_DIR}/qconf"
-    for qc in qt-qconf qconf-qt4 qconf; do
+    for qc in qt-qconf qconf-qt${QT_MAJOR_VERSION} qconf; do
       v=`$qc --version 2>/dev/null |grep affinix` && QCONF=$qc
     done
     [ -z "${QCONF}" -a ! "${BUILD_MISSING_QCONF}" = 1 ] && die "You should install "\
@@ -322,9 +398,7 @@ check_env() {
   esac
 
   # Plugins
-  local plugins_enabled=0
-  case "${CONF_OPTS}" in *--enable-plugins*) plugins_enabled=1; ;; *) ;; esac
-  [ -n "${PLUGINS}" ] && [ "${plugins_enabled}" = 0 ] && {
+  [ -n "${PLUGINS}" ] && [ "${PLUGINS_ENABLED}" = 0 ] && {
     warning "WARNING: there are selected plugins but plugins are disabled in"
     warning "configuration options. no one will be built"
     PLUGINS=""
@@ -336,13 +410,13 @@ check_env() {
 
   # Compile prefix
   if [ -n "${COMPILE_PREFIX}" ]; then
-    [ $have_prefix = 0 ] && CONF_OPTS="${CONF_OPTS} --prefix=$COMPILE_PREFIX"
+    [ $have_prefix = 0 ] && CONF_OPTS+=( --prefix="$COMPILE_PREFIX" )
     log "Compile prefix=${COMPILE_PREFIX}"
     if [ -z "${PSILIBDIR}" ]; then # --libdir is not present in argv
       PSILIBDIR="${COMPILE_PREFIX}/lib"
       [ "`uname -m`" = "x86_64" ] && [ -d "${COMPILE_PREFIX}"/lib64 ] && PSILIBDIR="${COMPILE_PREFIX}/lib64"
       log "LIBDIR=${PSILIBDIR}"
-      CONF_OPTS="${CONF_OPTS} --libdir=${PSILIBDIR}";
+      CONF_OPTS+=( --libdir="${PSILIBDIR}" )
     fi
   fi
 
@@ -496,7 +570,7 @@ git_fetch() {
 
 fetch_build_deps_sources() {
   cd "${PSI_DIR}"
-  [ "${BUILD_MISSING_QCONF}" = 1 ] && svn_fetch "${QCONF_REPO}" qconf "QConf"
+  [ "${BUILD_MISSING_QCONF}" = 1 ] && git_fetch "${QCONF_REPO}" qconf "QConf"
   [ "${BUILD_MISSING_QCA}" ] && svn_fetch "${QCA_REPO}" qca "QCA"
 }
 
@@ -582,7 +656,6 @@ prepare_sources() {
   )
 
   cd "${PSI_DIR}"
-  rev=$(cd git-plus/; git describe --tags | cut -d - -f 2).$(cd git/; git describe --tags | cut -d - -f 2)
   PATCHES="$(for f in git-plus/patches/*diff; do readlink -f "$f"; done)"
   PATCHES="${PATCHES} ${EXTRA_PATCHES}"
   cd "${PSI_DIR}/build"
@@ -597,18 +670,9 @@ prepare_sources() {
      fi
   done
 
-  rev_date_list="$(cd "${PSI_DIR}/git/"; git log -n1 --date=short --pretty=format:'%ad')
-                 $(cd "${PSI_DIR}/git-plus/"; git log -n1 --date=short --pretty=format:'%ad')"
-  rev_date=$(echo "${rev_date_list}" | sort -r | head -n1)
+  nightly_ver=$("${PSI_DIR}/git-plus/admin/psi-plus-nightly-version" "${PSI_DIR}/git/"  $([ "$WEBKIT_ENABLED" = 1 ] && echo "--webkit"))
+  echo "$nightly_ver" > version
 
-  case "${CONF_OPTS}" in
-    *--enable-webkit*)
-      echo "0.16.${rev}-webkit ($(echo ${rev_date}))" > version
-      ;;
-    *)
-      echo "0.16.${rev} ($(echo ${rev_date}))" > version
-      ;;
-  esac
   sed -i${SED_INPLACE_ARG} \
     "s:target.path.*:target.path = ${PSILIBDIR}/psi-plus/plugins:" \
     src/plugins/psiplugin.pri
@@ -619,7 +683,7 @@ prepare_sources() {
 }
 
 prepare_plugins_sources() {
-  [ -d "${PSI_DIR}/build/src/plugins/generic" ] || \
+  [ -f "${PSI_DIR}/build/psi.pro" ] || \
     die "preparing plugins requires prepared psi+ sources"
   for name in ${PLUGIN_DIRS}; do
     mkdir -p `dirname "${PSI_DIR}/build/src/plugins/$name"`
@@ -653,8 +717,8 @@ compile_deps() {
 compile_psi() {
   cd "${PSI_DIR}/build"
   "$QCONF"
-  log "./${CONFIGURE} ${CONF_OPTS}"
-  ./${CONFIGURE} ${CONF_OPTS} || die "configure failed"
+  log "./${CONFIGURE} ${CONF_OPTS[@]}"
+  ./${CONFIGURE} "${CONF_OPTS[@]}" || die "configure failed"
   "$MAKE" $MAKEOPT || die "make failed"
 }
 
@@ -769,11 +833,11 @@ priveleged_exec() {
 
   log
   log "We are going to install everything now. Please choose auth method:"
-  [ "${dest_user}" != "root" ] && log "3) su ${dest_user}"
   while true; do
     log "  0) cancel install (start ${script} manually when ready)"
     log "  1) sudo"
     log "  2) su root"
+    [ "${dest_user}" != "root" ] && log "  3) su ${dest_user}"
     read n
     case "$n" in
       0) return; ;;
@@ -783,7 +847,11 @@ priveleged_exec() {
   done
 
   log "Executing: \"${cmd}\""
-  [ "${n}" = 3 ] && log "please enter ${dest_user}'s password.."
+  case "$n" in
+    1) dest_user="$USER"; ;;
+    2) dest_user="root"; ;;
+  esac
+  log "Please enter ${dest_user}'s password.."
   eval $cmd || die "install failed"
 }
 

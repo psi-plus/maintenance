@@ -13,7 +13,7 @@
 # 64-bit machine (even though universal binaries are produced)
 # git
 # Xcode
-# Qt built for 32-bit/64-bit x86 universal 
+# Qt built for 32-bit/64-bit x86 universal
 # (Take a look here: https://github.com/psi-im/psideps/tree/master/qt)
 
 # QTDIR, pointing to a 32/64-bit x86 build of Qt.
@@ -32,7 +32,7 @@ DEPS_DIR="${PSI_DIR}/deps"
 ICONSETS="system clients activities moods affiliations roster"
 
 # psi version / версия psi
-version="0.16"
+version="1.0"
 
 # do not update anything from repositories until required
 WORK_OFFLINE=0
@@ -67,7 +67,7 @@ PORTABLE=0
 # official repository / репозиторий официальной Psi
 GIT_REPO_PSI=git://github.com/psi-im/psi.git
 GIT_REPO_PLUS=git://github.com/psi-plus/main.git
-GIT_REPO_PLUGINS=git://github.com/psi-plus/plugins.git
+GIT_REPO_PLUGINS=git://github.com/psi-im/plugins.git
 GIT_REPO_MAINTENANCE=git://github.com/psi-plus/maintenance.git
 GIT_REPO_RESOURCES=git://github.com/psi-plus/resources.git
 
@@ -209,7 +209,7 @@ check_env() {
 			esac
 		done
 	}
-	
+
 	[ -z "${LRELEASE}" ] && warning "lrelease util is not available. so only ready qm files will be installed"
 
 	TRANSLATIONS="$(echo ${selected_langs})"
@@ -325,7 +325,7 @@ EOF
 		actual_translations="$(echo $actual_translations)"
 		[ -z "${actual_translations}" ] && warning "Translations not found"
 	}
-    
+
 	. ${PSI_DIR}/git/admin/build/package_info
 	PSI_FETCH="${PSI_DIR}/git/admin/fetch.sh"
 	if [ $BUILDDEPS = 0 ]; then
@@ -426,7 +426,7 @@ prepare_sources() {
 		cp -a "${PSI_DIR}/plugins/generic/$name" \
 			"${PSI_DIR}/build/src/plugins/generic/$name"
 	done
-    
+
 	if [ $DEV_PLUGINS = 1 ]; then
 		copy_dev_plugins
 	fi
@@ -435,18 +435,18 @@ prepare_sources() {
 
 	#sed -i "" "s/QtDBus phonon/QtDBus QtWebKit phonon/" mac/Makefile
 	#sed -i "" "s/.xxx/.${rev}/" src/applicationinfo.cpp
-    
+
 	if [ $ENABLE_WEBKIT != 0 ]; then
 		sed -i "" "s/psi-plus-mac.xml/psi-plus-wk-mac.xml/" src/applicationinfo.cpp
 		#sed -i "" "s/.xxx/.${rev}-webkit/" mac/Makefile
 		#sed -i "" "s/-devel/.${rev}-webkit/g" mac/Info.plist.in
-	#else		
+	#else
 		#sed -i "" "s/.xxx/.${rev}/" mac/Makefile
 		#sed -i "" "s/-devel/.${rev}/g" mac/Info.plist.in
 	fi
 	sed -i "" "s/<string>psi<\/string>/<string>psi-plus<\/string>/g" mac/Info.plist.in
 	sed -i "" "s/<\!--<dep type='sparkle'\/>-->/<dep type='sparkle'\/>/g" psi.qc
-    
+
 	sed -i "" "s/base\/psi.app/base\/psi-plus.app/" admin/build/prep_dist.sh
 	sed -i "" "s/base\/Psi.app/base\/Psi+.app/" admin/build/prep_dist.sh
 	sed -i "" "s/MacOS\/psi/MacOS\/psi-plus/" admin/build/prep_dist.sh
@@ -454,10 +454,10 @@ prepare_sources() {
 	sed -i "" "s/.\/pack_dmg.sh/# .\/pack_dmg.sh/" admin/build/Makefile
 
 	cp -f "${PSI_DIR}/maintenance/scripts/macosx/application.icns" "${PSI_DIR}/build/mac/application.icns"
-   
+
 	if [ $BUILDDEPS = 1 ]; then
 		builddeps
-		log "Copy deps..." 
+		log "Copy deps..."
 		cd "${PSI_DIR}/build/admin/build"
 		mkdir -p deps packages
 		cp -a ${PSI_DIR}/psideps/qca/dist/${qca_mac_dir} deps/${qca_mac_dir}
@@ -479,12 +479,12 @@ prepare_sources() {
 		cp -a ${DEPS_DIR}/deps/${growl_dir} deps/${growl_dir}
 		cp -f ${DEPS_DIR}/packages/${growl_file} packages/${growl_file}
 	else
-		log "Copy deps..." 
+		log "Copy deps..."
  		cd "${PSI_DIR}/build/admin/build"
-   		mkdir -p packages deps 
+   		mkdir -p packages deps
     		cp -a "${DEPS_DIR}/packages/" packages/
      		cp -a "${DEPS_DIR}/deps/" deps/
-	fi	
+	fi
 }
 
 copy_dev_plugins() {
@@ -504,7 +504,7 @@ builddeps() {
     fi
     PSIDEPS="${PSI_DIR}/psideps/qca ${PSI_DIR}/psideps/gstbundle ${PSI_DIR}/psideps/psimedia"
     for l in $PSIDEPS; do
-        cd "$l"        
+        cd "$l"
         $MAKE || die "Error while building ${l}"
     done
 }
@@ -522,15 +522,15 @@ src_compile() {
 	fi
 	if [ $ENABLE_WEBKIT != 0 ]; then
 		rev="${rev}-webkit"
-		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss --enable-webkit $CONF_OPTS --verbose"
+		CONF_OPTS="--disable-qdbus  --enable-whiteboarding --disable-xss --enable-webkit $CONF_OPTS"
 	else
-		CONF_OPTS="--disable-qdbus --enable-plugins --enable-whiteboarding --disable-xss $CONF_OPTS --verbose"
+		CONF_OPTS="--disable-qdbus  --enable-whiteboarding --disable-xss $CONF_OPTS"
 	fi
 
 	sed -i "" "s@./configure@& ${CONF_OPTS}@g" build_package.sh
 	sed -i "" "s@./configure@& ${CONF_OPTS}@g" devconfig.sh
 	sed -i "" 's@echo "$(VERSION)@& (\@\@DATE\@\@)@g' Makefile
-	
+
 	$MAKE $MAKEOPT VERSION=${version}.${rev} || die "make failed"
 }
 
@@ -569,7 +569,7 @@ copy_resources() {
 		[ -f "${qtf}.qm" ] && cp "${qtf}.qm" .
 	done
 
-	cd "${PSIAPP_DIR}/Resources/"    
+	cd "${PSIAPP_DIR}/Resources/"
 	cp -r ${PSI_DIR}/build/sound .
 	cp -r ${PSI_DIR}/build/themes .
 	( cd ${PSI_DIR}/resources ; git archive --format=tar master ) | ( cd "${PSIAPP_DIR}/Resources" ; tar xf - )
@@ -577,10 +577,10 @@ copy_resources() {
 	if [ ! -d ${PSIAPP_DIR}/Resources/plugins ]; then
     		mkdir -p "${PSIAPP_DIR}/Resources/plugins"
 	fi
-	
+
 	for pl in ${PLUGINS}; do
 		cd ${PSI_DIR}/build/src/plugins/generic/${pl} && cp *.dylib ${PSIAPP_DIR}/Resources/plugins/; done
-        
+
 	PSIPLUS_PLUGINS=`ls $PSIAPP_DIR/Resources/plugins`
 	QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtWebKit QtSvg"
 	QT_FRAMEWORK_VERSION=4
@@ -646,7 +646,7 @@ make_appcast() {
 	fi
 	VERSION="${version}"."${rev}"
 	ARCHIVE_FILENAME="psi-plus-${VERSION}-macosx.dmg"
-	
+
 	if [ $UPLOAD != 0 ]; then
 	  log "Uploading dmg on GoogleCode"
 	  if [ $ENABLE_WEBKIT != 0 ]; then
@@ -672,7 +672,7 @@ make_appcast() {
 
     cd ${PSI_DIR}/git-plus
 	REVINFO=`git log --since="4 weeks ago" --pretty=format:'<li>%s'`
-    
+
     SIGNATURE=$( ruby "${PSI_DIR}/sign/sign_update.rb" "${PSI_DIR}/${ARCHIVE_FILENAME}" "${PSI_DIR}/sign/dsa_priv.pem" )
 
 cat > ${PSI_DIR}/${APPCAST_FILE} <<EOF

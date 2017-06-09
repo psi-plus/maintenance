@@ -7,7 +7,7 @@
 ; -----------------------------------------------------------------------------
 ; Define your application information
 !define PRODUCT_NAME "Psi+"
-!define PRODUCT_VERSION "0.16.361"
+!define PRODUCT_VERSION "1.0"
 !define COMPANY_NAME "Psi+ Project"
 !define PRODUCT_WEB_SITE "http://psi-dev.googlecode.com/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\psi-plus.exe"
@@ -22,7 +22,7 @@ InstallDir "$PROGRAMFILES\Psi+"
 ;Get installation folder from registry if available
 InstallDirRegKey HKLM "Software\${PRODUCT_NAME}" "InstallDir"
 
-OutFile "setup\psi-plus-0.16.361-win32-setup.exe"
+OutFile "setup\psi-plus-1.0-win32-setup.exe"
 
 ; Use compression
 SetCompressor /SOLID lzma
@@ -37,7 +37,7 @@ VIAddVersionKey  "ProductName"     "${PRODUCT_NAME}"
 VIAddVersionKey  "ProductVersion"  "${PRODUCT_VERSION}"
 VIAddVersionKey  "FileDescription" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 VIAddVersionKey  "FileVersion"     "${PRODUCT_VERSION}"
-VIProductVersion "0.16.361.0"
+VIProductVersion "1.0"
 
 ; -----------------------------------------------------------------------------
 ; The installer will perform a CRC on itself before allowing an install

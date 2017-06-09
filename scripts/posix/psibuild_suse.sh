@@ -1,21 +1,20 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 #######################################################################
-#                                                                     #
+#                                                                     #     
 #       Universal build script of Psi+ under Linux                    #
 #       Универсальный скрипт сборки Psi+ под Linux                    #
 #                                                                     #
 #######################################################################
 
 # REQUIREMENTS / ТРЕБОВАНИЯ
-
 # In order to build Psi+ you must have next packages in your system
 # Для сборки Psi+ вам понадобятся следующие пакеты
 # git - vcs system / система контроля версий
 # gcc - compiler / компилятор
 # qt4 tools libraries and headers (most probably "dev" packages) / qt4 тулзы либы и хидеры (наверное "dev" пакеты)
 # qca/QtCrypto - encryption libs / криптовальные либы
- 
 
+sudo zypper in libqt5-qtbase-common-devel libidn-devel libqca-qt5 libqca2-devel zlib-devel libqt5-qdbus xscreensaver aspell-devel libqt5-qtx11extras-devel libqt5-qtmultimedia-devel qconf
 
 # OPTIONS / НАСТРОЙКИ
 
@@ -35,9 +34,6 @@ PATCH_LOG="" # PSI_DIR/psipatch.log by default (empty for default)
 # skip patches which applies with errors / пропускать глючные патчи
 SKIP_INVALID_PATCH="${SKIP_INVALID_PATCH:-0}"
 
-# configure options / опции скрипта configure
-CONF_OPTS="${@}"
-
 # install root / каталог куда устанавливать (полезно для пакаджеров)
 INSTALL_ROOT="${INSTALL_ROOT:-/}"
 
@@ -55,22 +51,21 @@ PLUGINS="${PLUGINS:-}"
 die() { echo "$@"; exit 1; }
 if [ -f ./libpsibuild.sh ]; then
   case "`git remote -v 2>/dev/null`" in
-    *maintenance.git*) echo "We are in repo. libpsibuild update disabled";;
-    *) [ "$WORK_OFFLINE" = 1 ] || { rm libpsibuild.sh || die "delete error"; }
-      ;;
+      *maintenance.git*) echo "We are in repo. libpsibuild update disabled";;
+          *) [ "$WORK_OFFLINE" = 1 ] || { rm libpsibuild.sh || die "delete error"; }
+              ;;
   esac
 fi
 if [ ! -f ./libpsibuild.sh ]; then
   echo "Getting new version of libpsibuild.sh"
-  wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh" || die "Failed to update libpsibuild";
+  wget --no-check-certificate "https://raw.github.com/psi-plus/maintenance/master/scripts/posix/libpsibuild.sh" || die "Failed to update libpsibuild";   
 fi
-PSI_DIR="/c/psibuild"
 . ./libpsibuild.sh
-
+      
 #############
 # Go Go Go! #
 #############
-set_psi_env $CONF_OPTS
+set_psi_env "$@"
 prepare_workspace
 fetch_all
 prepare_all

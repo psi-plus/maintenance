@@ -95,6 +95,6 @@ fi
 
 ( cd "${DEST_DIR}"; $QCONF; )
 ( cd "${WORK_DIR}"; $QCONF; ./configure.exe --disable-growl \
-  --debug --enable-plugins --qtdir=${QTDIR} --enable-webkit --disable-qdbus --disable-xss )
+  --debug  --qtdir=${QTDIR} --enable-webkit --disable-qdbus --disable-xss )
 
 [ -f psi.pro.user ] && cp psi.pro.user "${WORK_DIR}"

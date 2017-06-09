@@ -38,7 +38,7 @@ ren psi\iris\conf_win.pri.example conf_win.pri
 @echo Completed
 cd psi
 qconf
-configure --debug --enable-plugins --enable-whiteboarding --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%QTDIR%\..\mingw\include --with-aspell-lib=%QTDIR%\..\mingw\lib
+configure --debug  --enable-whiteboarding --with-openssl-inc=%OPENSSLDIR%\include --with-openssl-lib=%OPENSSLDIR%\lib\MinGW --disable-xss --disable-qdbus --with-aspell-inc=%QTDIR%\..\mingw\include --with-aspell-lib=%QTDIR%\..\mingw\lib
 @echo ================================
 @echo Compiler is ready for fight! B-)
 @echo ================================
