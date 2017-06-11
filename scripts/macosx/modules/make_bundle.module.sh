@@ -5,7 +5,6 @@ TEMPLATE_DMG="template.dmg"
 function make_bundle() {
     log "Making standalone bundle..."
     cd "${PSI_DIR}/build/"
-    rm ${TEMPLATE_DMG}
     # Creating DMG image from template.
     cp "${PSI_DIR}/maintenance/scripts/macosx/template.dmg.bz2" "template.dmg.bz2"
     bunzip2 template.dmg.bz2
