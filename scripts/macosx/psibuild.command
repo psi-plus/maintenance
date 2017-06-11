@@ -220,12 +220,10 @@ check_env() {
 
 get_qconf() {
 	cd "${PSI_DIR}"
-	qconf_file=qconf-1.4.tar.bz2
-	qconf_dir="${PSI_DIR}/qconf-1.4"
-	if [ ! -f $qconf_file ]; then
+	qconf_dir="${PSI_DIR}/qconf-2.0"
+	if [ ! -d $qconf_dir ]; then
 		log "Downloading qconf…"
-		curl -o $qconf_file http://delta.affinix.com/download/$qconf_file
-		tar jxvf $qconf_file
+		git clone https://github.com/psi-plus/qconf.git qconf-2.0
 		cd $qconf_dir
 		./configure && $MAKE $MAKEOPT || die "Can't build qconf!"
 	fi
@@ -309,10 +307,6 @@ fetch_sources() {
 	cat > psideps/qca/patches/mac_universal.pri << "EOF"
 contains(QT_CONFIG,x86):CONFIG += x86
 contains(QT_CONFIG,x86_64):CONFIG += x86_64
-QMAKE_MAC_SDK=$$(QMAKE_MAC_SDK)
-isEmpty(QMAKE_MAC_SDK) {
-    QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.5.sdk
-}
 EOF
 	git_fetch "${LANGS_REPO_URI}" translations "Psi+ translations"
 
@@ -411,6 +405,11 @@ prepare_sources() {
 	sed -i${SED_INPLACE_ARG} \
     "s:target.path.*:target.path = ${PSILIBDIR}/psi-plus/plugins:" \
     src/plugins/psiplugin.pri
+
+	# remove gnu99 definition
+	cp ${PSI_DIR}/build/src/libpsi/tools/globalshortcut/globalshortcut.pri ${PSI_DIR}/build/src/libpsi/tools/globalshortcut/globalshortcut.pri.orig
+	sed "/\*g\+\+\*\:QMAKE_OBJECTIVE_CFLAGS/d" ${PSI_DIR}/build/src/libpsi/tools/globalshortcut/globalshortcut.pri.orig > ${PSI_DIR}/build/src/libpsi/tools/globalshortcut/globalshortcut.pri
+	rm ${PSI_DIR}/build/src/libpsi/tools/globalshortcut/globalshortcut.pri.orig
 
 	# prepare icons
 	cp -a "${PSI_DIR}"/git-plus/iconsets "${PSI_DIR}/build"
@@ -540,10 +539,6 @@ plugins_compile() {
 	cat >> psiplugin.pri << "EOF"
 contains(QT_CONFIG,x86):CONFIG += x86
 contains(QT_CONFIG,x86_64):CONFIG += x86_64
-QMAKE_MAC_SDK=$$(QMAKE_MAC_SDK)
-isEmpty(QMAKE_MAC_SDK) {
-    QMAKE_MAC_SDK = /Developer/SDKs/MacOSX10.5.sdk
-}
 EOF
 
 	log "List plugins for compiling..."
