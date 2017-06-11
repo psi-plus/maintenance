@@ -46,17 +46,21 @@ function copy_libraries()
     for p in $QCA_PLUGINS; do
         cp -f "${DEPS_ROOT}/lib/qca-qt5/crypto/$p" "${PSIAPP_DIR}/Contents/PlugIns/crypto/$p"
 
-                install_name_tool -change "${DEPS_ROOT}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib"    "${PSIAPP_DIR}/Contents/PlugIns/crypto/$p"
-                install_name_tool -change "${DEPS_ROOT}/lib/libssl.1.0.0.dylib"    "@executable_path/../Frameworks/libssl.dylib"       "${PSIAPP_DIR}/Contents/PlugIns/crypto/$p"
+        install_name_tool -change "${DEPS_ROOT}/lib/qca-qt5.framework/Versions/2.2.0/qca-qt5" "@executable_path/../Frameworks/qca-qt5.framework/Versions/2.2.0/qca-qt5" "${PSIAPP_DIR}/Contents/PlugIns/crypto/$p"
+        install_name_tool -change "${DEPS_ROOT}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib"    "${PSIAPP_DIR}/Contents/PlugIns/crypto/$p"
+        install_name_tool -change "${DEPS_ROOT}/lib/libssl.1.0.0.dylib"    "@executable_path/../Frameworks/libssl.dylib"       "${PSIAPP_DIR}/Contents/PlugIns/crypto/$p"
         install_name_tool -change "${DEPS_ROOT}/lib/libgcrypt.20.dylib"   "@executable_path/../Frameworks/libgcrypt.dylib"    "${PSIAPP_DIR}/Contents/PlugIns/crypto/$p"
-                install_name_tool -change "${DEPS_ROOT}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/PlugIns/crypto/$p"
+        install_name_tool -change "${DEPS_ROOT}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/PlugIns/crypto/$p"
     done
 
+    install_name_tool -change "${DEPS_ROOT}/lib/qca-qt5.framework/Versions/2.2.0/qca-qt5" "@executable_path/../Frameworks/qca-qt5.framework/Versions/2.2.0/qca-qt5" "${PSIAPP_DIR}/Contents/MacOS/psi-plus"
+
     # Other libs.
-    cp -f "${DEPS_ROOT}/lib/libz.dylib"     "${PSIAPP_DIR}/Contents/Frameworks/"
-    cp -f "${DEPS_ROOT}/lib/libidn.dylib"   "${PSIAPP_DIR}/Contents/Frameworks/"
-    cp -f "${DEPS_ROOT}/lib/libssl.dylib"    "${PSIAPP_DIR}/Contents/Frameworks/"
+    cp -f "${DEPS_ROOT}/lib/libz.${DEP_ZLIB_VER}.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libz.dylib"
+    cp -f "${DEPS_ROOT}/lib/libidn.dylib" "${PSIAPP_DIR}/Contents/Frameworks/"
+    cp -f "${DEPS_ROOT}/lib/libssl.dylib" "${PSIAPP_DIR}/Contents/Frameworks/"
     cp -f "${DEPS_ROOT}/lib/libcrypto.dylib" "${PSIAPP_DIR}/Contents/Frameworks/"
+    cp -f "${DEPS_ROOT}/lib/libminizip.1.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libminizip.dylib"
     chmod +w "${PSIAPP_DIR}/Contents/Frameworks/libssl.dylib"
     chmod +w "${PSIAPP_DIR}/Contents/Frameworks/libcrypto.dylib"
 
@@ -68,6 +72,16 @@ function copy_libraries()
 
     install_name_tool -change "${DEPS_ROOT}/lib/libz.1.dylib"    "@executable_path/../Frameworks/libz.dylib"   "${PSIAPP_DIR}/Contents/MacOS/psi-plus"
     install_name_tool -change "${DEPS_ROOT}/lib/libidn.11.dylib" "@executable_path/../Frameworks/libidn.dylib" "${PSIAPP_DIR}/Contents/MacOS/psi-plus"
+    install_name_tool -change "${DEPS_ROOT}/lib/libminizip.1.dylib" "@executable_path/../Frameworks/libminizip.dylib" "${PSIAPP_DIR}/Contents/MacOS/psi-plus"
+
+    install_name_tool -id "@executable_path/../Frameworks/libminizip.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libminizip.dylib"
+
+    install_name_tool -change "${DEPS_ROOT}/lib/libz.1.dylib" "@executable_path/../Frameworks/libz.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libminizip.dylib"
+
+    install_name_tool -change "${DEPS_ROOT}/lib/libz.1.dylib" "@executable_path/../Frameworks/libz.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libz.dylib"
+
+    # In case of fire.
+    install_name_tool -change "/usr/local/opt/libgpg-error/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libgcrypt.dylib"
 
     # OTR.
     cp -f "${DEPS_ROOT}/lib/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/Frameworks/"
@@ -93,11 +107,11 @@ function copy_libraries()
 
     # Go thru all bundled libraries, and check for dependencies.
     # If something is outside of bundle - install it.
-    log "Bundling Qt library dependencies..."
-    QTLIBS=`find ${PSIAPP_DIR}/Contents/Frameworks -type f -name "Qt*" | grep -v ".prl"`
-    bundle_library "${PSIAPP_DIR}/Contents/Frameworks" ${QTLIBS[@]}
+    #log "Bundling Qt library dependencies..."
+    #QTLIBS=`find ${PSIAPP_DIR}/Contents/Frameworks -type f -name "Qt*" | grep -v ".prl"`
+    #bundle_library "${PSIAPP_DIR}/Contents/Frameworks" ${QTLIBS[@]}
 
-    LIBS=`find ${PSIAPP_DIR}/Contents/Frameworks -type f -name "*.dylib"`
-    log "Bundling libraries dependencies..."
-    bundle_library "${PSIAPP_DIR}/Contents/Frameworks" ${LIBS[@]}
+    #LIBS=`find ${PSIAPP_DIR}/Contents/Frameworks -type f -name "*.dylib"`
+    #log "Bundling libraries dependencies..."
+    #bundle_library "${PSIAPP_DIR}/Contents/Frameworks" ${LIBS[@]}
 }
