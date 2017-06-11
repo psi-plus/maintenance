@@ -87,6 +87,8 @@ function prepare_sources()
     sed -i "" "s/QtXml QtGui/QtXml QtGui QtWebKit QtSvg/" admin/build/prep_dist.sh
     sed -i "" "s/.\/pack_dmg.sh/# .\/pack_dmg.sh/" admin/build/Makefile
 
+    sed -i "" "s/build\/admin\/build\/deps\/qca-qt5\/include/deps_root\/lib\/qca-qt5.framework\/Versions\/Current\/Headers/" psi.pro
+
     if [ ${ENABLE_WEBKIT} == 1 ]; then
         sed -i "" "s/psi-plus-mac.xml/psi-plus-wk-mac.xml/" src/applicationinfo.cpp
     fi

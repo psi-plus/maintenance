@@ -9,11 +9,14 @@ function check_tools_presence()
     # It cannot be overrided from environment.
     MAKE=`whereis make | awk {' print $1'}`
 
+    # Cmake path.
+    CMAKE=`which cmake | awk {' print $1 '}`
+
     # Detecting qmake binary path.
     # It cannot be overrided from environment.
     QMAKE="${QTDIR}/bin/qmake"
     if [ ! -f "${QMAKE}" ]; then
-        die "qmake not found! Please, install Qt from sources!"
+        die "qmake not found! Please, install Qt!"
     fi
     log "Found qmake binary: '${QMAKE}'"
 

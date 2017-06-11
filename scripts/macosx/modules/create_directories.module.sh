@@ -13,9 +13,9 @@ function create_directories()
     fi
 
     # Directory for dependencies handling.
-    if [ ! -d "${DEPS_DIR}" ]; then
-        log "Creating directory for dependencies: '${DEPS_DIR}'"
-        mkdir -p "${DEPS_DIR}" || die "Can't create work directory ${DEPS_DIR}!"
+    if [ ! -d "${DEPS_ROOT}" ]; then
+        log "Creating directory for dependencies: '${DEPS_ROOT}'"
+        mkdir -p "${DEPS_ROOT}" || die "Can't create work directory ${DEPS_ROOT}!"
     fi
 
     # Directory for build process.
@@ -23,8 +23,14 @@ function create_directories()
         log "Build directory exists, removing..."
         rm -rf "${PSI_DIR}/build"
     fi
+
     log "Creating build directory: '${PSI_DIR}/build'"
     mkdir -p "${PSI_DIR}/build"
+
+    if [ ! -d "${DEPS_BUILDROOT}" ]; then
+        log "Creating dependencies build directory: '${DEPS_BUILDROOT}'"
+        mkdir -p "${DEPS_BUILDROOT}"
+    fi
 
     # Directory for logs.
     PSIBUILD_LOGS_PATH="${PSI_DIR}/logs"
@@ -33,6 +39,7 @@ function create_directories()
         rm -rf "${PSIBUILD_LOGS_PATH}"
     fi
     log "Creating logs directory: '${PSIBUILD_LOGS_PATH}'"
-    mkdir -p "${PSIBUILD_LOGS_PATH}"
+    mkdir -p "${PSIBUILD_LOGS_PATH}/deps"
+    mkdir -p "${PSIBUILD_LOGS_PATH}/plugins"
 
 }

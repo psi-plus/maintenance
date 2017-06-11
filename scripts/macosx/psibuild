@@ -15,8 +15,11 @@
 #   * Qt built from source (not homebrew, not installed from official package)
 #
 # ToDo for packaging:
-#   * LibIDN
-#   * QCA
+#   * None
+#
+# Deps:
+#   * autoconf
+#   * automake
 
 #####################################################################
 # Options.
@@ -25,7 +28,10 @@
 # Root directory for sources and build process.
 PSI_DIR="${HOME}/psi"
 # Directory for dependencies.
-DEPS_DIR="${PSI_DIR}/deps"
+DEPS_ROOT="${PSI_DIR}/deps_root"
+# Dependencies build root.
+# It can be cleaned up later.
+DEPS_BUILDROOT="${PSI_DIR}/deps_buildroot"
 
 # Iconsets that will be installed into bundle.
 ICONSETS="system clients activities moods affiliations roster"
@@ -37,10 +43,14 @@ TRANSLATIONS_TO_INSTALL="en"
 # Configure options.
 # These options will be passed to ./configure script.
 # Do not change them until you know what are you doing!
-CONF_OPTS="--disable-qdbus  --enable-whiteboarding --disable-xss --verbose"
+CONF_OPTS="--disable-qdbus --enable-whiteboarding --disable-xss --verbose --release"
 
 # Psi version.
 PSI_VERSION="1.0"
+
+# Disabled plugins.
+# Most likely will not build for now.
+DISABLED_PLUGINS="screenshotplugin"
 
 #####################################################################
 # CLI options.
@@ -71,10 +81,6 @@ PORTABLE=0
 # Skip failed or invalid patches?
 # Controlled with "--skip-bad-patches" parameter.
 SKIP_BAD_PATCHES=0
-
-# Prefer Qt5? By default we will try to search for Qt4.
-# Controlled with "--prefer-qt5" parameter.
-PREFER_QT5=0
 
 # Use Qt5 from Qt website? Controlled with "--use-qt5-from-website"
 # Not recommended.
@@ -117,6 +123,7 @@ SCRIPT_PATH=$(perl -e 'use File::Basename; use Cwd "abs_path"; print dirname(abs
 # Helper modules import. Do not change this unless you're know what
 # are you doing! They're contain required functions!
 source "${SCRIPT_PATH}/modules/apply_patch.module.sh"
+source "${SCRIPT_PATH}/modules/build_dependencies.module.sh"
 source "${SCRIPT_PATH}/modules/bundle_library.module.sh"
 source "${SCRIPT_PATH}/modules/check_environment.module.sh"
 source "${SCRIPT_PATH}/modules/check_tools_presence.module.sh"
@@ -156,6 +163,16 @@ function action_failed()
         cat "${log_path}" | tail -n 10
     fi
     exit 1
+}
+
+cleanup_framework() {
+    # remove dev stuff
+    rm -rf $1/Headers
+    rm -f $1/${2}_debug
+    rm -f $1/${2}_debug.prl
+    rm -rf $1/Versions/$3/Headers
+    rm -f $1/Versions/$3/${2}_debug
+    rm -f $1/Versions/$3/${2}_debug.prl
 }
 
 #####################################################################
@@ -210,11 +227,6 @@ ENVIRONMENT VARIABLES
 "
 }
 
-
-# Prefer Qt5? By default we will try to search for Qt4.
-# Controlled with "--prefer-qt5" parameter.
-PREFER_QT5=0
-
 case $1 in
     --help)
         help
@@ -227,12 +239,15 @@ case $1 in
         parse_cli_parameters $@
         check_environment
         check_tools_presence
-        create_directories
-        install_build_deps
-        obtain_sources
-        prepare_sources
-        compile_sources
-        compile_plugins
+        if [ "${SKIP_BUILD}" != "1" ]; then
+            create_directories
+            install_build_deps
+            build_dependencies
+            obtain_sources
+            prepare_sources
+            compile_sources
+            compile_plugins
+        fi
         copy_resources
         copy_libraries
         make_bundle

@@ -26,7 +26,7 @@ function bundle_library()
                     # We should make a symlink if cp failed. This means that
                     # $dep is a file in current directory.
                     if [ $? -ne 1 ]; then
-                        cd "${PSIAPP_DIR}/Frameworks"
+                        cd "${PSIAPP_DIR}/Contents/Frameworks"
                         ln -s "${dep}" "${lfname}"
                     fi
                 fi
