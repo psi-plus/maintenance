@@ -82,4 +82,21 @@ as normal user!"
     export MACOSX_DEPLOYMENT_TARGET=10.9
     export QMAKE_MACOSX_DEPLOYMENT_TARGET=10.9
     export QMAKESPEC="macx-clang"
+
+    # Libraries path.
+    export DYLD_LIBRARY_PATH="${DEPS_ROOT}/lib:${DYLD_LIBRARY_PATH}"
+
+    # Type of source. Can be "snapshot" or "git"
+    SOURCE_TYPE=""
+
+    # Build from snapshot sources of Psi, or from git?
+    if [ ${BUILD_FROM_SNAPSHOT} -eq 1 ]; then
+        SOURCE_TYPE="snapshot"
+        PSI_SOURCE_DIR="${PSI_DIR}/psi/snapshot"
+    else
+        SOURCE_TYPE="git"
+        PSI_SOURCE_DIR="${PSI_DIR}/psi/git"
+    fi
+
+    log "Psi sources directory: '${PSI_SOURCE_DIR}'"
 }

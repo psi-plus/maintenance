@@ -20,12 +20,12 @@ function parse_cli_parameters()
     fi
 
     # Webkit build.
-    if [ "${cliparams/enable-webkit}" != "${cliparams}" ]; then
-        log "Enabling Webkit build"
-        ENABLE_WEBKIT=1
+    if [ "${cliparams/enable-webengine}" != "${cliparams}" ]; then
+        log "Enabling WebEngine build"
+        ENABLE_WEBENGINE=1
     else
-        log "Will not build webkit version"
-        ENABLE_WEBKIT=0
+        log "Will not build WebEngine version"
+        ENABLE_WEBENGINE=0
     fi
 
     # All translations.

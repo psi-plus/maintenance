@@ -5,32 +5,15 @@ function prepare_sources()
 {
     log "Preparing sources..."
 
+    # Directory for build process.
+    if [ -d "${PSI_DIR}/build" ]; then
+        log "Build directory exists, removing..."
+        rm -rf "${PSI_DIR}/build"
+    fi
+
     # Copy data to build directory.
     log "Copying sources to build directory..."
     cp -a "${PSI_SOURCE_DIR}/" "${PSI_DIR}/build"
-
-    # Create version string.
-    log "Creating version string for about dialog..."
-    # Snapshotted thing already have everything for version string.
-    if [ "${SOURCE_TYPE}" == "git" ]; then
-        PSI_REVISION=`cd "${PSI_SOURCE_DIR}" && git describe --tags | cut -d - -f 2`
-        PSI_PLUS_REVISION=`cd "${PSI_DIR}/plus" && git describe --tags | cut -d - -f 2`
-        PSI_PLUS_TAG=`cd "${PSI_DIR}/plus" && git describe --tags | cut -d - -f 1`
-        VERSION_STRING_RAW="${PSI_PLUS_TAG}.${PSI_PLUS_REVISION}.${PSI_REVISION}"
-        if [ ${ENABLE_WEBKIT} -eq 1 ]; then
-            VERSION_STRING_RAW="${VERSION_STRING_RAW}-webkit"
-        fi
-    else
-        VERSION_STRING_RAW=`cd "${PSI_SOURCE_DIR}" && git describe --tags | cut -d - -f 2`
-        if [ ${ENABLE_WEBKIT} -eq 1 ]; then
-            VERSION_STRING_RAW="${VERSION_STRING_RAW}-webkit"
-        fi
-    fi
-    VERSION_STRING="${VERSION_STRING_RAW} ($(date +"%Y-%m-%d"))"
-
-    log "Version string: ${VERSION_STRING}"
-    log "Raw version string (will be used e.g. in filename): ${VERSION_STRING_RAW}"
-    echo ${VERSION_STRING} > "${PSI_DIR}/build/version"
 
     log "Removing default plugins, they do not work as expected"
     rm -rf "${PSI_DIR}/build/src/plugins/generic"
@@ -89,7 +72,7 @@ function prepare_sources()
 
     sed -i "" "s/build\/admin\/build\/deps\/qca-qt5\/include/deps_root\/lib\/qca-qt5.framework\/Versions\/Current\/Headers/" psi.pro
 
-    if [ ${ENABLE_WEBKIT} == 1 ]; then
+    if [ ${ENABLE_WEBENGINE} == 1 ]; then
         sed -i "" "s/psi-plus-mac.xml/psi-plus-wk-mac.xml/" src/applicationinfo.cpp
     fi
 
@@ -127,4 +110,7 @@ function prepare_sources()
     if [ ${QT_VERSION_MAJOR} -eq 5 ]; then
         echo "INCLUDEPATH += ${PSI_DIR}/build/admin/build/deps/qca-qt5/include" >> "${PSI_DIR}/build/psi.pro"
     fi
+
+    # Version string.
+    echo ${VERSION_STRING} > "${PSI_DIR}/build/version"
 }

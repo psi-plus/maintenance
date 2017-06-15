@@ -80,13 +80,13 @@ function copy_libraries()
 
     install_name_tool -change "${DEPS_ROOT}/lib/libz.1.dylib" "@executable_path/../Frameworks/libz.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libz.dylib"
 
-    # In case of fire.
-    install_name_tool -change "/usr/local/opt/libgpg-error/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libgcrypt.dylib"
-
     # OTR.
     cp -f "${DEPS_ROOT}/lib/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/Frameworks/"
     cp -f "${DEPS_ROOT}/lib/libgcrypt.dylib"    "${PSIAPP_DIR}/Contents/Frameworks/"
     cp -f "${DEPS_ROOT}/lib/libotr.dylib"       "${PSIAPP_DIR}/Contents/Frameworks/"
+
+    # In case of fire.
+    install_name_tool -change "/usr/local/opt/libgpg-error/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libgcrypt.dylib"
 
     install_name_tool -id "@executable_path/../Frameworks/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libgpg-error.dylib"
 

@@ -4,28 +4,8 @@
 function obtain_sources()
 {
     log "Getting sources..."
-    # Psi sources
-    if [ ! -d "${PSI_DIR}/psi" ]; then
-        log "Creating directory for Psi sources..."
-        mkdir -p "${PSI_DIR}/psi"
-    fi
+
     log "Getting Psi sources..."
-    # Type of source. Can be "snapshot" or "git"
-    SOURCE_TYPE=""
-
-    # Build from snapshot sources of Psi, or from git?
-    if [ ${BUILD_FROM_SNAPSHOT} -eq 1 ]; then
-        SOURCE_TYPE="snapshot"
-        PSI_SOURCE_DIR="${PSI_DIR}/psi/snapshot"
-    else
-        SOURCE_TYPE="git"
-        PSI_SOURCE_DIR="${PSI_DIR}/psi/git"
-    fi
-
-    log "Psi sources directory: '${PSI_SOURCE_DIR}'"
-
-    # Just a build date.
-    BUILD_DATE=`date +'%Y-%m-%d'`
 
     # Separate clone-pull algo for Psi sources.
     if [ ! -d "${PSI_SOURCE_DIR}/.git" ]; then

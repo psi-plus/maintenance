@@ -11,7 +11,7 @@ function make_bundle() {
     # Compose filename for DMG file.
     # Version string for usage in filename should contain webkit flag.
     # This how resulted DMG will be named.
-    DMG_FILENAME="psi-plus-${VERSION_STRING_RAW}-qt${QT_VERSION_MAJOR}-${SOURCE_TYPE}-${BUILD_DATE}-macosx.dmg"
+    DMG_FILENAME="psi-plus-${VERSION_STRING_RAW}-${SOURCE_TYPE}-${BUILD_DATE}-macosx.dmg"
 
     mkdir template
     hdiutil attach "${TEMPLATE_DMG}" -noautoopen -quiet -mountpoint "template"

@@ -18,12 +18,6 @@ function create_directories()
         mkdir -p "${DEPS_ROOT}" || die "Can't create work directory ${DEPS_ROOT}!"
     fi
 
-    # Directory for build process.
-    if [ -d "${PSI_DIR}/build" ]; then
-        log "Build directory exists, removing..."
-        rm -rf "${PSI_DIR}/build"
-    fi
-
     log "Creating build directory: '${PSI_DIR}/build'"
     mkdir -p "${PSI_DIR}/build"
 
@@ -42,4 +36,10 @@ function create_directories()
     mkdir -p "${PSIBUILD_LOGS_PATH}/deps"
     mkdir -p "${PSIBUILD_LOGS_PATH}/plugins"
 
+    # Psi sources
+    if [ ! -d "${PSI_DIR}/psi" ]; then
+        log "Creating directory for Psi sources..."
+        mkdir -p "${PSI_DIR}/psi"
+        obtain_sources
+    fi
 }
