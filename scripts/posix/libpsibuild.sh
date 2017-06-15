@@ -672,6 +672,7 @@ prepare_sources() {
 
   nightly_ver=$("${PSI_DIR}/git-plus/admin/psi-plus-nightly-version" "${PSI_DIR}/git/"  $([ "$WEBKIT_ENABLED" = 1 ] && echo "--webkit"))
   echo "$nightly_ver" > version
+  echo "Build version: ${nightly_ver}"
 
   sed -i${SED_INPLACE_ARG} \
     "s:target.path.*:target.path = ${PSILIBDIR}/psi-plus/plugins:" \
