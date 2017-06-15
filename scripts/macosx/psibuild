@@ -45,7 +45,7 @@ TRANSLATIONS_TO_INSTALL="en"
 # Do not change them until you know what are you doing!
 CONF_OPTS="--disable-qdbus --enable-whiteboarding --disable-xss --verbose --release"
 
-# Psi version.
+# Psi base version.
 PSI_VERSION="1.0"
 
 # Disabled plugins.
@@ -63,8 +63,8 @@ DISABLED_PLUGINS="screenshotplugin"
 BUILD_FROM_SNAPSHOT=0
 
 # Enable Webkit build?
-# Controlled with "--enable-webkit" parameter.
-ENABLE_WEBKIT=0
+# Controlled with "--enable-webengine" parameter.
+ENABLE_WEBENGINE=0
 
 # Bundle translations?
 # Controlled with "--bundle-all-translations" parameter.
@@ -132,6 +132,7 @@ source "${SCRIPT_PATH}/modules/compile_sources.module.sh"
 source "${SCRIPT_PATH}/modules/copy_libraries.module.sh"
 source "${SCRIPT_PATH}/modules/copy_resources.module.sh"
 source "${SCRIPT_PATH}/modules/create_directories.module.sh"
+source "${SCRIPT_PATH}/modules/create_version_string.module.sh"
 source "${SCRIPT_PATH}/modules/install_build_deps.module.sh"
 source "${SCRIPT_PATH}/modules/logger.module.sh"
 source "${SCRIPT_PATH}/modules/make_bundle.module.sh"
@@ -218,7 +219,7 @@ Feature options:
 
     --enable-dev-plugins        Build unstable (dev) plugins.
 
-    --enable-webkit             Build webkit version. By default non-webkit
+    --enable-webengine          Build webengine version. By default non-webengine
                                 version will be built.
 
 ENVIRONMENT VARIABLES
@@ -239,8 +240,9 @@ case $1 in
         parse_cli_parameters $@
         check_environment
         check_tools_presence
+        create_directories
+        create_version_string
         if [ "${SKIP_BUILD}" != "1" ]; then
-            create_directories
             install_build_deps
             build_dependencies
             obtain_sources
