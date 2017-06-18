@@ -36,8 +36,8 @@ DEP_ZLIB_URL="http://zlib.net/${DEP_ZLIB_FILE}"
 function build_dependencies() {
     log "Building dependencies..."
     build_openssl
-    _build_dep_default "libgcrypt" "${DEP_LIBGCRYPT_VER}" "${DEP_LIBGCRYPT_FILE}" "${DEP_LIBGCRYPT_URL}" "libgcrypt.20.dylib"
     _build_dep_default "libgpg-error" "${DEP_LIBGPGERROR_VER}" "${DEP_LIBGPGERROR_FILE}" "${DEP_LIBGPGERROR_URL}" "libgpg-error.0.dylib"
+    _build_dep_default "libgcrypt" "${DEP_LIBGCRYPT_VER}" "${DEP_LIBGCRYPT_FILE}" "${DEP_LIBGCRYPT_URL}" "libgcrypt.20.dylib"
     _build_dep_default "libidn" "${DEP_LIBIDN_VER}" "${DEP_LIBIDN_FILE}" "${DEP_LIBIDN_URL}" "libidn.11.dylib"
     _build_dep_default "zlib" "${DEP_ZLIB_VER}" "${DEP_ZLIB_FILE}" "${DEP_ZLIB_URL}" "libz.${DEP_ZLIB_VER}.dylib"
     build_minizip
