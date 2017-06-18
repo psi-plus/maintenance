@@ -77,6 +77,8 @@ as normal user!"
 
     # Prepare PKG_CONFIG_PATH.
     export PKG_CONFIG_PATH="${DEPS_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+    # Use tools from DEPS_ROOT/bin directory (notable gpg-error).
+    export PATH="${DEPS_ROOT}/bin:${PATH}"
 
     # Compiler options.
     export MACOSX_DEPLOYMENT_TARGET=10.9
