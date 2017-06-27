@@ -1,3 +1,8 @@
+
+
+PSI_VERSION_COMMIT=2812a0af876f47b9001fcd3a4af9ad89e2ccb1ea
+PATCHES_VERSION_COMMIT=871fac5f74f247df1d28297d5ea3982a8dcfaacc
+
 #####################################################################
 # This function will create version string for about window and
 # DMG file.
@@ -7,9 +12,11 @@ function create_version_string() {
     # Create version string.
     log "Creating version string for about dialog..."
     # Snapshotted thing already have everything for version string.
-    PSI_BUILD=`cd "${PSI_SOURCE_DIR}/admin" && ./git_revnumber.sh`
+    PSI_REVISIONS_FROM_VERSION=`cd "${PSI_SOURCE_DIR}/admin" && ./git_revnumber.sh`
+    PLUGINS_REVISIONS_FROM_VERSION=`cd "${PSI_DIR}/plus" && git rev-list --count ${PATCHES_VERSION_COMMIT}..HEAD`
     PSI_REVISION=`cd "${PSI_SOURCE_DIR}" && git rev-parse --short HEAD`
     PSI_PLUS_REVISION=`cd "${PSI_DIR}/plus" && git rev-parse --short HEAD`
+    PSI_BUILD=$[ ${PSI_REVISIONS_FROM_VERSION} + ${PLUGINS_REVISIONS_FROM_VERSION} ]
     VERSION_STRING_RAW="${PSI_VERSION}.${PSI_BUILD}"
 
     VERSION_STRING="${VERSION_STRING_RAW} ($(date +"%Y-%m-%d"), Psi:${PSI_REVISION}, Psi+:${PSI_PLUS_REVISION}"

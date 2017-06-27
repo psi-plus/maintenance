@@ -15,11 +15,19 @@
 #   * Qt built from source (not homebrew, not installed from official package)
 #
 # ToDo for packaging:
-#   * None
+#   * gstreamer (?)
 #
-# Deps:
+# These dependencies should be installed with package manager like brew or
+# macports:
 #   * autoconf
 #   * automake
+#   * cmake
+#   * libtool
+#
+# WARNING: this script was tested with dependencies installed with brew.
+# Bug reports about fails with dependencies installed by other package
+# systems are accepted but WILL have lowest possible priority!
+# Patches welcome for that.
 
 #####################################################################
 # Options.
@@ -241,11 +249,11 @@ case $1 in
         check_environment
         check_tools_presence
         create_directories
+        obtain_sources
         create_version_string
         if [ "${SKIP_BUILD}" != "1" ]; then
             install_build_deps
             build_dependencies
-            obtain_sources
             prepare_sources
             compile_sources
             compile_plugins
