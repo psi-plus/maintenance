@@ -191,7 +191,7 @@ function build_qca() {
     cd build
 
     log "Configuring..."
-    local opts="-DCMAKE_INSTALL_PREFIX=${DEPS_ROOT} -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS:STRING=-L${DEPS_ROOT}/lib"
+    local opts="-DCMAKE_INSTALL_PREFIX=${DEPS_ROOT} -DBUILD_TESTS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS:STRING=-L${DEPS_ROOT}/lib -DOPENSSL_ROOT_DIR=${DEPS_ROOT} -DOPENSSL_LIBRARIES=${DEPS_ROOT}/lib"
     ${CMAKE} ${opts} .. > "${PSI_DIR}/logs/deps/qca-cmake.log" 2>&1
     if [ $? -ne 0 ]; then
         action_failed "Configuring QCA" "${PSI_DIR}/logs/deps/qca-cmake.log"
