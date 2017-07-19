@@ -18,8 +18,8 @@ export MAIN_DIR="${HOME}/Tmp/Psi"
 export VERSION="x.y.z"
 export SUFFIX="win7"
 
-PSI_TAG="1.0.1"
-DEF_COMMIT=2812a0af876f47b9001fcd3a4af9ad89e2ccb1ea
+PSI_TAG="1.1.0"
+DEF_COMMIT=000473ebfd463c910ee81d599a7982d8753b83dc
 
 PROGRAM_NAME="psi"
 PROJECT_DIR_NAME="psi"
