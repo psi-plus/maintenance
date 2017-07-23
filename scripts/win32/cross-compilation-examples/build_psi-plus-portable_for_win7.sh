@@ -46,6 +46,7 @@ if [ -d "${MAIN_DIR}/${MOD}" ]; then
     echo "Updating ${MAIN_DIR}/${MOD}"
     cd "${MAIN_DIR}/${MOD}"
     git checkout .
+    git checkout master
     git pull --all --prune -f
     VERSION="$(git tag | sort -V | tail -n1)"
     echo;
@@ -54,10 +55,12 @@ else
     cd "${MAIN_DIR}"
     git clone "${URL}"
     cd "${MAIN_DIR}/${MOD}"
+    git checkout master
     VERSION="$(git tag | sort -V | tail -n1)"
     echo;
 fi
 
+ARCHIVE_DIR_NAME="${PROGRAM_NAME}-${VERSION}_${SUFFIX}"
 echo "Current version of Psi+: ${VERSION}"
 echo;
 
@@ -177,22 +180,22 @@ echo;
 
 cd "${MAIN_DIR}"
 echo "Copying the results to main directory..."
-mkdir -p "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86"
-mkdir -p "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86_64"
+mkdir -p "${ARCHIVE_DIR_NAME}_x86"
+mkdir -p "${ARCHIVE_DIR_NAME}_x86_64"
 rsync -a --del "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/i686-w64-mingw32.shared/psi/" \
-               "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86/" > /dev/null
+               "${ARCHIVE_DIR_NAME}_x86/" > /dev/null
 rsync -a --del "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/x86_64-w64-mingw32.shared/psi/" \
-               "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86_64/" > /dev/null
+               "${ARCHIVE_DIR_NAME}_x86_64/" > /dev/null
 echo;
 
 echo "Compressing files into 7z archives..."
-rm -f ${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86*.7z
-echo "Creating archive: ${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86.7z"
-7z ${ARCHIVER_OPTIONS} "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86.7z" \
-                       "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86" > /dev/null
-echo "Creating archive: ${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86_64.7z"
-7z ${ARCHIVER_OPTIONS} "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86_64.7z" \
-                       "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86_64" > /dev/null
+rm -f ${ARCHIVE_DIR_NAME}_x86*.7z
+echo "Creating archive: ${ARCHIVE_DIR_NAME}_x86.7z"
+7z ${ARCHIVER_OPTIONS} "${ARCHIVE_DIR_NAME}_x86.7z" \
+                       "${ARCHIVE_DIR_NAME}_x86" > /dev/null
+echo "Creating archive: ${ARCHIVE_DIR_NAME}_x86_64.7z"
+7z ${ARCHIVER_OPTIONS} "${ARCHIVE_DIR_NAME}_x86_64.7z" \
+                       "${ARCHIVE_DIR_NAME}_x86_64" > /dev/null
 echo "Done."
 echo;
 

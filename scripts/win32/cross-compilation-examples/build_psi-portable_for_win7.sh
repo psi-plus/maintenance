@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2017-07-22
+# Updated: 2017-07-24
 # Version: N/A
 #
 # Dependencies:
@@ -37,6 +37,27 @@ README_URL=https://sourceforge.net/projects/psi/files/Experimental-Builds/MS-Win
 
 ARCHIVER_OPTIONS="a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 
+if [ "${1}" = "-h" ] || [ "${1}" = "--help" ]; then
+    SCRIPT_NAME="$(basename ${0})"
+    echo "Usage:"
+    echo "   ./${SCRIPT_NAME} [options]"
+    echo ;
+    echo "Examples:"
+    echo "  ./${SCRIPT_NAME}"
+    echo "  ./${SCRIPT_NAME} release 1.1"
+    echo "  ./${SCRIPT_NAME} --help"
+    echo;
+    exit 0;
+elif [ "${1}" = "release" ]; then
+    if [ -z "${2}" ]; then
+        echo "Error: release version is not specified!"
+        echo;
+        exit 1;
+    fi
+else
+    ARCHIVE_DIR_NAME="${PROGRAM_NAME}-${VERSION}_${SUFFIX}"
+fi
+
 # Test Internet connection:
 host github.com > /dev/null
 
@@ -51,6 +72,7 @@ if [ -d "${MAIN_DIR}/${MOD}" ]; then
     echo "Updating ${MAIN_DIR}/${MOD}"
     cd "${MAIN_DIR}/${MOD}"
     git checkout .
+    git checkout master
     git pull --all --prune -f
     git submodule init
     git submodule update
@@ -62,6 +84,7 @@ else
     cd "${MAIN_DIR}"
     git clone "${URL}"
     cd "${MAIN_DIR}/${MOD}"
+    git checkout master
     git submodule init
     git submodule update
     PSI_NUM="$(git rev-list --count ${DEF_COMMIT}..HEAD)"
@@ -69,6 +92,14 @@ else
     echo;
 fi
 
+if [ "${1}" = "release" ]; then
+    VERSION="${2}"
+    git checkout "${VERSION}" > /dev/null 2> /dev/null
+    git submodule init > /dev/null 2> /dev/null
+    git submodule update > /dev/null 2> /dev/null
+fi
+
+ARCHIVE_DIR_NAME="${PROGRAM_NAME}-portable-${VERSION}_${SUFFIX}"
 echo "Current version of Psi: ${VERSION}"
 echo;
 
@@ -204,22 +235,22 @@ echo;
 
 cd "${MAIN_DIR}"
 echo "Copying the results to main directory..."
-mkdir -p "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86"
-mkdir -p "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86_64"
+mkdir -p "${ARCHIVE_DIR_NAME}_x86"
+mkdir -p "${ARCHIVE_DIR_NAME}_x86_64"
 rsync -a --del "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/i686-w64-mingw32.shared/psi/" \
-               "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86/" > /dev/null
+               "${ARCHIVE_DIR_NAME}_x86/" > /dev/null
 rsync -a --del "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/x86_64-w64-mingw32.shared/psi/" \
-               "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86_64/" > /dev/null
+               "${ARCHIVE_DIR_NAME}_x86_64/" > /dev/null
 echo;
 
 echo "Compressing files into 7z archives..."
-rm -f ${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86*.7z
-echo "Creating archive: ${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86.7z"
-7z ${ARCHIVER_OPTIONS} "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86.7z" \
-                       "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86" > /dev/null
-echo "Creating archive: ${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86_64.7z"
-7z ${ARCHIVER_OPTIONS} "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86_64.7z" \
-                       "${PROGRAM_NAME}-${VERSION}_${SUFFIX}_x86_64" > /dev/null
+rm -f ${ARCHIVE_DIR_NAME}_x86*.7z
+echo "Creating archive: ${ARCHIVE_DIR_NAME}_x86.7z"
+7z ${ARCHIVER_OPTIONS} "${ARCHIVE_DIR_NAME}_x86.7z" \
+                       "${ARCHIVE_DIR_NAME}_x86" > /dev/null
+echo "Creating archive: ${ARCHIVE_DIR_NAME}_x86_64.7z"
+7z ${ARCHIVER_OPTIONS} "${ARCHIVE_DIR_NAME}_x86_64.7z" \
+                       "${ARCHIVE_DIR_NAME}_x86_64" > /dev/null
 echo "Done."
 echo;
 
