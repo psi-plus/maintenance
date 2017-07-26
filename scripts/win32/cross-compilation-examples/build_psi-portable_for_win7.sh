@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2017-07-24
+# Updated: 2017-07-26
 # Version: N/A
 #
 # Dependencies:
@@ -18,8 +18,8 @@ export MAIN_DIR="${HOME}/Tmp/Psi"
 export VERSION="x.y.z"
 export SUFFIX="win7"
 
-PSI_TAG="1.1.0"
-DEF_COMMIT=000473ebfd463c910ee81d599a7982d8753b83dc
+PSI_TAG="1.2.0"
+DEF_COMMIT=4b8a3473ee1de59f84627000cba462e05f8a9b84
 
 PROGRAM_NAME="psi"
 PROJECT_DIR_NAME="psi"
