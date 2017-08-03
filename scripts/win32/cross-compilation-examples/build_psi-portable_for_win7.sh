@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2017-07-26
+# Updated: 2017-08-04
 # Version: N/A
 #
 # Dependencies:
@@ -215,8 +215,7 @@ echo;
 
 cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
 echo "Building webkit version of Psi without plugins..."
-# build-project i686-w64-mingw32.shared x86_64-w64-mingw32.shared
-build-project x86_64-w64-mingw32.shared
+build-project i686-w64-mingw32.shared x86_64-w64-mingw32.shared
 echo;
 
 cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
