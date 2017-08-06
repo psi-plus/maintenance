@@ -297,16 +297,16 @@ set_psi_env() {
   log "Found patch tool"
   
   find_qt_util() {
-    local name=$1
-    local vp="${2:--v}"
+    local name=$1 # util name
+    local vp="${2:--v}" # version command line switch. of -v by default
     result=""
     local vs=Qt
-    [ -n "$qt_ver" ] && vs="$qt_ver"
+    [ -n "$qt_ver" ] && vs="$qt_ver" # exact desired Qt version the tool belongs too. not given for qmake.
 
     qtest() { [ -n "$($1 $vp 2>&1 |grep "$vs")" ]; return $?; }
 
     for v in ${QT_VERSIONS_PRIORITY}; do
-      for un in $full_name $name-qt${QT_MAJOR_VERSION} qt${QT_MAJOR_VERSION}-${name} ${name}${QT_MAJOR_VERSION}; do
+      for un in $name-qt${v} qt${v}-${name} ${name}${v}; do
         [ -n "$qtbindir" ] && un="$qtbindir/$un" # we want all qt util to be in the same dir
         #echo "Check for $un"
         qtest $un && { result="$un"; break 2; }
