@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2017-09-09
+# Updated: 2017-09-11
 # Version: N/A
 #
 # Dependencies:
@@ -198,7 +198,7 @@ sed -i "s|option( VERBOSE_PROGRAM_NAME .*$|option( VERBOSE_PROGRAM_NAME \"\" ON 
 sed -i "s|option( ENABLE_PORTABLE .*$|option( ENABLE_PORTABLE \"\" ON )|g" CMakeLists.txt
 sed -i "s|option( PRODUCTION .*$|option( PRODUCTION \"\" ON )|g" CMakeLists.txt
 sed -i "s|option( USE_MXE .*$|option( USE_MXE \"\" ON )|g" CMakeLists.txt
-sed -i "s|option( USE_QJDNS .*$|option( USE_QJDNS \"\" ON )|g" iris/CMakeLists.txt
+sed -i "s|option( USE_QJDNS .*$|option( USE_QJDNS \"\" ON )|g" CMakeLists.txt
 
 rm -rf "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
 echo;
