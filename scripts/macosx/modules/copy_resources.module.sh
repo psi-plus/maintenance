@@ -5,8 +5,8 @@
 function copy_resources()
 {
     log "Copying resources into bundle..."
-    mv "${PSI_DIR}/build/psi-plus.app/" "${PSI_DIR}/build/Psi+.app/"
-    PSIAPP_DIR="${PSI_DIR}/build/Psi+.app/"
+    mv "${PSI_DIR}/build/psi-plus.app/" "${PSI_DIR}/build/${WE_WILL_BUILD}.app/"
+    PSIAPP_DIR="${PSI_DIR}/build/${WE_WILL_BUILD}.app/"
     mkdir -p "${PSIAPP_DIR}/Contents/Resources/"
     cd "${PSIAPP_DIR}/Contents/Resources/"
 
@@ -24,7 +24,7 @@ function copy_resources()
     mkdir -p translations
     cp -R "${PSI_DIR}/translations/compiled/" "${PSIAPP_DIR}/Contents/Resources/translations/"
 
-    log "Copying Psi+ resources..."
+    log "Copying ${WE_WILL_BUILD} resources..."
     for item in `ls -1 "${PSI_DIR}/resources"`; do
         cp -a "${PSI_DIR}/resources/${item}" "${PSIAPP_DIR}/Contents/Resources/"
     done

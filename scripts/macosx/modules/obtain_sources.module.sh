@@ -83,31 +83,31 @@ function obtain_sources()
         git pull
     fi
 
-    log "Fetching dependencies..."
-    PSI_FETCH="${PSI_SOURCE_DIR}/admin/fetch.sh"
-    . "${PSI_SOURCE_DIR}/admin/build/package_info"
+    #log "Fetching dependencies..."
+    #PSI_FETCH="${PSI_SOURCE_DIR}/admin/fetch.sh"
+    #. "${PSI_SOURCE_DIR}/admin/build/package_info"
 
-    cd "${PSI_DIR}"
-    mkdir -p packages deps
-    if [ ! -f "packages/${growl_file}" ]
-    then
-        sh ${PSI_FETCH} ${growl_url} packages/${growl_file}
-        cd deps && unzip ../packages/${growl_file} && cd ..
-    fi
-    if [ ! -f "packages/${gstbundle_mac_file}" ]
-    then
-        sh ${PSI_FETCH} ${gstbundle_mac_url} packages/${gstbundle_mac_file}
-        cd deps && tar jxvf ../packages/${gstbundle_mac_file} && cd ..
-    fi
-    if [ ! -f "packages/${psimedia_mac_file}" ]
-    then
-        sh ${PSI_FETCH} ${psimedia_mac_url} packages/${psimedia_mac_file}
-        cd deps && tar jxvf ../packages/${psimedia_mac_file} && cd ..
-    fi
-    if [ ! -f "packages/${qca_mac_file}" ]
-    then
-        sh ${PSI_FETCH} ${qca_mac_url} packages/${qca_mac_file}
-        cd deps && tar jxvf ../packages/${qca_mac_file} && cd ..
-    fi
+    #cd "${PSI_DIR}"
+    #mkdir -p packages deps
+    #if [ ! -f "packages/${growl_file}" ]
+    #then
+    #    sh ${PSI_FETCH} ${growl_url} packages/${growl_file}
+    #    cd deps && unzip ../packages/${growl_file} && cd ..
+    #fi
+    #if [ ! -f "packages/${gstbundle_mac_file}" ]
+    #then
+    #    sh ${PSI_FETCH} ${gstbundle_mac_url} packages/${gstbundle_mac_file}
+    #    cd deps && tar jxvf ../packages/${gstbundle_mac_file} && cd ..
+    #fi
+    #if [ ! -f "packages/${psimedia_mac_file}" ]
+    #then
+    #    sh ${PSI_FETCH} ${psimedia_mac_url} packages/${psimedia_mac_file}
+    #    cd deps && tar jxvf ../packages/${psimedia_mac_file} && cd ..
+    #fi
+    #if [ ! -f "packages/${qca_mac_file}" ]
+    #then
+    #    sh ${PSI_FETCH} ${qca_mac_url} packages/${qca_mac_file}
+    #    cd deps && tar jxvf ../packages/${qca_mac_file} && cd ..
+    #fi
 
 }

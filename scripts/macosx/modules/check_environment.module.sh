@@ -18,7 +18,7 @@ function check_environment()
     log "Checking environment..."
     # We should not even try to build as root. At all.
     if [ `whoami` == "root" ]; then
-        die "Psi+ should not be built as root. Restart build process \
+        die "${WE_WILL_BUILD} should not be built as root. Restart build process \
 as normal user!"
     fi
     # Checking Qt presence and it's version.

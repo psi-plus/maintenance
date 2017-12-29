@@ -1,7 +1,5 @@
-
-
-PSI_VERSION_COMMIT=2812a0af876f47b9001fcd3a4af9ad89e2ccb1ea
-PATCHES_VERSION_COMMIT=871fac5f74f247df1d28297d5ea3982a8dcfaacc
+PSI_VERSION_COMMIT=4b8a3473ee1de59f84627000cba462e05f8a9b84
+PATCHES_VERSION_COMMIT=db1a4053ef7aae72ae819eb00eba47bae9530320
 
 #####################################################################
 # This function will create version string for about window and
@@ -19,7 +17,12 @@ function create_version_string() {
     PSI_BUILD=$[ ${PSI_REVISIONS_FROM_VERSION} + ${PLUGINS_REVISIONS_FROM_VERSION} ]
     VERSION_STRING_RAW="${PSI_VERSION}.${PSI_BUILD}"
 
-    VERSION_STRING="${VERSION_STRING_RAW} ($(date +"%Y-%m-%d"), Psi:${PSI_REVISION}, Psi+:${PSI_PLUS_REVISION}"
+    if [ ${BUILD_PSI_PLUS} -eq 1 ]; then
+        VERSION_STRING="${VERSION_STRING_RAW} ($(date +"%Y-%m-%d"), Psi:${PSI_REVISION}, Psi+:${PSI_PLUS_REVISION}"
+    else
+        VERSION_STRING="${VERSION_STRING_RAW} ($(date +"%Y-%m-%d"), Psi:${PSI_REVISION}"
+    fi
+
     if [ "${ENABLE_WEBENGINE}" -eq "1" ]; then
         VERSION_STRING="${VERSION_STRING}, webengine)"
     else
