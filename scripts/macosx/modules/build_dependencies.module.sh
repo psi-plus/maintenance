@@ -1,7 +1,7 @@
 DEP_GROWL_URL="https://drive.google.com/uc?export=download&id=0B9THQ10qg_RSNWhuOW1rbV9WYmc"
 DEP_GROWL_FILE="Growl-2.0.1.tar.bz2"
 
-DEP_LIBGCRYPT_VER=1.7.7
+DEP_LIBGCRYPT_VER=1.8.2
 DEP_LIBGCRYPT_DIR=libgcrypt-${DEP_LIBGCRYPT_VER}
 DEP_LIBGCRYPT_FILE=${DEP_LIBGCRYPT_DIR}.tar.gz
 DEP_LIBGCRYPT_URL="ftp://ftp.gnupg.org/gcrypt/libgcrypt/${DEP_LIBGCRYPT_FILE}"
@@ -21,10 +21,10 @@ DEP_LIBIDN_DIR=libidn-${DEP_LIBIDN_VER}
 DEP_LIBIDN_FILE=${DEP_LIBIDN_DIR}.tar.gz
 DEP_LIBIDN_URL="ftp://ftp.gnu.org/gnu/libidn/${DEP_LIBIDN_FILE}"
 
-DEP_OPENSSL_VER=1.0.2l
+DEP_OPENSSL_VER=1.0.2n
 DEP_OPENSSL_DIR=openssl-${DEP_OPENSSL_VER}
 DEP_OPENSSL_FILE=${DEP_OPENSSL_DIR}.tar.gz
-DEP_OPENSSL_URL=https://ftp.openssl.org/source/openssl-1.0.2l.tar.gz
+DEP_OPENSSL_URL=https://ftp.openssl.org/source/${DEP_OPENSSL_FILE}
 
 DEP_QJDNS_GIT=https://github.com/psi-im/jdns.git
 

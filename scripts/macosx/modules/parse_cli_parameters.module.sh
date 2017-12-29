@@ -8,6 +8,17 @@ function parse_cli_parameters()
     log "======================================== BUILD PARAMETERS"
     local cliparams=$@
 
+    # Build Psi or Psi+?
+    if [ "${cliparams/build-plain-psi}" != "${cliparams}" ]; then
+        log "Building plain Psi, without patches."
+        BUILD_PSI=1
+        BUILD_PSI_PLUS=0
+        WE_WILL_BUILD="Psi"
+    else
+        log "Building ${WE_WILL_BUILD}"
+        # Do nothing as we're defaulting to Psi+.
+    fi
+
     # Build from snapshot or git?
     if [ "${cliparams/build-from-snapshot}" != "${cliparams}" ]; then
         log "Building from snapshotted sources"

@@ -14,7 +14,7 @@ function copy_libraries()
     local brew_libs_to_bundle=`otool -L ${PSIAPP_DIR}/Contents/MacOS/psi-plus | grep "/usr/local" | awk {' print $1 '}`
 
     for lib in ${brew_libs_to_bundle[@]}; do
-        log "WARNING: homebrew library: ${lib_name}, Psi+ might not be distributable!"
+        log "WARNING: homebrew library: ${lib_name}, ${WE_WILL_BUILD} might not be distributable!"
     done
 
     mkdir -p "${PSIAPP_DIR}/Contents/Frameworks"

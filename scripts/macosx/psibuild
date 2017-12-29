@@ -12,7 +12,7 @@
 # Requirements:
 #   * git
 #   * xcode (including CLI tools)
-#   * Qt built from source (not homebrew, not installed from official package)
+#   * Qt built from source (not homebrew)
 #
 # ToDo for packaging:
 #   * gstreamer (?)
@@ -24,10 +24,12 @@
 #   * cmake
 #   * libtool
 #
-# WARNING: this script was tested with dependencies installed with brew.
-# Bug reports about fails with dependencies installed by other package
-# systems are accepted but WILL have lowest possible priority!
-# Patches welcome for that.
+# WARNING: this script will build own set of dependencies neccessary
+# to get Psi and Psi+ running. Dependencies installed by homebrew,
+# macports or other package management systems will be ignored.
+# If errors occurs - file a bug report! Or better patch it :).
+# The only dependencies you should install with package management
+# systems described earlier.
 
 #####################################################################
 # Options.
@@ -54,17 +56,26 @@ TRANSLATIONS_TO_INSTALL="en"
 CONF_OPTS="--disable-qdbus --enable-whiteboarding --disable-xss --verbose --release"
 
 # Psi base version.
-PSI_VERSION="1.0"
+PSI_VERSION="1.2"
 
 # Disabled plugins.
 # Most likely will not build for now.
 DISABLED_PLUGINS="screenshotplugin"
+
+# What we will build?
+WE_WILL_BUILD="Psi+"
 
 #####################################################################
 # CLI options.
 # These options are controlled by CLI parameters (see "psibuild --help").
 # You should not change them, unless you want to do something by
 # default.
+
+# Build Psi+?
+BUILD_PSI_PLUS=1
+
+# Build Psi?
+BUILD_PSI=0
 
 # Build from git, or from snapshot?
 # Controlled with "--build-from-snapshot" parameter.
@@ -208,31 +219,41 @@ https://github.com/psi-plus/maintenance
 
 Available parameters:
 
-Building options:
-    --build-from-snapshot       Build Psi+ from snapshots rather than from git.
+Sources options
 
-    --make-portable             Make Psi+ bundle be portable. WARNING: completely
-                                untested thing. Might eat your magic mouse or
-                                trackpad.
+    --build-psi-plus            Build Psi+. The default.
+
+    --build-plain-psi           Build Psi, without \"plus\" patches.
+
+Building options:
+    --build-from-snapshot       Build Psi/Psi+ from snapshots rather than
+                                from git.
+
+    --make-portable             Make Psi/Psi+ bundle be portable. WARNING:
+                                completely untested thing. Might eat your
+                                magic mouse or trackpad.
 
     --skip-bad-patches          Do not exit if bad patch appears.
 
-    --use-qt5-from-website      Try to use Qt5 installed with online or offline
-                                installer. Note that this could break distribution
-                                ability!
+    --use-qt5-from-website      Try to use Qt5 installed with online or
+                                offline installer. Skipping this option
+                                could break distribution ability!
 
 Feature options:
-    --bundle-all-translations   Bundle all translations. By default only english
-                                will be bundled.
+    --bundle-all-translations   Bundle all translations. By default only
+                                english will be bundled.
 
-    --enable-dev-plugins        Build unstable (dev) plugins.
+    --enable-dev-plugins        Build unstable (dev) plugins. Useful only
+                                when building Psi+, will be skipped if
+                                building Psi.
 
-    --enable-webengine          Build webengine version. By default non-webengine
-                                version will be built.
+    --enable-webengine          Build webengine version. By default
+                                non-webengine version will be built.
 
 ENVIRONMENT VARIABLES
 
-    QTDIR                       Qt installation directory.
+    QTDIR                       Qt installation directory. Should point
+                                to your Qt installation.
 "
 }
 

@@ -35,46 +35,46 @@ function prepare_sources()
         #done
     fi
 
-    log "Applying patches..."
-    local patches_common=`ls -1 ${PSI_DIR}/plus/patches/*diff 2>/dev/null`
-    local patches_osx=`ls -1 ${PSI_DIR}/plus/patches/mac/*diff 2>/dev/null`
+    if [ ${BUILD_PSI} -eq 0 ]; then
+        log "Applying patches..."
+        local patches_common=`ls -1 ${PSI_DIR}/plus/patches/*diff 2>/dev/null`
+        local patches_osx=`ls -1 ${PSI_DIR}/plus/patches/mac/*diff 2>/dev/null`
 
-    cd "${PSI_DIR}/build"
-    # Applying generic patches.
-    # This should be skipped if we're building from snapshot, because source
-    # was already patched with generic patches.
-    if [ ${SKIP_GENERIC_PATCHES} -eq 0 ]; then
-        log "Applying common patches..."
-        for item in ${patches_common[@]}; do
+        cd "${PSI_DIR}/build"
+        # Applying generic patches.
+        # This should be skipped if we're building from snapshot, because source
+        # was already patched with generic patches.
+        if [ ${SKIP_GENERIC_PATCHES} -eq 0 ]; then
+            log "Applying common patches..."
+            for item in ${patches_common[@]}; do
+                apply_patch "${item}"
+            done
+        fi
+
+        # OS X patches. Should always be applied.
+        log "Applying OS X patches..."
+        for item in ${patches_osx[@]}; do
             apply_patch "${item}"
         done
+    else
+        log "Building plain Psi, patches from Psi+ WON'T be applied"
     fi
-
-    # OS X patches. Should always be applied.
-    log "Applying OS X patches..."
-    for item in ${patches_osx[@]}; do
-        apply_patch "${item}"
-    done
 
     # Sed magic. Quick'n'easy.
     log "Executing some sed magic..."
     sed -i "" "s/.xxx/.${PSI_PLUS_REVISION}/" src/applicationinfo.cpp
     sed -i "" "s:target.path.*:target.path = ${PSILIBDIR}/psi-plus/plugins:" src/plugins/psiplugin.pri
 
-    sed -i "" "s/<string>psi<\/string>/<string>psi-plus<\/string>/g" mac/Info.plist.in
-    sed -i "" "s/<\!--<dep type='sparkle'\/>-->/<dep type='sparkle'\/>/g" psi.qc
+    if [ ${BUILD_PSI} -eq 0 ]; then
+        sed -i "" "s/<string>psi<\/string>/<string>psi-plus<\/string>/g" mac/Info.plist.in
+        #sed -i "" "s/<\!--<dep type='sparkle'\/>-->/<dep type='sparkle'\/>/g" psi.qc
 
-    sed -i "" "s/base\/psi.app/base\/psi-plus.app/" admin/build/prep_dist.sh
-    sed -i "" "s/base\/Psi.app/base\/Psi+.app/" admin/build/prep_dist.sh
-    sed -i "" "s/MacOS\/psi/MacOS\/psi-plus/" admin/build/prep_dist.sh
-    sed -i "" "s/QtXml QtGui/QtXml QtGui QtWebKit QtSvg/" admin/build/prep_dist.sh
-    sed -i "" "s/.\/pack_dmg.sh/# .\/pack_dmg.sh/" admin/build/Makefile
+        if [ ${ENABLE_WEBENGINE} == 1 ]; then
+            sed -i "" "s/psi-plus-mac.xml/psi-plus-wk-mac.xml/" src/applicationinfo.cpp
+        fi
+    fi
 
     sed -i "" "s/build\/admin\/build\/deps\/qca-qt5\/include/deps_root\/lib\/qca-qt5.framework\/Versions\/Current\/Headers/" psi.pro
-
-    if [ ${ENABLE_WEBENGINE} == 1 ]; then
-        sed -i "" "s/psi-plus-mac.xml/psi-plus-wk-mac.xml/" src/applicationinfo.cpp
-    fi
 
     # Removing "--std=gnu99" definition.
     # This is required for building with clang, apparently. It will not be built
@@ -101,15 +101,15 @@ function prepare_sources()
         done
     fi
 
-    log "Copying dependencies..."
-    cd "${PSI_DIR}/build/admin/build"
-    cp -a "${PSI_DIR}/packages/" packages/
-    cp -a "${PSI_DIR}/deps/" deps/
+    #log "Copying dependencies..."
+    #cd "${PSI_DIR}/build/admin/build"
+    #cp -a "${PSI_DIR}/packages/" packages/
+    #cp -a "${PSI_DIR}/deps/" deps/
 
     # We have some self-compiled dependencies for Qt5. Add them to psi.pro.
-    if [ ${QT_VERSION_MAJOR} -eq 5 ]; then
-        echo "INCLUDEPATH += ${PSI_DIR}/build/admin/build/deps/qca-qt5/include" >> "${PSI_DIR}/build/psi.pro"
-    fi
+    #if [ ${QT_VERSION_MAJOR} -eq 5 ]; then
+    #    echo "INCLUDEPATH += ${PSI_DIR}/build/admin/build/deps/qca-qt5/include" >> "${PSI_DIR}/build/psi.pro"
+    #fi
 
     # Version string.
     echo ${VERSION_STRING} > "${PSI_DIR}/build/version"

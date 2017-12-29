@@ -25,7 +25,7 @@ function compile_sources()
         local configure_opts="${configure_opts} --with-webkit=QtWebEngine"
     fi
 
-    log "Configuring Psi+"
+    log "Configuring ${WE_WILL_BUILD}"
     ./configure ${configure_opts} > "${PSI_DIR}/logs/psi-configure.log"
     if [ $? -ne 0 ]; then
         action_failed "Configuring Psi" "${PSI_DIR}/logs/psi-configure.log"
@@ -34,7 +34,7 @@ function compile_sources()
     echo "QMAKE_MAC_SDK = macosx10.9" >> conf.pri
 
     # Compile it!
-    log "Starting psi-plus compilation. Logs redirected to '${PSI_DIR}/logs/psi-make.log'..."
+    log "Starting ${WE_WILL_BUILD} compilation. Logs redirected to '${PSI_DIR}/logs/psi-make.log'..."
     ${MAKE} ${MAKEOPTS} VERSION=${VERSION_STRING_RAW} >> "${PSI_DIR}/logs/psi-make.log" 2>&1
     if [ $? -ne 0 ]; then
         action_failed "Compiling Psi" "${PSI_DIR}/logs/psi-make.log"
