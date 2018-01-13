@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2017-09-30
+# Updated: 2018-01-13
 # Version: N/A
 #
 # Dependencies:
@@ -166,26 +166,15 @@ if [ ! -d "${MAIN_DIR}/${DICTIONARIES_DIR_NAME}" ]; then
     wget -c "${DICTIONARIES_URL}/${DICTIONARIES_TARBALL_NAME}"
     tar -xf "${DICTIONARIES_TARBALL_NAME}"
     # Copy all available dictionaries
-    mkdir -p "${DICTIONARIES_DIR_NAME}/available-dicts"
+    mkdir -p "${DICTIONARIES_DIR_NAME}/dicts"
     cp -a libreoffice-*/ChangeLog-dictionaries \
           "${DICTIONARIES_DIR_NAME}"/ChangeLog.dictionaries.txt
     cp -a libreoffice-*/dictionaries/*/*.aff \
-          "${DICTIONARIES_DIR_NAME}/available-dicts/"
-    cp -a libreoffice-*/dictionaries/*/*.dic \
-          "${DICTIONARIES_DIR_NAME}/available-dicts/"
-    rm -f "${DICTIONARIES_DIR_NAME}/available-dicts"/hyph_*.dic
-    # Temporary workaround for bug with loading of all available dictionaries
-    # instead of chosen ones.
-    mkdir -p "${DICTIONARIES_DIR_NAME}/dicts"
-    cp -a "${DICTIONARIES_DIR_NAME}/available-dicts"/en_US.* \
           "${DICTIONARIES_DIR_NAME}/dicts/"
-    cat > "${DICTIONARIES_DIR_NAME}"/ReadMe.dictionaries.txt << EOF
-Copy necessary spell-checking dictionaries from "available-dicts" to "dicts"
-subdirectory. Do NOT copy all available dictionaries there! It will cause to
-significant memory usage and long freeze of user interface during connection to
-XMPP servers.
-EOF
+    cp -a libreoffice-*/dictionaries/*/*.dic \
+          "${DICTIONARIES_DIR_NAME}/dicts/"
     # Clean up
+    rm -f "${DICTIONARIES_DIR_NAME}/dicts"/hyph_*.dic
     find . -type d -name "libreoffice-*" -print0 | xargs -0 rm -rf
     echo "Done."
     echo;
