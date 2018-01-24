@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2017-10-05
+# Updated: 2018-01-25
 # Version: N/A
 #
 # Dependencies:
@@ -108,7 +108,7 @@ if [ ! -d "${MAIN_DIR}/${DICTIONARIES_DIR_NAME}" ]; then
     echo "Getting myspell dictionaries..."
     cd "${MAIN_DIR}"
     find . -type d -name "libreoffice-*" -print0 | xargs -0 rm -rf
-    DICTIONARIES_TARBALL_NAME=$(curl -L "${DICTIONARIES_URL}" 2>&1 | sed -ne "s:^.*\(libreoffice-dictionaries_.*\.orig\.tar\.xz\).*$:\1:p")
+    DICTIONARIES_TARBALL_NAME=$(curl -L "${DICTIONARIES_URL}" 2>&1 | sed -ne "s:^.*\(libreoffice-dictionaries_.*\.orig\.tar\.xz\).*$:\1:p" | tail -n1)
     wget -c "${DICTIONARIES_URL}/${DICTIONARIES_TARBALL_NAME}"
     tar -xf "${DICTIONARIES_TARBALL_NAME}"
     # Copy all available dictionaries
