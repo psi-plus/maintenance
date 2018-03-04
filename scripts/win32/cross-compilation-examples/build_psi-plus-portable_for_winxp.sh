@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2018-01-25
+# Updated: 2018-03-04
 # Version: N/A
 #
 # Dependencies:
@@ -147,6 +147,8 @@ sed -i "s|option( VERBOSE_PROGRAM_NAME .*$|option( VERBOSE_PROGRAM_NAME \"\" ON 
 sed -i "s|option( ENABLE_PORTABLE .*$|option( ENABLE_PORTABLE \"\" ON )|g" CMakeLists.txt
 sed -i "s|option( PRODUCTION .*$|option( PRODUCTION \"\" ON )|g" CMakeLists.txt
 sed -i "s|option( USE_MXE .*$|option( USE_MXE \"\" ON )|g" CMakeLists.txt
+sed -i "s|option( USE_KEYCHAIN .*$|option( USE_KEYCHAIN \"\" OFF )|g" CMakeLists.txt
+sed -i "s|option( BUILD_DEV_PLUGINS .*$|option( BUILD_DEV_PLUGINS \"\" ON )|g" src/plugins/CMakeLists.txt
 sed -i "s|option( USE_QJDNS .*$|option( USE_QJDNS \"\" ON )|g" CMakeLists.txt
 
 rm -rf "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
