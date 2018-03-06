@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2018-03-04
+# Updated: 2018-03-06
 # Version: N/A
 #
 # Dependencies:
@@ -17,9 +17,6 @@ export MAIN_DIR="${HOME}/Tmp/Psi"
 
 export VERSION="x.y.z"
 export SUFFIX="win7"
-
-PSI_TAG="1.2.0"
-DEF_COMMIT=4b8a3473ee1de59f84627000cba462e05f8a9b84
 
 PROGRAM_NAME="psi"
 PROJECT_DIR_NAME="psi"
@@ -44,7 +41,7 @@ if [ "${1}" = "-h" ] || [ "${1}" = "--help" ]; then
     echo ;
     echo "Examples:"
     echo "  ./${SCRIPT_NAME}"
-    echo "  ./${SCRIPT_NAME} release 1.1"
+    echo "  ./${SCRIPT_NAME} release 1.3"
     echo "  ./${SCRIPT_NAME} --help"
     echo;
     exit 0;
@@ -76,8 +73,9 @@ if [ -d "${MAIN_DIR}/${MOD}" ]; then
     git pull --all --prune -f
     git submodule init
     git submodule update
-    PSI_NUM="$(git rev-list --count ${DEF_COMMIT}..HEAD)"
-    VERSION="${PSI_TAG}.${PSI_NUM}"
+    PSI_TAG="$(git describe --tags | cut -d - -f1)"
+    PSI_REV="$(git describe --tags | cut -d - -f2)"
+    VERSION="${PSI_TAG}-${PSI_REV}"
     echo;
 else
     echo "Creating ${MAIN_DIR}/${MOD}"
@@ -87,8 +85,9 @@ else
     git checkout master
     git submodule init
     git submodule update
-    PSI_NUM="$(git rev-list --count ${DEF_COMMIT}..HEAD)"
-    VERSION="${PSI_TAG}.${PSI_NUM}"
+    PSI_TAG="$(git describe --tags | cut -d - -f1)"
+    PSI_REV="$(git describe --tags | cut -d - -f2)"
+    VERSION="${PSI_TAG}-${PSI_REV}"
     echo;
 fi
 
