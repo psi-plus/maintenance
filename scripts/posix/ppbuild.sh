@@ -253,11 +253,11 @@ patch_psi ()
 #
 get_psi_plus_version()
 {
-  local psi_ver=$(cd ${psiplus_src} && git describe --tags | cut -d - -f1)
-  local psi_rev=$(${upstream_src}/admin/git_revnumber.sh)
-  local plus_rev=$(cd ${psiplus_src} && git rev-list --count ${ref_commit}..HEAD)
-  local sum_commit=$(expr ${psi_rev} + ${plus_rev})
-  psi_package_version="${psi_ver}.${sum_commit}"
+  local plus_tag=$(cd ${psiplus_src} && git describe --tags | cut -d - -f1)
+  local psi_num=$("${upstream_src}/admin/git_revnumber.sh" "${plus_tag}")
+  local plus_num=$(cd ${psiplus_src} && git describe --tags | cut -d - -f2)
+  local sum_commit=$(expr ${psi_num} + ${plus_num})
+  psi_package_version="${plus_tag}.${sum_commit}"
   psi_plus_version=$(${psiplus_src}/admin/psi-plus-nightly-version ${upstream_src})
   echo "SHORT_VERSION = $psi_package_version"
   echo "LONG_VERSION = $psi_plus_version"
