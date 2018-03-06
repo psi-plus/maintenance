@@ -2,7 +2,6 @@
 
 #CONSTANTS/КОНСТАНТЫ
 home=${HOME:-/home/$USER} #домашний каталог
-psi_version="1.0" #не менять без необходимости, нужно для пакетирования
 lib_prefixes="/usr/lib
 /usr/lib64
 /usr/local/lib
@@ -254,9 +253,9 @@ patch_psi ()
 #
 get_psi_plus_version()
 {
+  local psi_ver=$(cd ${upstream_src} && git describe --tags | cut -d - -f1)
   local psi_rev=$(${upstream_src}/admin/git_revnumber.sh)
   local plus_rev=$(cd ${psiplus_src} && git rev-list --count ${ref_commit}..HEAD)
-  local psi_ver=$(cd ${psiplus_src} && git describe --tags | cut -d - -f1)
   local sum_commit=$(expr ${psi_rev} + ${plus_rev})
   psi_package_version="${psi_ver}.${sum_commit}"
   psi_plus_version=$(${psiplus_src}/admin/psi-plus-nightly-version ${upstream_src})
