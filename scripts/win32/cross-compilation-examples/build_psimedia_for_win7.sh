@@ -199,8 +199,8 @@ for TARGET in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
         cp -a "${MXE_DIR}/usr/${TARGET}/qt5/plugins/${QT_PLUGINS_DIR}" ./
     done
 
-    mkdir "${BIN_DIR}/gstreamer-1.0"
-    cd "${BIN_DIR}/gstreamer-1.0"
+    mkdir -p "${BIN_DIR}/lib/gstreamer-1.0"
+    cd "${BIN_DIR}/lib/gstreamer-1.0"
 
     for PLUGIN in ${PLUGINS}
     do
