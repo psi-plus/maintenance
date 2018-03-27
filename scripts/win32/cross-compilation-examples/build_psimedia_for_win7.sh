@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-03-20
-# Updated: 2018-03-22
+# Updated: 2018-03-27
 # Version: N/A
 #
 # Dependencies:
@@ -26,13 +26,9 @@ ARCHIVER_OPTIONS="a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 
 LIBS="
     libbz2.dll
-    libcrypto-1_1.dll
-    libcrypto-1_1-x64.dll
     libffi-6.dll
     libfontconfig-1.dll
     libfreetype-6.dll
-    libgcc_s_seh-1.dll
-    libgcc_s_sjlj-1.dll
     libgio-2.0-0.dll
     libglib-2.0-0.dll
     libgmodule-2.0-0.dll
@@ -61,8 +57,6 @@ LIBS="
     libpcre2-16-0.dll
     libpng16-16.dll
     libspeex-1.dll
-    libssl-1_1.dll
-    libssl-1_1-x64.dll
     libstdc++-6.dll
     libtheora-0.dll
     libtheoradec-1.dll
@@ -71,6 +65,18 @@ LIBS="
     libvorbisenc-2.dll
     libwinpthread-1.dll
     zlib1.dll
+"
+
+I686_LIBS="
+    libcrypto-1_1.dll
+    libgcc_s_sjlj-1.dll
+    libssl-1_1.dll
+"
+
+X86_64_LIBS="
+    libcrypto-1_1-x64.dll
+    libgcc_s_seh-1.dll
+    libssl-1_1-x64.dll
 "
 
 QT_LIBS="
@@ -186,7 +192,19 @@ for TARGET in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
 
     for LIB in ${LIBS}
     do
-        cp -a "${MXE_DIR}/usr/${TARGET}/bin/${LIB}" ./ || true
+        cp -a "${MXE_DIR}/usr/${TARGET}/bin/${LIB}" ./
+    done
+
+    if [ "${TARGET}" = "i686-w64-mingw32.shared" ]
+    then
+        ARCH_SPEC_LIBS="${I686_LIBS}"
+    else
+        ARCH_SPEC_LIBS="${X86_64_LIBS}"
+    fi
+
+    for ARCH_SPEC_LIB in ${ARCH_SPEC_LIBS}
+    do
+        cp -a "${MXE_DIR}/usr/${TARGET}/bin/${ARCH_SPEC_LIB}" ./
     done
 
     for QT_LIB in ${QT_LIBS}
@@ -204,7 +222,7 @@ for TARGET in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
 
     for PLUGIN in ${PLUGINS}
     do
-        cp -a "${MXE_DIR}/usr/${TARGET}/bin/gstreamer-1.0/${PLUGIN}" ./
+        cp -a "${MXE_DIR}/usr/${TARGET}/bin/gstreamer-1.0/${PLUGIN}" ./ | true
     done
 done
 echo;
