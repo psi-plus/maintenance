@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2018-03-04
+# Updated: 2018-05-11
 # Version: N/A
 #
 # Dependencies:
@@ -60,7 +60,7 @@ else
     echo;
 fi
 
-ARCHIVE_DIR_NAME="${PROGRAM_NAME}-${VERSION}_${SUFFIX}"
+ARCHIVE_DIR_NAME="${PROGRAM_NAME}-portable-${VERSION}_${SUFFIX}"
 echo "Current version of Psi+: ${VERSION}"
 echo;
 
