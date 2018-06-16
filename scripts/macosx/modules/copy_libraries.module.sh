@@ -1,6 +1,6 @@
 QT_FRAMEWORKS="QtCore QtNetwork QtXml QtGui QtMultimedia QtMultimediaWidgets QtWidgets QtConcurrent QtPrintSupport QtOpenGL QtSvg QtWebEngineWidgets QtWebEngineCore QtQuick QtQml QtWebChannel QtPositioning QtQuickWidgets"  #QtDBus QtWebEngine
 
-QT_PLUGINS="audio/libqtaudio_coreaudio.dylib bearer/libqcorewlanbearer.dylib bearer/libqgenericbearer.dylib platforms/libqcocoa.dylib printsupport/libcocoaprintersupport.dylib iconengines/libqsvgicon.dylib"
+QT_PLUGINS="audio/libqtaudio_coreaudio.dylib bearer/libqgenericbearer.dylib platforms/libqcocoa.dylib styles/libqmacstyle.dylib printsupport/libcocoaprintersupport.dylib iconengines/libqsvgicon.dylib"
 QT_PLUGINS="${QT_PLUGINS} mediaservice/libqtmedia_audioengine.dylib mediaservice/libqavfmediaplayer.dylib imageformats/libqgif.dylib imageformats/libqjpeg.dylib imageformats/libqsvg.dylib  imageformats/libqwbmp.dylib imageformats/libqtiff.dylib imageformats/libqwebp.dylib  imageformats/libqtga.dylib imageformats/libqico.dylib imageformats/libqicns.dylib imageformats/libqmacjp2.dylib"
 
 #####################################################################
@@ -53,6 +53,9 @@ function copy_libraries()
         install_name_tool -change "${DEPS_ROOT}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/PlugIns/crypto/$p"
     done
 
+    install_name_tool -change "${DEPS_ROOT}/lib/libssl.1.1.dylib" "@executable_path/../Frameworks/libssl.dylib" "${PSIAPP_DIR}/Contents/PlugIns/crypto/libqca-ossl.dylib"
+    install_name_tool -change "${DEPS_ROOT}/lib/libcrypto.1.1.dylib" "@executable_path/../Frameworks/libcrypto.dylib" "${PSIAPP_DIR}/Contents/PlugIns/crypto/libqca-ossl.dylib"
+
     install_name_tool -change "${DEPS_ROOT}/lib/qca-qt5.framework/Versions/2.2.0/qca-qt5" "@executable_path/../Frameworks/qca-qt5.framework/Versions/2.2.0/qca-qt5" "${PSIAPP_DIR}/Contents/MacOS/psi-plus"
 
     # Other libs.
@@ -61,29 +64,35 @@ function copy_libraries()
     cp -f "${DEPS_ROOT}/lib/libssl.dylib" "${PSIAPP_DIR}/Contents/Frameworks/"
     cp -f "${DEPS_ROOT}/lib/libcrypto.dylib" "${PSIAPP_DIR}/Contents/Frameworks/"
     cp -f "${DEPS_ROOT}/lib/libminizip.1.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libminizip.dylib"
+    cp -f "${DEPS_ROOT}/lib/libintl.8.dylib" "${PSIAPP_DIR}/Contents/Frameworks/"
+    cp -f "${DEPS_ROOT}/lib/libqt5keychain.1.dylib" "${PSIAPP_DIR}/Contents/Frameworks/"
     chmod +w "${PSIAPP_DIR}/Contents/Frameworks/libssl.dylib"
     chmod +w "${PSIAPP_DIR}/Contents/Frameworks/libcrypto.dylib"
 
     install_name_tool -id "@executable_path/../Frameworks/libz.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libz.dylib"
     install_name_tool -id "@executable_path/../Frameworks/libidn.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libidn.dylib"
     install_name_tool -id "@executable_path/../Frameworks/libssl.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libssl.dylib"
-    install_name_tool -change "${DEPS_ROOT}/lib/libcrypto.1.0.0.dylib" "@executable_path/../Frameworks/libcrypto.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libssl.dylib"
+    install_name_tool -change "${DEPS_ROOT}/lib/libcrypto.1.1.dylib" "@executable_path/../Frameworks/libcrypto.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libssl.dylib"
     install_name_tool -id "@executable_path/../Frameworks/libcrypto.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libcrypto.dylib"
+    install_name_tool -id "@executable_path/../Frameworks/libqt5keychain.1.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libqt5keychain.1.dylib"
 
     install_name_tool -change "${DEPS_ROOT}/lib/libz.1.dylib"    "@executable_path/../Frameworks/libz.dylib"   "${PSIAPP_DIR}/Contents/MacOS/psi-plus"
     install_name_tool -change "${DEPS_ROOT}/lib/libidn.11.dylib" "@executable_path/../Frameworks/libidn.dylib" "${PSIAPP_DIR}/Contents/MacOS/psi-plus"
     install_name_tool -change "${DEPS_ROOT}/lib/libminizip.1.dylib" "@executable_path/../Frameworks/libminizip.dylib" "${PSIAPP_DIR}/Contents/MacOS/psi-plus"
+    install_name_tool -change "${DEPS_ROOT}/lib/libqt5keychain.1.dylib" "@executable_path/../Frameworks/libqt5keychain.1.dylib" "${PSIAPP_DIR}/Contents/MacOS/psi-plus"
 
     install_name_tool -id "@executable_path/../Frameworks/libminizip.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libminizip.dylib"
+    install_name_tool -id "@executable_path/../Frameworks/libintl.8.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libintl.8.dylib"
 
     install_name_tool -change "${DEPS_ROOT}/lib/libz.1.dylib" "@executable_path/../Frameworks/libz.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libminizip.dylib"
-
-    install_name_tool -change "${DEPS_ROOT}/lib/libz.1.dylib" "@executable_path/../Frameworks/libz.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libz.dylib"
 
     # OTR.
     cp -f "${DEPS_ROOT}/lib/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/Frameworks/"
     cp -f "${DEPS_ROOT}/lib/libgcrypt.dylib"    "${PSIAPP_DIR}/Contents/Frameworks/"
     cp -f "${DEPS_ROOT}/lib/libotr.dylib"       "${PSIAPP_DIR}/Contents/Frameworks/"
+
+    install_name_tool -change "${DEPS_ROOT}/lib/libintl.8.dylib" "@executable_path/../Frameworks/libintl.8.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libgpg-error.dylib"
+    install_name_tool -change "${DEPS_ROOT}/lib/libintl.8.dylib" "@executable_path/../Frameworks/libintl.8.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libidn.dylib"
 
     # In case of fire.
     install_name_tool -change "/usr/local/opt/libgpg-error/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libgcrypt.dylib"
@@ -96,6 +105,8 @@ function copy_libraries()
     install_name_tool -id "@executable_path/../Frameworks/libotr.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libotr.dylib"
         install_name_tool -change "${DEPS_ROOT}/lib/libgcrypt.20.dylib" "@executable_path/../Frameworks/libgcrypt.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libotr.dylib"
     install_name_tool -change "${DEPS_ROOT}/lib/libgpg-error.0.dylib" "@executable_path/../Frameworks/libgpg-error.dylib" "${PSIAPP_DIR}/Contents/Frameworks/libotr.dylib"
+
+    install_name_tool -change "${DEPS_ROOT}/lib/libcrypto.1.1.dylib"       "@executable_path/../Frameworks/libcrypto.dylib"       "${PSIAPP_DIR}/Contents/Resources/plugins/libomemoplugin.dylib"
 
     install_name_tool -change "${DEPS_ROOT}/lib/libotr.5.dylib"       "@executable_path/../Frameworks/libotr.dylib"       "${PSIAPP_DIR}/Contents/Resources/plugins/libotrplugin.dylib"
     install_name_tool -change "${DEPS_ROOT}/lib/libgcrypt.20.dylib"   "@executable_path/../Frameworks/libgcrypt.dylib"    "${PSIAPP_DIR}/Contents/Resources/plugins/libotrplugin.dylib"

@@ -69,7 +69,7 @@ as normal user!"
     fi
 
     # Prepare CMAKE_PREFIX_PATH.
-    export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}:/usr/local/lib/cmake"
+    export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}:/usr/local/lib/cmake:${DEPS_ROOT}/lib/cmake"
     if [ "${USE_QT5_FROM_WEBSITE}" == "1" ]; then
         export CMAKE_PREFIX_PATH="${QTDIR}/lib/cmake:${CMAKE_PREFIX_PATH}"
     fi
@@ -77,8 +77,11 @@ as normal user!"
 
     # Prepare PKG_CONFIG_PATH.
     export PKG_CONFIG_PATH="${DEPS_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+    log "pkgconfig paths: '${PKG_CONFIG_PATH}'"
     # Use tools from DEPS_ROOT/bin directory (notable gpg-error).
     export PATH="${DEPS_ROOT}/bin:${PATH}"
+    # MKSPECS.
+    export QMAKEPATH="${QMAKEPATH}:${DEPS_ROOT}/lib/"
 
     # Compiler options.
     export MACOSX_DEPLOYMENT_TARGET=10.9
@@ -87,6 +90,7 @@ as normal user!"
 
     # Libraries path.
     export DYLD_LIBRARY_PATH="${DEPS_ROOT}/lib:${DYLD_LIBRARY_PATH}"
+    log "Libs paths: '${DYLD_LIBRARY_PATH}'"
 
     # Type of source. Can be "snapshot" or "git"
     SOURCE_TYPE=""

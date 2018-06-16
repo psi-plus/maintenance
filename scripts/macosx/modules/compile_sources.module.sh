@@ -20,7 +20,7 @@ function compile_sources()
     # Generate configure_opts that will contain all options we will pass
     # to ./configure later (including CONF_OPTS).
     log "Creating configure parameters..."
-    local configure_opts="${CONF_OPTS} --disable-sparkle --with-idn-inc=${DEPS_ROOT}/include/ --with-idn-lib=${DEPS_ROOT}/lib --with-qca-inc=${DEPS_ROOT}/lib/qca-qt5.framework/Versions/Current/Headers --with-qca-lib=${DEPS_ROOT}/lib --with-qjdns-inc=${DEPS_ROOT}/include/ --with-qjdns-lib=${DEPS_ROOT}/lib --with-zlib-inc=${DEPS_ROOT}/include/ --with-zlib-lib=${DEPS_ROOT}/lib --with-growl=${DEPS_ROOT}/lib/"
+    local configure_opts="${CONF_OPTS} --with-idn-inc=${DEPS_ROOT}/include/ --with-idn-lib=${DEPS_ROOT}/lib --with-qca-inc=${DEPS_ROOT}/lib/qca-qt5.framework/Versions/Current/Headers --with-qca-lib=${DEPS_ROOT}/lib --with-qjdns-inc=${DEPS_ROOT}/include/ --with-qjdns-lib=${DEPS_ROOT}/lib --with-zlib-inc=${DEPS_ROOT}/include/ --with-zlib-lib=${DEPS_ROOT}/lib --with-growl=${DEPS_ROOT}/lib/"
     if [ ${ENABLE_WEBENGINE} -eq 1 ]; then
         local configure_opts="${configure_opts} --with-webkit=QtWebEngine"
     fi
