@@ -17,11 +17,15 @@ qt_ver=5
 spell_flag="-DUSE_ENCHANT=OFF -DUSE_HUNSPELL=ON"
 spellchek_engine="hunspell"
 iswebkit=""
+issql=""
 use_iconsets="system clients activities moods affiliations roster"
 isoffline=0
 skip_invalid=0
 use_plugins="*"
 let cpu_count=$(grep -c ^processor /proc/cpuinfo)+1
+devm=0
+wbkt=0
+pref=0
 #
 #COLORS
 red="\e[0;31m"
@@ -49,13 +53,23 @@ DEF_PLUG_LIST="ALL"
 DEF_CMAKE_BUILD_TYPE="Release"
 #Qt5
 USE_QT5="ON"
+#MXE PATH
+mxe_root=${githubdir}/mxe
+#i386 mxe prefix
+i686_mxe_prefix=${mxe_root}/usr/i686-w64-mingw32.shared
+x86_64_mxe_prefix=${mxe_root}/usr/x86_64-w64-mingw32.shared
+OLDPATH=${PATH}
+
 
 #WARNING: следующие переменные будут изменены в процессе работы скрипта автоматически
 buildpsi=${default_buildpsi} #инициализация переменной
 upstream_src=${buildpsi}/psi #репозиторий Psi
 psiplus_src=${buildpsi}/psi-plus #репозиторий Psi+
-workdir=${buildpsi}/worksrc #рабочий каталог для компиляции psi+
-builddir=${buildpsi}/build
+#workdir=${buildpsi}/worksrc #каталог подготовки исходных кодов psi+
+#builddir=${buildpsi}/build #рабочий каталог для компиляции psi+
+tmp_dir=/tmp/ppbuild
+workdir=${tmp_dir}/worksrc
+builddir=${tmp_dir}/build
 patches=${buildpsi}/psi-plus/patches #путь к патчам psi+, необходим для разработки
 inst_path=${buildpsi}/${inst_suffix} #только для пакетирования
 rpm_oscodename=$(lsb_release -is)
@@ -78,8 +92,6 @@ plugbuild_log=${workdir}/plugins.log
 rpmbuilddir=${home}/rpmbuild
 rpmspec=${rpmbuilddir}/SPECS
 rpmsrc=${rpmbuilddir}/SOURCES
-#
-ref_commit=db1a4053ef7aae72ae819eb00eba47bae9530320 # 1.2 tag
 #
 
 fetch_url ()
@@ -111,10 +123,12 @@ fetch_url ()
 
 fetch_all ()
 {
-  fetch_url ${psi_url} ${upstream_src}
-  fetch_url ${psi_plus_url} ${psiplus_src}
-  fetch_url ${plugins_url} ${buildpsi}/plugins
-  fetch_url ${langs_url} ${buildpsi}/langs
+  if [ $isoffline -eq 0 ]; then
+    fetch_url ${psi_url} ${upstream_src}
+    fetch_url ${psi_plus_url} ${psiplus_src}
+    fetch_url ${plugins_url} ${buildpsi}/plugins
+    fetch_url ${langs_url} ${buildpsi}/langs
+  fi
 }
 
 find_ccache ()
@@ -178,8 +192,8 @@ update_variables ()
 {
   upstream_src=${buildpsi}/psi
   psiplus_src=${buildpsi}/psi-plus
-  workdir=${buildpsi}/worksrc
-  builddir=${buildpsi}/build
+  #workdir=${buildpsi}/worksrc
+  #builddir=${buildpsi}/build
   patches=${buildpsi}/psi-plus/patches
   inst_path=${buildpsi}/${inst_suffix}
   if [ "${qt_ver}" == "5" ]; then
@@ -298,12 +312,17 @@ prepare_workspace ()
   cp -a ${buildpsi}/langs/translations/*.ts ${workdir}/translations/
   cd ${workdir}
   patch_psi
-  echo -e "${blue}Do you want to apply psi-new-history.patch${nocolor} ${pink}[y/n(default)]${nocolor}"
-  read ispatch
+  if [ "${issql}" != "y" ]; then
+    echo -e "${blue}Do you want to apply psi-new-history.patch${nocolor} ${pink}[y/n(default)]${nocolor}"
+    read ispatch
+  else
+    ispatch="y"
+  fi
   if [ "${ispatch}" == "y" ]; then
     cd ${workdir}
     patch_psi 10000 ${patches}/dev/psi-new-history.patch
     cd ${githubdir}
+    issql="y"
   fi
   get_psi_plus_version
   cd ${psiplus_src}
@@ -473,11 +492,6 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru.'
 #
 prepare_spec ()
 {
-  if [ "${rpm_oscodename}" == "Fedora" ]; then
-    extramask="#"
-  else
-    extramask=""
-  fi
   if [ -z "${iswebkit}" ]; then
     extraflags="-DENABLE_WEBKIT=OFF ${spell_flag}"
   fi
@@ -517,7 +531,7 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru
 
 
 %build
-cmake -DCMAKE_INSTALL_PREFIX=\"%{_prefix}\" -DPSI_LIBDIR=\"%{_libdir}/psi-plus\" -DCMAKE_BUILD_TYPE=Release ${extraflags} .
+cmake -DCMAKE_INSTALL_PREFIX=\"%{_prefix}\" -DPSI_LIBDIR=\"%{_libdir}/psi-plus\" -DCMAKE_BUILD_TYPE=RelWithDebInfo ${extraflags} .
 %{__make} %{?_smp_mflags}
 
 
@@ -554,14 +568,19 @@ touch --no-create %{_datadir}/icons/hicolor || :
 %defattr(-, root, root, 0755)
 %doc COPYING README TODO
 %{_bindir}/psi-plus
-${extramask}%{_bindir}/psi-plus.debug
+
 %{_datadir}/psi-plus/
 %{_datadir}/pixmaps/psi-plus.png
 %{_datadir}/applications/psi-plus.desktop
-${extramask}%{_datadir}/icons/hicolor/*/apps/psi-plus.png
-${extramask}%exclude %{_datadir}/psi-plus/COPYING
-${extramask}%exclude %{_datadir}/psi-plus/README
 "
+  if [ "${rpm_oscodename}" != "Fedora" ]; then
+    specfile="$(echo ${specfile})
+%{_bindir}/psi-plus.debug
+%{_datadir}/icons/hicolor/*/apps/psi-plus.png
+%exclude %{_datadir}/psi-plus/COPYING
+%exclude %{_datadir}/psi-plus/README
+"
+  fi
   local tmp_spec=${buildpsi}/test.spec
   usr_spec=${rpmspec}/psi-plus.spec
   echo "${specfile}" > ${tmp_spec}
@@ -658,7 +677,7 @@ ${desc}
 %setup
 
 %build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%{buildroot}%{_libdir} -DPLUGINS_PATH=/psi-plus/plugins .
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=%{buildroot}%{_libdir} -DPLUGINS_PATH=/psi-plus/plugins .
 %{__make} %{?_smp_mflags} 
 
 %install
@@ -831,12 +850,12 @@ debug_psi ()
 #
 prepare_mxe()
 {
-	OLDPATH=${PATH}
-	unset $(env | \
-	grep -vi '^EDITOR=\|^HOME=\|^LANG=\|MXE\|^PATH=' | \
-	grep -vi 'PKG_CONFIG\|PROXY\|^PS1=\|^TERM=' | \
-	cut -d '=' -f1 | tr '\n' ' ')
-	export PATH="/home/vitaly/virtualka/mxe/usr/bin:$PATH"
+  OLDPATH=${PATH}
+  unset $(env | \
+  grep -vi '^EDITOR=\|^HOME=\|^LANG=\|MXE\|^PATH=' | \
+  grep -vi 'PKG_CONFIG\|PROXY\|^PS1=\|^TERM=' | \
+  cut -d '=' -f1 | tr '\n' ' ')
+  export PATH="${mxe_root}/usr/bin:$PATH"
 }
 run_mxe_cmake()
 {
@@ -852,20 +871,28 @@ run_mxe_cmake_64()
 compile_psi_mxe()
 {
   curd=$(pwd)
+  flags=""
+  oldissql=${issql}
+  issql="y"
   prepare_src
   prepare_builddir ${builddir}
-  mxe_rootd=${buildpsi}/mxe_builds
-  check_dir ${mxe_rootd}
+  mxe_outd=${tmp_dir}/mxe_builds
+  check_dir ${mxe_outd}
   cd ${builddir}
-  flags="-DENABLE_PLUGINS=ON -DENABLE_PORTABLE=ON -DVERBOSE_PROGRAM_NAME=ON -DUSE_CCACHE=OFF"
   if [ "$1" == "qt5" ];then
+    current_prefix=${i686_mxe_prefix}
     cmakecmd=run_mxe_cmake
-    flags="${flags} -DBUILD_ARCH=i386"
   elif [ "$1" == "qt5_64" ];then
+    current_prefix=${x86_64_mxe_prefix}
     cmakecmd=run_mxe_cmake_64
-    flags="${flags} -DBUILD_ARCH=x86_64"
   fi
-  flags="${flags} -DCMAKE_INSTALL_PREFIX=${mxe_rootd}/$1"
+  if [ ${devm} -eq 1 ]; then
+    flags="${flags} -DENABLE_PLUGINS=ON -DBUILD_DEV_PLUGINS=ON -DDEV_MODE=ON"
+  fi
+  if [ ${wbkt} -eq 0 ]; then
+    flags="${flags} -DENABLE_WEBKIT=OFF"
+  fi
+  flags="${flags} -DVERBOSE_PROGRAM_NAME=ON -DQt5Keychain_DIR=${current_prefix}/lib/cmake/Qt5Keychain"
   wrkdir=${builddir}
   check_dir ${wrkdir}
   cd ${wrkdir}
@@ -873,37 +900,99 @@ compile_psi_mxe()
   ${cmakecmd} ${flags} ${workdir}"
   ${cmakecmd} ${flags} ${workdir}
   echo 
-  echo "Press Enter to continue..." && read tmpvar
+  #echo "Press Enter to continue..." && read tmpvar
   ${cmakecmd} --build . --target all -- -j${cpu_count}
   ${cmakecmd} --build . --target prepare-bin --
-  ${cmakecmd} --build . --target prepare-bin-libs --
-  check_dir ${mxe_rootd}/$1
-  cp -rf ${wrkdir}/psi/*  ${mxe_rootd}/$1/
-  cp -a ${wrkdir}/psi/translations ${mxe_rootd}/$1/
-  cp -a ${buildpsi}/mxe_prepare/myspell ${mxe_rootd}/$1/
+  if [ ${devm} -eq 1 ]; then
+    ${cmakecmd} --build . --target prepare-bin-libs --
+  fi
+  if [ -d "${mxe_outd}/$1" ] && [ ${devm} -ne 0 ]; then
+    cd ${mxe_outd} && rm -rf $1
+  fi
+  check_dir ${mxe_outd}/$1
+  cp -rf ${wrkdir}/psi/*  ${mxe_outd}/$1/
+  cp -a ${wrkdir}/psi/translations ${mxe_outd}/$1/
+  cp -rf ${buildpsi}/mxe_prepare/* ${mxe_outd}/$1/
   cd ${curd}
   if [ ! -z "${OLDPATH}" ]; then
     PATH=${OLDPATH}
   fi
+  issql=${oldissql}
 }
 #
 archivate_psi()
 {
-  mxe_rootd=${buildpsi}/mxe_builds
-  7z a -mx=9 -m0=LZMA -mmt=on ${mxe_rootd}/psi-plus-webkit-${psi_package_version}-$1.7z ${mxe_rootd}/$1/*
+  if [ ! -z "${iswebkit}" ]; then
+      wbk_suff="webkit-"
+  fi
+  if [ ! -z "${issql}" ]; then
+    sql_suff="sql-"
+  fi
+  mxe_outd=${tmp_dir}/mxe_builds
+  7z a -mx=9 -m0=LZMA -mmt=on ${mxe_outd}/psi-plus-${wbk_suff}${sql_suff}${psi_package_version}-$1.7z ${mxe_outd}/$1/*
+  cp -r ${mxe_outd}/psi-plus-${wbk_suff}${sql_suff}${psi_package_version}-$1.7z ${buildpsi}/mxe_builds/
+}
+#
+build_i686_mxe()
+{
+  wbkt=1
+  devm=1
+  compile_psi_mxe qt5
+  devm=0
+  wbkt=0
+  compile_psi_mxe qt5
+  archivate_all qt5
+}
+#
+build_x86_64_mxe()
+{
+  wbkt=1
+  devm=1
+  compile_psi_mxe qt5_64
+  devm=0
+  wbkt=0
+  compile_psi_mxe qt5_64
+  archivate_all qt5_64
 }
 #
 build_all_mxe()
 {
-  compile_psi_mxe qt5
-  compile_psi_mxe qt5_64
-  archivate_all
+  build_i686_mxe
+  build_x86_64_mxe
 }
 #
 archivate_all()
 {
-  archivate_psi qt5
-  archivate_psi qt5_64
+  if [ ! -z "${issql}" ]; then
+    sql_suff="sql-"
+  fi
+  wbk_suff="all-"
+  mxe_outd=${tmp_dir}/mxe_builds
+  7z a -mx=9 -m0=LZMA -mmt=on ${mxe_outd}/psi-plus-${wbk_suff}${sql_suff}${psi_package_version}-$1.7z ${mxe_outd}/$1/*
+  cp -r ${mxe_outd}/psi-plus-${wbk_suff}${sql_suff}${psi_package_version}-$1.7z ${buildpsi}/mxe_builds/
+}
+#
+check_qt_deps()
+{
+	check_deps "checkinstall qtmultimedia5-dev libqt5multimedia5-plugins qtbase5-dev qttools5-dev qttools5-dev-tools libqca2-dev pkg-config cmake libqt5x11extras5-dev"
+}
+#
+check_deps()
+{
+	if [ ! -z "$1" ]; then
+		instdep=""
+		for dependency in $1; do
+			echo "${dependency}"
+			local result=$(dpkg --get-selections | grep ${dependency})
+			if [ -z "${result}" ]; then
+				echo -e "${blue}Package ${dependency} not installed. Trying to install...${nocolor}"
+				instdep="${instdep} ${dependency}"
+			fi
+		done
+		if [ ! -z "${instdep}" ]; then
+			sudo apt-get install ${instdep}
+		fi
+	fi
 }
 #
 set_config ()
