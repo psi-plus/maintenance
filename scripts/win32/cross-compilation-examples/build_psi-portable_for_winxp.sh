@@ -30,7 +30,7 @@ PROJECT_URL=https://github.com/psi-im/psi.git
 PLUGINS_URL=https://github.com/psi-im/plugins.git
 TRANSLATIONS_URL=https://github.com/psi-im/psi-l10n.git
 DICTIONARIES_URL=https://deb.debian.org/debian/pool/main/libr/libreoffice-dictionaries
-README_URL=https://sourceforge.net/projects/psi/files/Experimental-Builds/MS-Windows/tehnick
+README_URL=https://sourceforge.net/projects/psi/files/Experimental-Builds/Windows/tehnick
 
 ARCHIVER_OPTIONS="a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 

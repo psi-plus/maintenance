@@ -28,7 +28,7 @@ README_FILE_NAME="README.txt"
 PROJECT_URL=https://github.com/psi-plus/psi-plus-snapshots.git
 TRANSLATIONS_URL=https://github.com/psi-plus/psi-plus-l10n.git
 DICTIONARIES_URL=https://deb.debian.org/debian/pool/main/libr/libreoffice-dictionaries
-README_URL=https://sourceforge.net/projects/psiplus/files/MS-Windows/Personal-Builds/tehnick
+README_URL=https://sourceforge.net/projects/psiplus/files/Windows/Personal-Builds/tehnick
 
 ARCHIVER_OPTIONS="a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 
