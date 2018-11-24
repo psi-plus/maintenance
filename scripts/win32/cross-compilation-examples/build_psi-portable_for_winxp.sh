@@ -90,7 +90,6 @@ else
     VERSION="${PSI_TAG}-${PSI_REV}"
     echo;
 fi
-
 if [ "${1}" = "release" ]; then
     VERSION="${2}"
     git checkout "${VERSION}" > /dev/null 2> /dev/null
@@ -116,6 +115,9 @@ else
     git clone "${URL}"
     echo;
 fi
+if [ "${1}" = "release" ]; then
+    git checkout "${VERSION}" > /dev/null 2> /dev/null
+fi
 
 MOD="${TRANSLATIONS_DIR_NAME}"
 URL="${TRANSLATIONS_URL}"
@@ -130,6 +132,9 @@ else
     cd "${MAIN_DIR}"
     git clone "${URL}"
     echo;
+fi
+if [ "${1}" = "release" ]; then
+    git checkout "${VERSION}" > /dev/null 2> /dev/null
 fi
 
 MOD="${QT_TRANSLATIONS_DIR_NAME}"
