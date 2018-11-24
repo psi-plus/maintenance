@@ -92,7 +92,7 @@ else
 fi
 if [ "${1}" = "release" ]; then
     VERSION="${2}"
-    git checkout "${VERSION}" > /dev/null 2> /dev/null
+    git checkout "${VERSION}"
     git submodule init > /dev/null 2> /dev/null
     git submodule update > /dev/null 2> /dev/null
 fi
@@ -107,6 +107,7 @@ if [ -d "${MAIN_DIR}/${MOD}" ]; then
     echo "Updating ${MAIN_DIR}/${MOD}"
     cd "${MAIN_DIR}/${MOD}"
     git checkout .
+    git checkout master
     git pull --all --prune -f
     echo;
 else
@@ -116,7 +117,8 @@ else
     echo;
 fi
 if [ "${1}" = "release" ]; then
-    git checkout "${VERSION}" > /dev/null 2> /dev/null
+    cd "${MAIN_DIR}/${MOD}"
+    git checkout "${VERSION}"
 fi
 
 MOD="${TRANSLATIONS_DIR_NAME}"
@@ -125,6 +127,7 @@ if [ -d "${MAIN_DIR}/${MOD}" ]; then
     echo "Updating ${MAIN_DIR}/${MOD}"
     cd "${MAIN_DIR}/${MOD}"
     git checkout .
+    git checkout master
     git pull --all --prune -f
     echo;
 else
@@ -134,7 +137,8 @@ else
     echo;
 fi
 if [ "${1}" = "release" ]; then
-    git checkout "${VERSION}" > /dev/null 2> /dev/null
+    cd "${MAIN_DIR}/${MOD}"
+    git checkout "${VERSION}"
 fi
 
 MOD="${QT_TRANSLATIONS_DIR_NAME}"
