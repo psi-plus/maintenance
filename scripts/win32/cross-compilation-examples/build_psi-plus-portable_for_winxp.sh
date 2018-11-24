@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2018-05-11
+# Updated: 2018-11-24
 # Version: N/A
 #
 # Dependencies:
@@ -89,10 +89,10 @@ if [ ! -d "${MAIN_DIR}/${MOD}" ]; then
         [ -r "${CONF_FILE}" ] && . "${CONF_FILE}"
     done
     # Copy translations from Qt SDK if it is available
-    if [ -d "${QT_SDK_DIR}/gcc_64/translations" ]; then
+    if [ -d "${QT_SDK_DIR}/android_armv7/translations" ]; then
         mkdir -p "${MAIN_DIR}/${MOD}"
         cd "${MAIN_DIR}/${MOD}"
-        rsync -a "${QT_SDK_DIR}/gcc_64/translations"/qt*.qm ./
+        rsync -a "${QT_SDK_DIR}/android_armv7/translations"/qt*.qm ./
         rm -f qt_help_*.qm qtconfig_*.qm qtconnectivity_*.qm qtlocation_*.qm \
               qtquick1_*.qm qtquickcontrols_*.qm qtquickcontrols2_*.qm \
               qtscript_*.qm qtserialport_*.qm qtwebengine_*.qm qtwebsockets_*.qm \
@@ -100,6 +100,7 @@ if [ ! -d "${MAIN_DIR}/${MOD}" ]; then
         echo "Done."
     else
         echo "Localization files are not found!"
+        exit 1
     fi
     echo;
 fi
