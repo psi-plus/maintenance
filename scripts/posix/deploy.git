@@ -50,8 +50,8 @@ commit_tree()
   echo "configure*" >> .gitignore
   git rm configure*
   "${QCONF}"
-  git submodule foreach 'git add .; [ -n "`LANG=C git status |grep "nothing to commit"`" ] || git commit -am "${@}"'
-  git add .; [ -n "`git status |grep "nothing to commit"`" ] || git commit -am "${@}";
+  git submodule foreach 'git add .; [ -n "$(LANG=C git status |grep "nothing to commit")" ] || git commit -am "${@}"'
+  git add .; [ -n "$(git status |grep "nothing to commit")" ] || git commit -am "${@}";
 }
 
 
@@ -63,7 +63,7 @@ while [ -n "$1" ]; do
   shift
 done
 
-qconfs="${QCONF} qt-qconf qconf-qt4 qconf"
+qconfs="${QCONF} qt-qconf qconf-qt5 qconf"
 for qc in $qconfs; do QCONF="`which ${qc} 2>/dev/null`"; [ -n "$QCONF" ] && break; done
 [ -z "$QCONF" ] && die "neither of ${qconfs} is found"
 
