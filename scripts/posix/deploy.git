@@ -50,7 +50,7 @@ commit_tree()
   echo "configure*" >> .gitignore
   git rm configure*
   "${QCONF}"
-  git submodule foreach 'git add .; [ -n "$(LANG=C git status |grep "nothing to commit")" ] || git commit -am "${@}"'
+  deploy_msg="$@" git submodule foreach 'git add .; [ -n "$(LANG=C git status |grep "nothing to commit")" ] || git commit -am "${deploy_msg}"'
   git add .; [ -n "$(git status |grep "nothing to commit")" ] || git commit -am "${@}";
 }
 
