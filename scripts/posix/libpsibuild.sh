@@ -8,7 +8,7 @@
 WORK_OFFLINE=${WORK_OFFLINE:-0}
 
 # Qt major version 4,5,... (could be overriden with --qtselect as well)
-QT_VERSIONS_PRIORITY=${QT_MAJOR_VERSION:-5 4}
+QT_VERSIONS_PRIORITY=${QT_MAJOR_VERSION:-6 5}
 
 # QT_VERSIONS_PRIORITY or --qtselect is the only valid (--qtselect is in priority)
 QT_VERSION_FORCED=0
@@ -306,7 +306,7 @@ set_psi_env() {
     qtest() { [ -n "$($1 $vp 2>&1 |grep "$vs")" ]; return $?; }
 
     for v in ${QT_VERSIONS_PRIORITY}; do
-      for un in $name-qt${v} qt${v}-${name} ${name}${v}; do
+      for un in $name-qt${v} qt${v}-${name} ${name}${v} "${name} -qt=${v}"; do
         [ -n "$qtbindir" ] && un="$qtbindir/$un" # we want all qt util to be in the same dir
         #echo "Check for $un"
         qtest $un && { result="$un"; break 2; }
@@ -327,17 +327,15 @@ set_psi_env() {
   # qmake
   log "Preferred Qt versions: ${QT_VERSIONS_PRIORITY}"
   if [ -z "$QMAKE" ]; then
-    qmake -v 2>/dev/null | grep -q 'QMake' && {
-      for v in ${QT_VERSIONS_PRIORITY}; do
-        log "Check Qt version ${v}"
-        qmake -qt=${v} -v | grep -q 'QMake version' && {
-          # in case of -qt error it say "Unknown option". So it's correct.
-          QMAKE="$(qmake -qt=${v} -query QT_INSTALL_BINS)/qmake"
-          [ -f "${QMAKE}" ] || QMAKE=""
-          break; # found valid Qt version with help of Qt Chooser
-        }
-      done
-    }
+    for v in ${QT_VERSIONS_PRIORITY}; do
+      log "Check Qt version ${v}"
+      qmake -qt=${v} -v | grep -q 'QMake version' && {
+        # in case of -qt error it say "Unknown option". So it's correct.
+        QMAKE="$(qmake -qt=${v} -query QT_INSTALL_BINS)/qmake"
+        [ -f "${QMAKE}" ] || QMAKE=""
+        break; # found valid Qt version with help of Qt Chooser
+      }
+    done
   fi
   log "qmake $QMAKE"
   if [ -z "${QMAKE}" ]; then
