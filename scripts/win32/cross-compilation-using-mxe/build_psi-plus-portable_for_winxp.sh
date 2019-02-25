@@ -181,17 +181,31 @@ echo;
 
 cd "${MAIN_DIR}"
 echo "Copying the results to main directory..."
-mkdir -p "${ARCHIVE_DIR_NAME}"
-rsync -a --del "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/i686-w64-mingw32.shared/psi/" \
-               "${ARCHIVE_DIR_NAME}/" > /dev/null
+for TARGET in ${BUILD_TARGETS} ; do
+    DIR_IN="${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${DIR_IN}/psi"
+    if [ "${TARGET}" = "i686-w64-mingw32.shared" ] ; then
+        DIR_OUT="${ARCHIVE_DIR_NAME}_x86"
+    elif [ "${TARGET}" = "x86_64-w64-mingw32.shared" ] ; then
+        DIR_OUT="${ARCHIVE_DIR_NAME}_x86_64"
+    else
+        continue
+    fi
+
+    mkdir -p "${DIR_OUT}"
+    rsync -a --del "${DIR_IN}/" "${DIR_OUT}/" > /dev/null
+done
 echo "Done."
 echo;
 
+cd "${MAIN_DIR}"
 echo "Compressing files into 7z archives..."
-rm -f ${ARCHIVE_DIR_NAME}*.7z
-echo "Creating archive: ${ARCHIVE_DIR_NAME}.7z"
-7z ${ARCHIVER_OPTIONS} "${ARCHIVE_DIR_NAME}.7z" \
-                       "${ARCHIVE_DIR_NAME}" > /dev/null
+rm -f ${ARCHIVE_DIR_NAME}_x86*.7z
+for DIR in ${ARCHIVE_DIR_NAME}_x86* ; do
+    [ ! -d "${DIR}" ] && continue
+
+    echo "Creating archive: ${DIR}.7z"
+    7z ${ARCHIVER_OPTIONS} "${DIR}.7z" "${DIR}" > /dev/null
+done
 echo "Done."
 echo;
 
