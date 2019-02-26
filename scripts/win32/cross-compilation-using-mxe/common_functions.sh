@@ -110,7 +110,9 @@ CopyFinalResults()
     cd "${MAIN_DIR}"
     for TARGET in ${BUILD_TARGETS} ; do
         DIR_IN="${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${TARGET}/psi"
-        if [ "${TARGET}" = "i686-w64-mingw32.shared" ] ; then
+        if [ "${SUFFIX}" = "winxp" ] ; then
+            DIR_OUT="${ARCHIVE_DIR_NAME}"
+        elif [ "${TARGET}" = "i686-w64-mingw32.shared" ] ; then
             DIR_OUT="${ARCHIVE_DIR_NAME}_x86"
         elif [ "${TARGET}" = "x86_64-w64-mingw32.shared" ] ; then
             DIR_OUT="${ARCHIVE_DIR_NAME}_x86_64"
