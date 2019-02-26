@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2019-02-26
+# Updated: 2019-02-27
 # Version: N/A
 #
 # Dependencies:

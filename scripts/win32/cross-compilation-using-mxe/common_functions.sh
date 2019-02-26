@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2019-02-26
+# Updated: 2019-02-27
 # Version: N/A
 #
 # Dependencies:
@@ -37,7 +37,7 @@ GetPsiPlusVersion()
     echo;
 }
 
-PrepareToFirstBuild()
+PrepareSourcesTree()
 {
     [ -z "${MAIN_DIR}" ] && return 1
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
@@ -49,6 +49,15 @@ PrepareToFirstBuild()
                    "${MAIN_DIR}/${PROJECT_DIR_NAME}/" > /dev/null
     rsync -a --del "${MAIN_DIR}/${DICTIONARIES_DIR_NAME}" \
                    "${MAIN_DIR}/${PROJECT_DIR_NAME}/" > /dev/null
+}
+
+PrepareToFirstBuild()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${PROJECT_DIR_NAME}" ] && return 1
+
+    cd "${MAIN_DIR}"
+    rm -rf "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
 
     cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
     sed -i "s|option( ENABLE_PLUGINS .*$|option( ENABLE_PLUGINS \"\" ON )|g" CMakeLists.txt
@@ -59,8 +68,6 @@ PrepareToFirstBuild()
     sed -i "s|option( USE_MXE .*$|option( USE_MXE \"\" ON )|g" CMakeLists.txt
     sed -i "s|option( USE_KEYCHAIN .*$|option( USE_KEYCHAIN \"\" OFF )|g" CMakeLists.txt
     sed -i "s|option( BUILD_DEV_PLUGINS .*$|option( BUILD_DEV_PLUGINS \"\" ON )|g" src/plugins/CMakeLists.txt
-
-    rm -rf "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
 }
 
 PrepareToSecondBuild()
@@ -72,7 +79,7 @@ PrepareToSecondBuild()
     sed -i "s|ENABLE_WEBKIT:BOOL=.*$|ENABLE_WEBKIT:BOOL=ON|g" */CMakeCache.txt
 }
 
-BuildProject()
+BuildProjectForWindows()
 {
     [ -z "${MAIN_DIR}" ] && return 1
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
@@ -80,6 +87,15 @@ BuildProject()
 
     cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
     build-project ${BUILD_TARGETS}
+}
+
+BuildProjectForMacOS()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${PROJECT_DIR_NAME}" ] && return 1
+
+    cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
+    "${MAIN_DIR}/${PROJECT_DIR_NAME}/mac/build-using-homebrew.sh"
 }
 
 CopyLibsAndResources()

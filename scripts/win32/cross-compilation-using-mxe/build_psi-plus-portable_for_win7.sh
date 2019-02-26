@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2019-02-26
+# Updated: 2019-02-27
 # Version: N/A
 #
 # Dependencies:
@@ -43,12 +43,13 @@ GetMyspellDictionaries
 GetReadMe
 
 echo "Preparing to build..."
+PrepareSourcesTree
 PrepareToFirstBuild
 echo "Done."
 echo;
 
 echo "Building basic version of Psi+ with plugins..."
-BuildProject
+BuildProjectForWindows
 echo;
 
 echo "Preparing to the next step..."
@@ -57,7 +58,7 @@ echo "Done."
 echo;
 
 echo "Building webkit version of Psi+ without plugins..."
-BuildProject
+BuildProjectForWindows
 echo;
 
 echo "Copying libraries and resources to..."
