@@ -39,7 +39,6 @@ echo;
 GetPsiPlusSources
 GetPsiPlusVersion
 GetPsiPlusTranslations
-GetQtTranslations
 GetMyspellDictionaries
 GetReadMe
 

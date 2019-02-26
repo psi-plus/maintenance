@@ -69,8 +69,7 @@ PrepareToSecondBuild()
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
 
     cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
-    sed -i "s|ENABLE_PLUGINS:BOOL=.*$|ENABLE_PLUGINS:BOOL=OFF|g" */CMakeCache.txt
-    sed -i "s|ENABLE_WEBKIT:BOOL=.*$|ENABLE_WEBKIT:BOOL=ON|g"    */CMakeCache.txt
+    sed -i "s|ENABLE_WEBKIT:BOOL=.*$|ENABLE_WEBKIT:BOOL=ON|g" */CMakeCache.txt
 }
 
 BuildProject()
@@ -87,7 +86,6 @@ CopyLibsAndResources()
 {
     [ -z "${MAIN_DIR}" ] && return 1
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
-    [ -z "${QT_TRANSLATIONS_DIR_NAME}" ] && return 1
 
     cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
     for DIR in ${BUILD_TARGETS} ; do
@@ -95,8 +93,6 @@ CopyLibsAndResources()
         cd   "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${DIR}"
         make prepare-bin-libs > /dev/null
         make prepare-bin      > /dev/null
-        cp -af "${MAIN_DIR}/${QT_TRANSLATIONS_DIR_NAME}"/*.qm psi/translations/ > /dev/null
-        cp -af "${MAIN_DIR}/${PROJECT_DIR_NAME}/skins"  psi/ > /dev/null
         cp -af "${MAIN_DIR}/README.txt" psi/ > /dev/null
     done
 }
