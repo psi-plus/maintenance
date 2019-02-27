@@ -144,8 +144,8 @@ CompressDirs()
     [ -z "${ARCHIVER_OPTIONS}" ] && return 1
 
     cd "${MAIN_DIR}"
-    rm -f ${ARCHIVE_DIR_NAME}_x86*.7z
-    for DIR in ${ARCHIVE_DIR_NAME}_x86* ; do
+    rm -f ${ARCHIVE_DIR_NAME}*.7z
+    for DIR in ${ARCHIVE_DIR_NAME}* ; do
         [ ! -d "${DIR}" ] && continue
 
         echo "Creating archive: ${DIR}.7z"
