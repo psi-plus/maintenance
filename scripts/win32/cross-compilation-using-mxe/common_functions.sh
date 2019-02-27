@@ -111,6 +111,7 @@ CleanBuildDir()
 
     cd "${MAIN_DIR}"
     rm -rf "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
+    rm -rf "${MAIN_DIR}/${PROJECT_DIR_NAME}/builddir"
 }
 
 PrepareToFirstBuild()
