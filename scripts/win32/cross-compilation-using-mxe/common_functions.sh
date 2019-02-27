@@ -16,12 +16,54 @@ SUFFIX="win7"
 
 ARCHIVER_OPTIONS="a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 
+ShowHelp()
+{
+    [ -z "${SCRIPT_NAME}" ] && return 1
+
+    if [ "${1}" = "-h" ] || [ "${1}" = "--help" ]; then
+        echo "Usage:"
+        echo "   ./${SCRIPT_NAME} [options]"
+        echo ;
+        echo "Examples:"
+        echo "  ./${SCRIPT_NAME}"
+        echo "  ./${SCRIPT_NAME} release 1.3"
+        echo "  ./${SCRIPT_NAME} --help"
+        echo;
+        exit 0;
+    elif [ "${1}" = "release" ]; then
+        if [ -z "${2}" ]; then
+            echo "Error: release version is not specified!"
+            echo;
+            exit 1;
+        fi
+    fi
+}
+
 PrepareMainDir()
 {
     [ -z "${MAIN_DIR}" ] && return 1
 
     mkdir -p "${MAIN_DIR}"
     cd "${MAIN_DIR}"
+}
+
+GetPsiVersion()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${PSI_DIR_NAME}" ] && return 1
+
+    cd "${MAIN_DIR}/${PSI_DIR_NAME}"
+    if [ "${1}" = "release" ]; then
+        VERSION="${2}"
+    else
+        PSI_TAG="$(git describe --tags | cut -d - -f1)"
+        PSI_REV="$(git describe --tags | cut -d - -f2)"
+        VERSION="${PSI_TAG}-${PSI_REV}"
+    fi
+
+    ARCHIVE_DIR_NAME="psi-portable-${VERSION}_${SUFFIX}"
+    echo "Current version of Psi: ${VERSION}"
+    echo;
 }
 
 GetPsiPlusVersion()
@@ -49,6 +91,17 @@ PrepareSourcesTree()
                    "${MAIN_DIR}/${PROJECT_DIR_NAME}/" > /dev/null
     rsync -a --del "${MAIN_DIR}/${DICTIONARIES_DIR_NAME}" \
                    "${MAIN_DIR}/${PROJECT_DIR_NAME}/" > /dev/null
+}
+
+CopyPluginsToSourcesTree()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${PROJECT_DIR_NAME}" ] && return 1
+    [ -z "${PLUGINS_DIR_NAME}" ] && return 1
+
+    rsync -a --del "${MAIN_DIR}/${PLUGINS_DIR_NAME}"/* \
+                   "${MAIN_DIR}/${PROJECT_DIR_NAME}/src/plugins/" > /dev/null
+
 }
 
 PrepareToFirstBuild()

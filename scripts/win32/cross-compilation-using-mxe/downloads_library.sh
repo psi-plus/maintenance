@@ -11,16 +11,20 @@
 
 set -e
 
+PSI_DIR_NAME="psi"
+PLUGINS_DIR_NAME="plugins"
+PSI_TRANSLATIONS_DIR_NAME="psi-l10n"
 PSI_PLUS_DIR_NAME="psi-plus-snapshots"
 PSI_PLUS_TRANSLATIONS_DIR_NAME="psi-plus-l10n"
 DICTIONARIES_DIR_NAME="myspell"
 
+PSI_URL="https://github.com/psi-im/psi.git"
+PLUGINS_URL="https://github.com/psi-im/plugins.git"
+PSI_TRANSLATIONS_URL="https://github.com/psi-im/psi-l10n.git"
 PSI_PLUS_URL="https://github.com/psi-plus/psi-plus-snapshots.git"
 PSI_PLUS_TRANSLATIONS_URL="https://github.com/psi-plus/psi-plus-l10n.git"
 DICTIONARIES_URL="https://deb.debian.org/debian/pool/main/libr/libreoffice-dictionaries"
 README_URL="https://sourceforge.net/projects/psiplus/files/Windows/Personal-Builds/tehnick"
-
-ARCHIVER_OPTIONS="a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 
 TestInternetConnection()
 {
@@ -30,6 +34,64 @@ TestInternetConnection()
     echo;
 }
 
+GetPsiSources()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    cd "${MAIN_DIR}"
+
+    MOD="${PSI_DIR_NAME}"
+    URL="${PSI_URL}"
+    if [ -d "${MAIN_DIR}/${MOD}" ]; then
+        echo "Updating ${MAIN_DIR}/${MOD}"
+        cd "${MAIN_DIR}/${MOD}"
+        git checkout .
+        git checkout master
+        git pull --all --prune -f
+        git submodule init
+        git submodule update
+        echo;
+    else
+        echo "Creating ${MAIN_DIR}/${MOD}"
+        cd "${MAIN_DIR}"
+        git clone "${URL}"
+        cd "${MAIN_DIR}/${MOD}"
+        git checkout master
+        git submodule init
+        git submodule update
+        echo;
+    fi
+    if [ "${1}" = "release" ]; then
+        git checkout "${2}"
+        git submodule init > /dev/null 2> /dev/null
+        git submodule update > /dev/null 2> /dev/null
+    fi
+}
+
+GetPluginsSources()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    cd "${MAIN_DIR}"
+
+    MOD="${PLUGINS_DIR_NAME}"
+    URL="${PLUGINS_URL}"
+    if [ -d "${MAIN_DIR}/${MOD}" ]; then
+        echo "Updating ${MAIN_DIR}/${MOD}"
+        cd "${MAIN_DIR}/${MOD}"
+        git checkout .
+        git checkout master
+        git pull --all --prune -f
+        echo;
+    else
+        echo "Creating ${MAIN_DIR}/${MOD}"
+        cd "${MAIN_DIR}"
+        git clone "${URL}"
+        echo;
+    fi
+    if [ "${1}" = "release" ]; then
+        cd "${MAIN_DIR}/${MOD}"
+        git checkout "${2}"
+    fi
+}
 
 GetPsiPlusSources()
 {
@@ -52,6 +114,32 @@ GetPsiPlusSources()
         cd "${MAIN_DIR}/${MOD}"
         git checkout master
         echo;
+    fi
+}
+
+GetPsiTranslations()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    cd "${MAIN_DIR}"
+
+    MOD="${PSI_TRANSLATIONS_DIR_NAME}"
+    URL="${PSI_TRANSLATIONS_URL}"
+    if [ -d "${MAIN_DIR}/${MOD}" ]; then
+        echo "Updating ${MAIN_DIR}/${MOD}"
+        cd "${MAIN_DIR}/${MOD}"
+        git checkout .
+        git checkout master
+        git pull --all --prune -f
+        echo;
+    else
+        echo "Creating ${MAIN_DIR}/${MOD}"
+        cd "${MAIN_DIR}"
+        git clone "${URL}"
+        echo;
+    fi
+    if [ "${1}" = "release" ]; then
+        cd "${MAIN_DIR}/${MOD}"
+        git checkout "${2}"
     fi
 }
 
