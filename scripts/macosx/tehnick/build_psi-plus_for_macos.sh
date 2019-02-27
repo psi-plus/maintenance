@@ -41,6 +41,7 @@ echo;
 
 echo "Building basic version of Psi+..."
 BuildProjectForMacOS
+echo "Done."
 echo;
 
 echo "Preparing to the next step..."
@@ -50,6 +51,7 @@ echo;
 
 echo "Building webengine version of Psi+..."
 BuildProjectForMacOS
+echo "Done."
 echo;
 
 echo "Checking macOS app bundles in main directory..."
