@@ -59,6 +59,7 @@ echo;
 
 echo "Checking macOS app bundles in main directory..."
 RenamePsiAppBundles ${@}
+cd "${MAIN_DIR}"
 ls -alp Psi-${VERSION}*.dmg
 du -shc Psi-${VERSION}*.dmg
 echo "Done."

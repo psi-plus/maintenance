@@ -44,7 +44,7 @@ BuildProjectForMacOS
 echo;
 
 echo "Preparing to the next step..."
-ENABLE_WEBENGINE="ON"
+export ENABLE_WEBENGINE="ON"
 echo "Done."
 echo;
 
@@ -53,6 +53,7 @@ BuildProjectForMacOS
 echo;
 
 echo "Checking macOS app bundles in main directory..."
+cd "${MAIN_DIR}"
 ls -alp Psi+-${VERSION}*.dmg
 du -shc Psi+-${VERSION}*.dmg
 echo "Done."
