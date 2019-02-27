@@ -45,12 +45,13 @@ GetReadMe
 echo "Preparing to build..."
 PrepareSourcesTree
 PrepareToFirstBuild
+CleanBuildDir
 cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
 sed -i "s|option( USE_QJDNS .*$|option( USE_QJDNS \"\" ON )|g" CMakeLists.txt
 echo "Done."
 echo;
 
-echo "Building basic version of Psi+ with plugins..."
+echo "Building basic version of Psi+..."
 BuildProjectForWindows
 echo;
 
@@ -59,7 +60,7 @@ PrepareToSecondBuild
 echo "Done."
 echo;
 
-echo "Building webkit version of Psi+ without plugins..."
+echo "Building webkit version of Psi+..."
 BuildProjectForWindows
 echo;
 

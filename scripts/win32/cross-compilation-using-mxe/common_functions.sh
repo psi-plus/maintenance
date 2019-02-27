@@ -104,13 +104,19 @@ CopyPluginsToSourcesTree()
 
 }
 
-PrepareToFirstBuild()
+CleanBuildDir()
 {
     [ -z "${MAIN_DIR}" ] && return 1
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
 
     cd "${MAIN_DIR}"
     rm -rf "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
+}
+
+PrepareToFirstBuild()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${PROJECT_DIR_NAME}" ] && return 1
 
     cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
     sed -i "s|option( ENABLE_PLUGINS .*$|option( ENABLE_PLUGINS \"\" ON )|g" CMakeLists.txt
@@ -148,7 +154,8 @@ BuildProjectForMacOS()
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
 
     cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
-    "${MAIN_DIR}/${PROJECT_DIR_NAME}/mac/build-using-homebrew.sh"
+    "${MAIN_DIR}/${PROJECT_DIR_NAME}/mac/build-using-homebrew.sh" \
+        > /dev/null 2> /dev/null
 }
 
 CopyLibsAndResources()
@@ -203,6 +210,24 @@ CompressDirs()
 
         echo "Creating archive: ${DIR}.7z"
         7z ${ARCHIVER_OPTIONS} "${DIR}.7z" "${DIR}" > /dev/null
+    done
+}
+
+RenamePsiAppBundles()
+{
+    [ "${1}" = "release" ] && return 0
+
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${VERSION}" ] && return 1
+    [ -z "${PSI_TAG}" ] && return 1
+
+
+    cd "${MAIN_DIR}"
+    rm -f Psi-${VERSION}*.dmg
+    for FILE_IN in Psi-${PSI_TAG}*.dmg ; do
+        FILE_OUT=$(echo ${FILE_IN} | sed "s|Psi-${PSI_TAG}|Psi-${VERSION}|g")
+        echo "Rename ${FILE_IN} to ${FILE_OUT}"
+        mv "${FILE_IN}" "${FILE_OUT}"
     done
 }
 

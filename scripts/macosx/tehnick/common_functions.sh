@@ -1,0 +1,1 @@
+../../win32/cross-compilation-using-mxe/common_functions.sh

@@ -2,18 +2,16 @@
 
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
-# Created: 2017-07-14
+# Created: 2018-12-19
 # Updated: 2019-02-27
 # Version: N/A
 #
 # Dependencies:
-# git, wget, curl, rsync, find, sed, p7zip
-# Sibuserv: https://github.com/sibuserv/sibuserv
-# MXE: https://github.com/sibuserv/mxe/tree/hobby
+# See: https://github.com/psi-im/psi/blob/master/mac/build-using-homebrew.sh
 
 set -e
 
-export MAIN_DIR="${HOME}/Tmp/Psi"
+export MAIN_DIR="${HOME}/Hobby/Psi+"
 
 CUR_DIR="$(dirname $(realpath -s ${0}))"
 . "${CUR_DIR}/downloads_library.sh"
@@ -21,12 +19,6 @@ CUR_DIR="$(dirname $(realpath -s ${0}))"
 
 PROJECT_DIR_NAME="psi"
 TRANSLATIONS_DIR_NAME="psi-l10n"
-
-README_FILE_NAME="README.txt"
-README_URL="https://sourceforge.net/projects/psi/files/Experimental-Builds/Windows/tehnick"
-
-BUILD_TARGETS="i686-w64-mingw32.shared x86_64-w64-mingw32.shared"
-SUFFIX="win7"
 
 # Script body
 
@@ -44,40 +36,31 @@ GetPsiVersion ${@}
 GetPluginsSources ${@}
 GetPsiTranslations ${@}
 GetMyspellDictionaries
-GetReadMe
 
 echo "Preparing to build..."
 PrepareSourcesTree
 CopyPluginsToSourcesTree
-PrepareToFirstBuild
 CleanBuildDir
 echo "Done."
 echo;
 
 echo "Building basic version of Psi..."
-BuildProjectForWindows
+BuildProjectForMacOS
 echo;
 
 echo "Preparing to the next step..."
-PrepareToSecondBuild
+ENABLE_WEBENGINE="ON"
 echo "Done."
 echo;
 
-echo "Building webkit version of Psi..."
-BuildProjectForWindows
+echo "Building webengine version of Psi..."
+BuildProjectForMacOS
 echo;
 
-echo "Copying libraries and resources to..."
-CopyLibsAndResources
-echo;
-
-echo "Copying the results to main directory..."
-CopyFinalResults
-echo "Done."
-echo;
-
-echo "Compressing directories into 7z archives..."
-CompressDirs
+echo "Checking macOS app bundles in main directory..."
+RenamePsiAppBundles ${@}
+ls -alp Psi-${VERSION}*.dmg
+du -shc Psi-${VERSION}*.dmg
 echo "Done."
 echo;
 
