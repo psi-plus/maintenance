@@ -2,7 +2,7 @@
 home=${HOME:-/home/$USER}
 logdir=${home}/github/psi
 logfile=${logdir}/rename.log
-buildpsi=${home}/github/psi/git-plus
+buildpsi=${home}/github/psi/gitwork/main #Change me
 patchdir=${buildpsi}/patches
 data=$(LANG=en date '+%Y-%m-%d(%H:%M:%S)')
 backupdir=${home}/github/psi/backup/${data}

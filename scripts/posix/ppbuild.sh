@@ -11,14 +11,12 @@ psi_url="https://github.com/psi-im/psi.git"
 psi_plus_url="https://github.com/psi-plus/main.git"
 plugins_url="https://github.com/psi-im/plugins.git"
 langs_url="https://github.com/psi-plus/psi-plus-l10n.git"
-def_prefix="/usr" #префикс для сборки пси+
+snapshots_url="https://github.com/psi-plus/psi-plus-snapshots.git"
+def_prefix="/usr" #префикс для сборки пси+q
 #DEFAULT OPTIONS/ОПЦИИ ПО УМОЛЧАНИЮ
-qt_ver=5
 spell_flag="-DUSE_ENCHANT=OFF -DUSE_HUNSPELL=ON"
 spellchek_engine="hunspell"
 iswebkit=""
-issql=""
-use_iconsets="system clients activities moods affiliations roster"
 isoffline=0
 skip_invalid=0
 use_plugins="*"
@@ -26,6 +24,7 @@ let cpu_count=$(grep -c ^processor /proc/cpuinfo)+1
 devm=0
 wbkt=0
 pref=0
+clear_tmp_on_exit=1 #очищать каталог сборки при выходе из скрипта
 #
 #COLORS
 red="\e[0;31m"
@@ -51,8 +50,6 @@ DEF_CMAKE_INST_SUFFIX="share/psi+/plugins"
 DEF_PLUG_LIST="ALL"
 #тип сборки плагинов
 DEF_CMAKE_BUILD_TYPE="Release"
-#Qt5
-USE_QT5="ON"
 #MXE PATH
 mxe_root=${githubdir}/mxe
 #i386 mxe prefix
@@ -65,6 +62,7 @@ OLDPATH=${PATH}
 buildpsi=${default_buildpsi} #инициализация переменной
 upstream_src=${buildpsi}/psi #репозиторий Psi
 psiplus_src=${buildpsi}/psi-plus #репозиторий Psi+
+snapshots_src=${buildpsi}/psi-plus-snapshots  #репозиторий снапшотов
 #workdir=${buildpsi}/worksrc #каталог подготовки исходных кодов psi+
 #builddir=${buildpsi}/build #рабочий каталог для компиляции psi+
 tmp_dir=/tmp/ppbuild
@@ -131,27 +129,17 @@ fetch_all ()
   fi
 }
 
-find_ccache ()
+fetch_snapshots ()
 {
-  local ccache_path=""
-  for prefix_path in ${lib_prefixes}; do
-    if [ -d "${prefix_path}/ccache/bin" ]; then
-      if [ -f "${prefix_path}/ccache/bin/g++" ]; then
-        ccache_path=${prefix_path}/ccache/bin
-        break
-      fi
-    fi
-  done
-  
-  if [ ! -z "${ccache_path}" ]; then
-    echo -e "${pink}ccache utility found in :${nocolor} ${ccache_path}"; echo ""
-    PATH="${ccache_path}:${PATH}"
-    QMAKE_CCACHE_CMD="QMAKE_CXX=ccache g++"
+  if [ $isoffline -eq 0 ]; then
+    fetch_url ${snapshots_url} ${snapshots_src}
   fi
 }
+
 #
 quit ()
 {
+  clean_tmp_dirs
   exit 0
 }
 #
@@ -163,13 +151,11 @@ read_options ()
     while read -r line; do
       case ${inc} in
       "0" ) iswebkit=$(echo ${line});;
-      "1" ) use_iconsets=$(echo ${line});;
-      "2" ) isoffline=$(echo ${line});;
-      "3" ) skip_invalid=$(echo ${line});;
-      "4" ) pluginlist=$(echo ${line});;
-      "5" ) spellchek_engine=$(echo ${line});;
-      "6" ) buildpsi=$(echo ${line});;
-      "7" ) qt_ver=$(echo ${line});;
+      "1" ) isoffline=$(echo ${line});;
+      "2" ) skip_invalid=$(echo ${line});;
+      "3" ) pluginlist=$(echo ${line});;
+      "4" ) spellchek_engine=$(echo ${line});;
+      "5" ) buildpsi=$(echo ${line});;
       esac
       let "inc+=1"
     done < ${config_file}
@@ -192,15 +178,9 @@ update_variables ()
 {
   upstream_src=${buildpsi}/psi
   psiplus_src=${buildpsi}/psi-plus
-  #workdir=${buildpsi}/worksrc
-  #builddir=${buildpsi}/build
+  snapshots_src=${buildpsi}/psi-plus-snapshots
   patches=${buildpsi}/psi-plus/patches
   inst_path=${buildpsi}/${inst_suffix}
-  if [ "${qt_ver}" == "5" ]; then
-    USE_QT5="ON"
-  else
-    USE_QT5="OFF"
-  fi
   if [ "${spellchek_engine}" == "enchant" ]; then
     spell_flag="-DUSE_ENCHANT=ON -DUSE_HUNSPELL=OFF"
   fi
@@ -297,11 +277,18 @@ copy_psiplus_icons()
   fi
 }
 #
+clean_tmp_dirs()
+{
+  if [ -d "${tmp_dir}" ] && [ ${clear_tmp_on_exit} -eq 1 ]; then
+    rm -rf ${tmp_dir}
+  fi
+}
+#
 prepare_workspace ()
 {
   local last_dir=$(pwd)
   echo "Deleting ${workdir}"
-  rm -rf ${workdir}
+  clean_tmp_dirs
   check_dir ${workdir}
   cd ${upstream_src}
   prepare_psi_src ${workdir}
@@ -312,18 +299,6 @@ prepare_workspace ()
   cp -a ${buildpsi}/langs/translations/*.ts ${workdir}/translations/
   cd ${workdir}
   patch_psi
-  if [ "${issql}" != "y" ]; then
-    echo -e "${blue}Do you want to apply psi-new-history.patch${nocolor} ${pink}[y/n(default)]${nocolor}"
-    read ispatch
-  else
-    ispatch="y"
-  fi
-  if [ "${ispatch}" == "y" ]; then
-    cd ${workdir}
-    patch_psi 10000 ${patches}/dev/psi-new-history.patch
-    cd ${githubdir}
-    issql="y"
-  fi
   get_psi_plus_version
   cd ${psiplus_src}
   local suffix=""
@@ -333,6 +308,21 @@ prepare_workspace ()
   fi
   echo $psi_plus_version > ${workdir}/version
 }
+#
+prepare_snapshots_workspace ()
+{
+  fetch_snapshots
+  local last_dir=$(pwd)
+  echo "Deleting ${workdir}"
+  clean_tmp_dirs
+  check_dir ${workdir}
+  cd ${snapshots_src}
+  prepare_psi_src ${workdir}
+  check_dir ${workdir}/translations
+  cp -a ${buildpsi}/langs/translations/*.ts ${workdir}/translations/
+  cd ${workdir}
+}
+
 #
 prepare_src ()
 {
@@ -415,8 +405,34 @@ compile_psiplus ()
   echo "***Build finished***">>${buildlog}
   if [ -z "$1" ]; then
     cmake --build . --target prepare-bin
-    echo "Psi+ installed in ${workdir}/cbuild/psi">>${buildlog}
+    echo "Psi+ installed in ${workdir}">>${buildlog}
   fi
+  cd ${curd}
+}
+#
+build_all_psiplus ()
+{
+  curd=$(pwd)
+  prepare_snapshots_workspace
+  cd ${workdir}
+  local buildlog=${buildpsi}/build-all.log
+  echo "***Build started***">${buildlog}
+  prepare_builddir ${builddir}
+  cd ${builddir}
+  flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DENABLE_PLUGINS=ON -DDEV_MODE=ON -DBUILD_DEV_PLUGINS=ON"
+  if [ -z "${iswebkit}" ]; then
+    flags="${flags} -DENABLE_WEBKIT=OFF"
+  fi
+  cd ${builddir}
+  cbuild_path=${workdir}
+  echo "--Starting cmake 
+  cmake ${flags} ${cbuild_path}">>${buildlog}
+  cmake ${flags} ${cbuild_path}
+  echo "--Starting psi-plus compilation">>${buildlog}
+  cmake --build . --target all -- -j${cpu_count} 2>>${buildlog} || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
+  echo "***Build finished***">>${buildlog}
+  cmake --build . --target prepare-bin
+  echo "Psi+ compiled at ${builddir}">>${buildlog}
   cd ${curd}
 }
 #
@@ -439,7 +455,7 @@ build_cmake_plugins ()
   prepare_builddir ${b_dir}
   cd ${b_dir}
   p_inst_path=${b_dir}/plugins
-  plug_cmake_flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DBUILD_DEV=ON -DPLUGINS_ROOT_DIR=${upstream_src}/src/plugins"
+  plug_cmake_flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DBUILD_DEV_PLUGINS=ON -DPLUGINS_ROOT_DIR=${upstream_src}/src/plugins -DPsiPluginsApi_DIR=${plugdir}/cmake/modules"
   echo -e "${blue}Do you want to install psi+ plugins into ${psi_homeplugdir}${nocolor} ${pink}[y/n(default)]${nocolor}"
   read isinstall
   if [ "${isinstall}" == "y" ]; then
@@ -457,8 +473,11 @@ build_cmake_plugins ()
   cd ${workdir}
 }
 #
+
+#
 build_deb_package ()
 {
+  check_qt_deps
   compile_psiplus /usr ${workdir}
   echo "Building Psi+ DEB package with checkinstall"
   local desc='Psi is a cross-platform powerful Jabber client (Qt, C++) designed for the Jabber power users.
@@ -468,23 +487,15 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru.'
   #make spellcheck
   local spell_dep=""
   if [ "${spellchek_engine}" == "hunspell" ]; then
-    spell_dep="libhunspell-1.3-0"
+    spell_dep="libhunspell-1.6-0"
   else
     spell_dep="libenchant1c2a"
   fi
-  if [ "${qt_ver}" == "4" ]; then
-    local webkitdep=""
-    if [ ! -z "${iswebkit}" ]; then
-      webkitdep=", libqt4-webkit '(>=4.4.3)'"
-    fi
-    qt_deps="libqt4-dbus '(>=4.4.3)', libqt4-network '(>=4.4.3)', libqt4-qt3support '(>=4.4.3)', libqt4-xml '(>=4.4.3)', libqtcore4 '(>=4.4.3)', libqtgui4 '(>=4.4.3)'${webkitdep}"
-  else
-    local webkitdep=""
-    if [ ! -z "${iswebkit}" ]; then
-      webkitdep=", libqt5webkit5"
-    fi
-    qt_deps="libqt5dbus5, libqt5network5, libqt5xml5 , libqt5core5a, libqt5gui5, libqt5widgets5, libqt5x11extras5${webkitdep}"
+  local webkitdep=""
+  if [ ! -z "${iswebkit}" ]; then
+    webkitdep=", libqt5webkit5"
   fi
+  qt_deps="libqt5dbus5, libqt5network5, libqt5xml5 , libqt5core5a, libqt5gui5, libqt5widgets5, libqt5x11extras5${webkitdep}"
   local requires=" ${spell_dep}, 'libc6 (>=2.7-1)', 'libgcc1 (>=1:4.1.1)', 'libqca2', ${qt_deps}, 'libstdc++6 (>=4.1.1)', 'libx11-6', 'libxext6', 'libxss1', 'zlib1g (>=1:1.1.4)' "
   sudo checkinstall -D --nodoc --pkgname=psi-plus --pkggroup=net --pkgversion=${psi_package_version} --pkgsource=${workdir} --maintainer="thetvg@gmail.com" --requires="${requires}"
   cp -f ${workdir}/*.deb ${buildpsi}
@@ -531,7 +542,7 @@ Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru
 
 
 %build
-cmake -DCMAKE_INSTALL_PREFIX=\"%{_prefix}\" -DPSI_LIBDIR=\"%{_libdir}/psi-plus\" -DCMAKE_BUILD_TYPE=RelWithDebInfo ${extraflags} .
+cmake -DCMAKE_INSTALL_PREFIX=\"%{_prefix}\" -DINSTALL_PLUGINS_SDK=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo ${extraflags} .
 %{__make} %{?_smp_mflags}
 
 
@@ -812,8 +823,6 @@ build_locales ()
       lrelease -qt=${qt_ver} ${tr_path}/*.ts
     elif [ -f "/usr/bin/lrelease" ] || [ -f "/usr/local/bin/lrelease" ]; then
       lrelease ${tr_path}/*.ts 
-    elif [ -f "/usr/bin/lrelease-qt4" ] || [ -f "/usr/local/bin/lrelease-qt4" ]; then
-      lrelease-qt4 ${tr_path}/*.ts 
     fi
   fi 
 }
@@ -872,9 +881,9 @@ compile_psi_mxe()
 {
   curd=$(pwd)
   flags=""
-  oldissql=${issql}
-  issql="y"
-  prepare_src
+  if [ ! -d "${workdir}" ]; then
+    prepare_src
+  fi
   prepare_builddir ${builddir}
   mxe_outd=${tmp_dir}/mxe_builds
   check_dir ${mxe_outd}
@@ -892,7 +901,7 @@ compile_psi_mxe()
   if [ ${wbkt} -eq 0 ]; then
     flags="${flags} -DENABLE_WEBKIT=OFF"
   fi
-  flags="${flags} -DVERBOSE_PROGRAM_NAME=ON -DQt5Keychain_DIR=${current_prefix}/lib/cmake/Qt5Keychain"
+  flags="${flags} -DUSE_CCACHE=ON -DVERBOSE_PROGRAM_NAME=ON -DQt5Keychain_DIR=${current_prefix}/lib/cmake/Qt5Keychain"
   wrkdir=${builddir}
   check_dir ${wrkdir}
   cd ${wrkdir}
@@ -917,7 +926,6 @@ compile_psi_mxe()
   if [ ! -z "${OLDPATH}" ]; then
     PATH=${OLDPATH}
   fi
-  issql=${oldissql}
 }
 #
 archivate_psi()
@@ -925,12 +933,9 @@ archivate_psi()
   if [ ! -z "${iswebkit}" ]; then
       wbk_suff="webkit-"
   fi
-  if [ ! -z "${issql}" ]; then
-    sql_suff="sql-"
-  fi
   mxe_outd=${tmp_dir}/mxe_builds
-  7z a -mx=9 -m0=LZMA -mmt=on ${mxe_outd}/psi-plus-${wbk_suff}${sql_suff}${psi_package_version}-$1.7z ${mxe_outd}/$1/*
-  cp -r ${mxe_outd}/psi-plus-${wbk_suff}${sql_suff}${psi_package_version}-$1.7z ${buildpsi}/mxe_builds/
+  7z a -mx=9 -m0=LZMA -mmt=on ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${mxe_outd}/$1/*
+  cp -r ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${buildpsi}/mxe_builds/
 }
 #
 build_i686_mxe()
@@ -963,13 +968,10 @@ build_all_mxe()
 #
 archivate_all()
 {
-  if [ ! -z "${issql}" ]; then
-    sql_suff="sql-"
-  fi
   wbk_suff="all-"
   mxe_outd=${tmp_dir}/mxe_builds
-  7z a -mx=9 -m0=LZMA -mmt=on ${mxe_outd}/psi-plus-${wbk_suff}${sql_suff}${psi_package_version}-$1.7z ${mxe_outd}/$1/*
-  cp -r ${mxe_outd}/psi-plus-${wbk_suff}${sql_suff}${psi_package_version}-$1.7z ${buildpsi}/mxe_builds/
+  7z a -mx=9 -m0=LZMA -mmt=on ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${mxe_outd}/$1/*
+  cp -r ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${buildpsi}/mxe_builds/
 }
 #
 check_qt_deps()
@@ -1004,13 +1006,13 @@ set_config ()
     use_webkit="n"
   fi
   local is_offline="n"
-  if [ "$isoffline" -eq 0 ]; then
+  if [ ${isoffline} -eq 0 ]; then
     is_offline="n"
   else
     is_offline="y"
   fi
   local skip_patches="n"
-  if [ "$skip_invalid" -eq 0 ]; then
+  if [ ${skip_invalid} -eq 0 ]; then
     skip_patches="n"
   else
     skip_patches="y"
@@ -1019,13 +1021,12 @@ set_config ()
   while [ ${loop} = 1 ];  do
     echo -e "${blue}Choose action TODO:${nocolor}
 --${pink}[1]${nocolor} - Set WebKit version to use (current: ${use_webkit})
---${pink}[2]${nocolor} - Set iconsets list needed to build
+--${pink}[2]${nocolor} - Set offline mode to use (current: ${is_offline})
 --${pink}[3]${nocolor} - Skip Invalid patches (current: ${skip_patches})
 --${pink}[4]${nocolor} - Set list of plugins needed to build (for all use *)
 --${pink}[5]${nocolor} - Set psi+ spellcheck engine (current: ${spellchek_engine})
 --${pink}[6]${nocolor} - Set psi+ sources path (current: ${buildpsi})
---${pink}[7]${nocolor} - Set qt version 4/5 (current: ${qt_ver})
---${pink}[8]${nocolor} - Print option values
+--${pink}[7]${nocolor} - Print option values
 --${pink}[0]${nocolor} - Do nothing"
     read deistvo
     case ${deistvo} in
@@ -1038,12 +1039,14 @@ set_config ()
               iswebkit=""
               use_webkit="n"
             fi;;
-      "2" ) echo "Please enter iconsets separated by space"
+      "2" ) echo -e "Do you want to use offline mode ${pink}[y/n]${nocolor} ?"
             read variable
-            if [ ! -z "$variable" ]; then
-              use_iconsets=${variable}
+            if [ "$variable" == "y" ]; then
+              isoffline=1
+              is_offline="y"
             else
-              use_iconsets="system clients activities moods affiliations roster"
+              isoffline=0
+              is_offline="n"
             fi;;
       "3" ) echo -e "Do you want to skip invalid patches when patching ${pink}[y/n]${nocolor} ?"
             read variable
@@ -1080,18 +1083,12 @@ ${nocolor} ?"
             else
               buildpsi=${default_buildpsi}
             fi;;
-      "7" ) echo "Please set qt version 4 or 5"
-            read variable
-            if [ ! -z "${variable}" ]; then
-              qt_ver=${variable}
-            fi;;
-      "8" ) echo -e "${blue}==Options==${nocolor}
+      "7" ) echo -e "${blue}==Options==${nocolor}
 ${green}WebKit${nocolor} = ${yellow}${use_webkit}${nocolor}
-${green}Iconsets${nocolor} = ${yellow}${use_iconsets}${nocolor}
+${green}Offline Mode${nocolor} = ${yellow}${is_offline}${nocolor}
 ${green}Skip Invalid Patches${nocolor} = ${yellow}${skip_patches}${nocolor}
 ${green}Plugins${nocolor} = ${yellow}${use_plugins}${nocolor}
 ${green}Spellcheck engine${nocolor} = ${yellow}${spellchek_engine}${nocolor}
-${green}Qt Version${nocolor} = ${yellow}${qt_ver}${nocolor}
 ${green}Psi+ sources path${nocolor} = ${yellow}${buildpsi}${nocolor}
 ${blue}===========${nocolor}";;
       "0" ) clear
@@ -1099,7 +1096,6 @@ ${blue}===========${nocolor}";;
     esac
   done
   echo "$iswebkit" > ${config_file}
-  echo "$use_iconsets" >> ${config_file}
   echo "$isoffline" >> ${config_file}
   echo "$skip_invalid" >> ${config_file}
   if [ "$use_plugins" == "*" ]; then
@@ -1109,8 +1105,6 @@ ${blue}===========${nocolor}";;
   fi
   echo "$spellchek_engine" >> ${config_file}
   echo "$buildpsi" >> ${config_file}
-  echo "$qt_ver" >> ${config_file}
-  echo "$qconf_bin" >> ${config_file}
   update_variables
 }
 #
@@ -1120,7 +1114,8 @@ print_menu ()
 ${pink}[1]${nocolor} - Download All needed source files to build psi+
 ${pink}[2]${nocolor} - Prepare psi+ sources
 ${pink}[3]${nocolor} - Build psi+ binary
----${pink}[31]${nocolor} - Build psi+ plugins using CMAKE
+---${pink}[31]${nocolor} - Build psi+ plugins using
+---${pink}[32]${nocolor} - Build psi+ with plugins from snapshots
 ${pink}[4]${nocolor} - Build Debian package with checkinstall
 ${pink}[5]${nocolor} - Build openSUSE RPM-package
 ---${pink}[51]${nocolor} - Build plugins openSUSE RPM-package
@@ -1134,8 +1129,7 @@ ${pink}[0]${nocolor} - Exit"
 get_help ()
 {
   echo -e "${red}---------------HELP-----------------------${nocolor}
-${pink}[32]${nocolor} - Create win32 32bit-build using MXE
-${pink}[33]${nocolor} - Create win32 64bit-build using MXE
+${pink}[32]${nocolor} - Build psi-plus with plugins from snapshots
 ${pink}[71]${nocolor} - Copy Psi+ icons to test build in ${buildpsi}/psidev/git
 ${pink}[ia]${nocolor} - Install all resources to $psi_datadir
 ${pink}[ii]${nocolor} - Install iconsets to $psi_datadir
@@ -1149,7 +1143,6 @@ ${pink}[bs]${nocolor} - Backup ${buildpsi##*/} directory in ${buildpsi%/*}
 ${pink}[pw]${nocolor} - Prepare psi+ workspace (clean ${buildpsi}/build dir)
 ${pink}[dp]${nocolor} - Run psi-plus binary under gdb debugger
 ${pink}[bam]${nocolor} - Build both 32bit and 64bit builds with MXE
-${pink}[aa]${nocolor} - Archivate all MXE-builds
 ${red}-------------------------------------------${nocolor}
 ${blue}Press Enter to continue...${nocolor}"
   read
@@ -1163,8 +1156,7 @@ choose_action ()
     "2" ) prepare_src;;
     "3" ) compile_psiplus /usr;;
     "31" ) build_cmake_plugins;;
-    "32" ) compile_psi_mxe qt5 && archivate_psi qt5;;
-    "33" ) compile_psi_mxe qt5_64 && archivate_psi qt5_64;;
+    "32" ) build_all_psiplus;;
     "4" ) build_deb_package;;
     "5" ) build_rpm_package;;
     "51" ) build_rpm_plugins;;
@@ -1185,7 +1177,6 @@ choose_action ()
     "pw" ) prepare_workspace;;
     "dp" ) debug_psi;;
     "bam" ) build_all_mxe;;
-    "aa" ) archivate_all;;
     "0" ) quit;;
   esac
 }
@@ -1195,7 +1186,6 @@ read_options
 if [ ! -f "${config_file}" ]; then
   set_config
 fi
-find_ccache
 clear
 #
 while true; do
