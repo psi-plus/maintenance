@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2019-02-27
+# Updated: 2019-04-20
 # Version: N/A
 #
 # Dependencies:
@@ -121,7 +121,7 @@ PrepareToFirstBuild()
 
     cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
     sed -i "s|option( ENABLE_PLUGINS .*$|option( ENABLE_PLUGINS \"\" ON )|g" CMakeLists.txt
-    sed -i "s|option( ENABLE_WEBKIT .*$|option( ENABLE_WEBKIT \"\" OFF )|g" CMakeLists.txt
+    sed -i "s|set( CHAT_TYPE .*$|set( CHAT_TYPE BASIC  CACHE STRING \"Type of chatlog engine\" )|g" CMakeLists.txt
     sed -i "s|option( VERBOSE_PROGRAM_NAME .*$|option( VERBOSE_PROGRAM_NAME \"\" ON )|g" CMakeLists.txt
     sed -i "s|option( ENABLE_PORTABLE .*$|option( ENABLE_PORTABLE \"\" ON )|g" CMakeLists.txt
     sed -i "s|option( PRODUCTION .*$|option( PRODUCTION \"\" ON )|g" CMakeLists.txt
@@ -136,7 +136,7 @@ PrepareToSecondBuild()
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
 
     cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
-    sed -i "s|ENABLE_WEBKIT:BOOL=.*$|ENABLE_WEBKIT:BOOL=ON|g" */CMakeCache.txt
+    sed -i "s|CHAT_TYPE:STRING=.*$|CHAT_TYPE:STRING=WEBKIT|g" */CMakeCache.txt
 }
 
 BuildProjectForWindows()
