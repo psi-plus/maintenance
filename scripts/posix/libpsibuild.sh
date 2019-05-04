@@ -3,7 +3,7 @@
 # do not forget, that REV_DATE always allow you to get revision before "master".
 # it will not give you "master" even if you set date to 9999-12-31. (i wrote this in 2014 year.)
 # so if you want "master", then don't use REV_DATE, leave it as empty string.
-
+#set -ex
 # do not update anything from repositories until required
 WORK_OFFLINE=${WORK_OFFLINE:-0}
 
@@ -50,10 +50,7 @@ GIT_REPO_PLUGINS=git://github.com/psi-im/plugins.git
 LANGS_REPO_URI="git://github.com/psi-plus/psi-plus-l10n.git"
 
 QCONF_REPO="https://github.com/psi-plus/qconf.git"
-QCA_REPO="svn://anonsvn.kde.org/home/kde/trunk/kdesupport/qca@1311233"
-
-SVN_FETCH="${SVN_FETCH:-git_svn_clone}"
-SVN_UP="${SVN_UP:-git_svn_pull}"
+QCA_REPO="git://anongit.kde.org/qca.git"
 
 # convert INSTALL_ROOT to absolute path
 case "${INSTALL_ROOT}" in /*) ;; *) INSTALL_ROOT="$(pwd)/${INSTALL_ROOT}"; ;; esac
@@ -129,7 +126,7 @@ END
 # Exit with error message
 die() { echo; echo " !!!ERROR: $@"; exit 1; }
 warning() { echo; echo " !!!WARNING: $@"; }
-log() { local opt; [ "$1" = "-n" ] && { opt="-n"; shift; }; echo $opt "*** $@"; }
+log() { local opt; [ "$1" != "-n" ] || { opt="-n"; shift; }; echo $opt "*** $@"; }
 
 winpath2unix() {
   local path="$@"
@@ -274,8 +271,6 @@ set_psi_env() {
   
   v=`git --version 2>/dev/null` || \
     die "You should install Git first. / Сначала установите Git"
-  #v=`svn --version 2>/dev/null` || \
-  #  die "You should install subversion first. / Сначала установите subversion"
 
   # Make
   if [ ! -f "${MAKE}" ]; then
@@ -303,13 +298,15 @@ set_psi_env() {
     local vs=Qt
     [ -n "$qt_ver" ] && vs="$qt_ver" # exact desired Qt version the tool belongs too. not given for qmake.
 
-    qtest() { [ -n "$($1 $vp 2>&1 |grep "$vs")" ]; return $?; }
+    qtest() { local out="$($1 $vp 2>/dev/null)" || return 1; [ -n "$(echo "$out" | grep "$vs")" ] || return 1; }
 
     for v in ${QT_VERSIONS_PRIORITY}; do
       for un in $name-qt${v} qt${v}-${name} ${name}${v} "${name} -qt=${v}"; do
         [ -n "$qtbindir" ] && un="$qtbindir/$un" # we want all qt util to be in the same dir
         #echo "Check for $un"
-        qtest $un && { result="$un"; break 2; }
+        qtest "$un" || continue;
+        result="$un";
+        break 2;
       done
     done
     [ -z "$result" ] && qtest $name && result="$name"
@@ -325,11 +322,12 @@ set_psi_env() {
 
   local result
   # qmake
+  # try qtchooser way first
   log "Preferred Qt versions: ${QT_VERSIONS_PRIORITY}"
   if [ -z "$QMAKE" ]; then
     for v in ${QT_VERSIONS_PRIORITY}; do
       log "Check Qt version ${v}"
-      qmake -qt=${v} -v | grep -q 'QMake version' && {
+      qmake -qt=${v} -v 2>/dev/null | grep -q 'QMake version' && {
         # in case of -qt error it say "Unknown option". So it's correct.
         QMAKE="$(qmake -qt=${v} -query QT_INSTALL_BINS)/qmake"
         [ -f "${QMAKE}" ] || QMAKE=""
@@ -337,11 +335,12 @@ set_psi_env() {
       }
     done
   fi
-  log "qmake $QMAKE"
   if [ -z "${QMAKE}" ]; then
     find_qt_util qmake; QMAKE="${result}"
   fi
-  qt_ver=$("$QMAKE" -query QT_VERSION); qt_major_ver=${qt_ver%%.*}
+  [ -n "$QMAKE" ] || die "Failed to find qmake"
+  log "qmake $QMAKE"
+  qt_ver=$($QMAKE -query QT_VERSION); qt_major_ver=${qt_ver%%.*}
   if [ "$QT_VERSION_FORCED" = 1 ]; then
     local found=0
     for v in ${QT_VERSIONS_PRIORITY}; do
@@ -352,7 +351,7 @@ set_psi_env() {
   else
     CONF_OPTS+=( --qtselect=${qt_major_ver} )
   fi
-  local qtbindir="$("${QMAKE}" -query QT_INSTALL_BINS)"
+  local qtbindir="$(${QMAKE} -query QT_INSTALL_BINS)"
   log "Use Qt version ${qt_ver} from $qtbindir"
 
   nonfatal=1 find_qt_util lrelease -version; LRELEASE="${result}"
@@ -460,75 +459,6 @@ prepare_workspace() {
   log "Created base directory structure"
 }
 
-# fetches defined set of something from psi-dev svn. ex: plugins or iconsets
-#
-# svn_fetch_set(name, remote_path, items, [sub_item_path])
-# name - a name of what you ar fetching. for example "plugin"
-# remote - a path relative to SVN_BATH_REPO
-# items - space separated items string
-# sub_item_path - checkout subdirectory of item with this relative path
-#
-# Example: svn_fetch_set("iconset", "iconsets", "system, mood", "default")
-svn_fetch_set() {
-  local name="$1"
-  local remote="$2"
-  local items="$3"
-  local subdir="$4"
-  local curd=`pwd`
-  cd "${PSI_DIR}"
-  [ -n "${remote}" ] || die "invalid remote path in set fetching"
-  if [ ! -d "${remote}" ]; then
-    mkdir -p "${remote}"
-  fi
-  cd "${remote}"
-
-  for item in ${items}; do
-    svn_fetch "${SVN_BASE_REPO}/${remote}/${item}/${subdir}" "$item" \
-              "${item} ${name}"
-  done
-  cd "${curd}"
-}
-
-git_svn_clone() {
-  local rev="${1##*@}"
-  local repo
-  [ -z `echo "$rev" | grep -E "^[0-9]+$"` ] && {
-    rev=""
-	repo="$1"
-  } || {
-    rev="${rev}:"
-    repo="${1%@*}"
-  }
-  git svn clone -r "$rev"HEAD "$repo" "$2"
-}
-
-git_svn_pull() {
-  cd "$@"
-  git svn fetch || die "git svn fetch failed"
-  git svn rebase || die "git svn rebase failed"
-  cd - > /dev/null
-}
-
-# Checkout fresh copy or update existing from svn
-# Example: svn_fetch svn://host/uri/trunk my_target_dir "Something useful"
-svn_fetch() {
-  local remote="$1"
-  local target="$2"
-  local comment="$3"
-  [ -z "$target" ] && { target="${remote##*/}"; target="${target%%#*}"; target="${target%%@*}"; }
-  [ -z "$target" ] && die "can't determine target dir"
-  if [ -d "$target" ]; then
-    [ $WORK_OFFLINE = 0 ] && {
-      [ -n "$comment" ] && log -n "Update ${comment} ... "
-      $SVN_UP "${target}" || die "${comment} update failed"
-    } || true
-  else
-    [ -n "$comment" ] && log "Checkout ${comment} .."
-    $SVN_FETCH "${remote}" "$target" \
-    || die "${comment} checkout failed"
-  fi
-}
-
 git_fetch() {
   local remote="$1"
   local target="$2"
@@ -573,8 +503,8 @@ git_fetch() {
 
 fetch_build_deps_sources() {
   cd "${PSI_DIR}"
-  [ "${BUILD_MISSING_QCONF}" = 1 ] && git_fetch "${QCONF_REPO}" qconf "QConf"
-  [ "${BUILD_MISSING_QCA}" ] && svn_fetch "${QCA_REPO}" qca "QCA"
+  if [ "${BUILD_MISSING_QCONF}" = 1 ]; then git_fetch "${QCONF_REPO}" qconf "QConf"; fi
+  if [ "${BUILD_MISSING_QCA}" = 1 ]; then git_fetch "${QCA_REPO}" qca "QCA"; fi
 }
 
 fetch_sources() {
@@ -583,13 +513,13 @@ fetch_sources() {
   git_fetch "${GIT_REPO_PLUS}" git-plus "Psi+ additionals"
 
   local actual_translations=""
-  [ -n "$TRANSLATIONS" ] && {
+  [ -z "$TRANSLATIONS" ] || {
     git_fetch "${LANGS_REPO_URI}" "langs" "language packs" 1
     for l in $TRANSLATIONS; do
       [ -n "${LRELEASE}" -o -f "langs/translations/psi_$l.qm" ] && actual_translations="${actual_translations} $l"
     done
     actual_translations="$(echo $actual_translations)"
-    [ -z "${actual_translations}" ] && warning "Translations not found"
+    [ -n "${actual_translations}" ] || warning "Translations not found"
   }
 }
 
@@ -732,7 +662,7 @@ compile_plugins() {
   for name in ${PLUGIN_DIRS}; do
     log "Compiling ${name} plugin.."
     cd  "${PSI_DIR}/build/src/plugins/$name"
-    "$QMAKE" "PREFIX=${COMPILE_PREFIX}" && "$MAKE" $MAKEOPT || {
+    $QMAKE "PREFIX=${COMPILE_PREFIX}" && "$MAKE" $MAKEOPT || {
       warning "Failed to make plugin ${name}! Skipping.."
       failed_plugins="${failed_plugins} ${name}"
     }
