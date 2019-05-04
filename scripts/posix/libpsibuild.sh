@@ -375,8 +375,13 @@ set_psi_env() {
     for qc in qt-qconf qconf-qt${QT_MAJOR_VERSION} qconf; do
       v=`$qc --version 2>/dev/null |grep affinix` && QCONF=$qc
     done
-    [ -z "${QCONF}" -a ! "${BUILD_MISSING_QCONF}" = 1 ] && die "You should install "\
-      "qconf(http://delta.affinix.com/qconf/) / Сначала установите qconf"
+    [ -z "${QCONF}" -a ! "${BUILD_MISSING_QCONF}" = 1 ] && {
+      die "qconf(https://github.com/psi-plus/qconf) configuration util is missing. You can..
+          1) BUILD_MISSING_QCONF=1 to build it
+          2) QCONFDIR=/directory/with/qconf/binary
+          3) Install it from system packages
+          "
+    }
   fi
   if [ -z "${QCONF}" -a "${BUILD_MISSING_QCONF}" = 1 ]; then
     log "qconf tool will be built from source"
