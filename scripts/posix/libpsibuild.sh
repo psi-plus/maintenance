@@ -301,9 +301,10 @@ set_psi_env() {
     qtest() { local out="$($1 $vp 2>/dev/null)" || return 1; [ -n "$(echo "$out" | grep "$vs")" ] || return 1; }
 
     for v in ${QT_VERSIONS_PRIORITY}; do
-      for un in $name-qt${v} qt${v}-${name} ${name}${v} "${name} -qt=${v}"; do
+      for un in $name-qt${v} qt${v}-${name} ${name}${v} "${name} -qt=${v}" $([ "$qtbindir" ] && echo $name); do
+        [ "$un" ] || continue
         [ -n "$qtbindir" ] && un="$qtbindir/$un" # we want all qt util to be in the same dir
-        #echo "Check for $un"
+        echo "  Check for $un"
         qtest "$un" || continue;
         result="$un";
         break 2;
@@ -339,7 +340,7 @@ set_psi_env() {
     find_qt_util qmake; QMAKE="${result}"
   fi
   [ -n "$QMAKE" ] || die "Failed to find qmake"
-  log "qmake $QMAKE"
+  log "qmake: $QMAKE"
   qt_ver=$($QMAKE -query QT_VERSION); qt_major_ver=${qt_ver%%.*}
   if [ "$QT_VERSION_FORCED" = 1 ]; then
     local found=0
