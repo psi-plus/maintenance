@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-03-20
-# Updated: 2018-03-27
+# Updated: 2019-07-30
 # Version: N/A
 #
 # Dependencies:
@@ -24,6 +24,8 @@ PROJECT_DIR_NAME="psimedia"
 PLUGIN_URL=https://github.com/psi-im/psimedia.git
 ARCHIVER_OPTIONS="a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 
+# libgstbadbase-1.0-0.dll
+
 LIBS="
     libbz2.dll
     libffi-6.dll
@@ -36,7 +38,6 @@ LIBS="
     libgstapp-1.0-0.dll
     libgstaudio-1.0-0.dll
     libgstbadaudio-1.0-0.dll
-    libgstbadbase-1.0-0.dll
     libgstbase-1.0-0.dll
     libgstnet-1.0-0.dll
     libgstpbutils-1.0-0.dll
@@ -174,8 +175,7 @@ build-project install i686-w64-mingw32.shared x86_64-w64-mingw32.shared
 cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
 for DIR in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
     cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${DIR}-out"
-    mv ./usr/lib/psi/plugins/libgstprovider.dll ./usr/bin/
-    rm -r ./usr/lib
+    cp -a ./usr/plugins/libgstprovider.dll ./usr/
 done
 echo;
 
@@ -186,7 +186,7 @@ cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
 echo "Copying libraries and resources to..."
 BUILD_DIR="${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
 for TARGET in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
-    BIN_DIR="${BUILD_DIR}/${TARGET}-out/usr/bin"
+    BIN_DIR="${BUILD_DIR}/${TARGET}-out/usr"
     echo "${BIN_DIR}"
     cd   "${BIN_DIR}"
 
@@ -231,9 +231,9 @@ cd "${MAIN_DIR}"
 echo "Copying the results to main directory..."
 mkdir -p "${ARCHIVE_DIR_NAME}_x86"
 mkdir -p "${ARCHIVE_DIR_NAME}_x86_64"
-rsync -a --del "${BUILD_DIR}/i686-w64-mingw32.shared-out/usr/bin/" \
+rsync -a --del "${BUILD_DIR}/i686-w64-mingw32.shared-out/usr/" \
                "${ARCHIVE_DIR_NAME}_x86/" > /dev/null
-rsync -a --del "${BUILD_DIR}/x86_64-w64-mingw32.shared-out/usr/bin/" \
+rsync -a --del "${BUILD_DIR}/x86_64-w64-mingw32.shared-out/usr/" \
                "${ARCHIVE_DIR_NAME}_x86_64/" > /dev/null
 echo;
 
