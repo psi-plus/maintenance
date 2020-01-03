@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2019-02-27
+# Updated: 2020-01-03
 # Version: N/A
 #
 # Dependencies:
@@ -19,6 +19,7 @@ CUR_DIR="$(dirname $(realpath -s ${0}))"
 
 PROJECT_DIR_NAME="psi-plus-snapshots"
 TRANSLATIONS_DIR_NAME="psi-plus-l10n"
+QT_SDK_VER="$(ls ${HOME}/Qt/ 2>/dev/null | grep '5.' | tail -n1)"
 
 # Script body
 
@@ -46,6 +47,7 @@ echo;
 
 echo "Preparing to the next step..."
 export ENABLE_WEBENGINE="ON"
+export QT_SDK_DIR="${HOME}/Qt/${QT_SDK_VER}/clang_64"
 echo "Done."
 echo;
 
