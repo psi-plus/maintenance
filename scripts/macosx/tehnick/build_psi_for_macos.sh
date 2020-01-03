@@ -19,6 +19,7 @@ CUR_DIR="$(dirname $(realpath -s ${0}))"
 
 PROJECT_DIR_NAME="psi"
 TRANSLATIONS_DIR_NAME="psi-l10n"
+QT_SDK_VER="$(ls ${HOME}/Qt/ 2>/dev/null | grep '5.' | tail -n1)"
 
 # Script body
 
