@@ -48,6 +48,7 @@ echo;
 echo "Preparing to the next step..."
 export ENABLE_WEBENGINE="ON"
 export QT_SDK_DIR="${HOME}/Qt/${QT_SDK_VER}/clang_64"
+CleanBuildDir
 echo "Done."
 echo;
 
