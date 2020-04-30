@@ -157,6 +157,7 @@ GetPsiPlusTranslations()
         echo "Updating ${MAIN_DIR}/${MOD}"
         cd "${MAIN_DIR}/${MOD}"
         git checkout .
+        git checkout master
         git pull --all --prune -f
         echo;
     else
