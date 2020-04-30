@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-03-20
-# Updated: 2019-07-30
+# Updated: 2020-04-30
 # Version: N/A
 #
 # Dependencies:
@@ -65,6 +65,7 @@ LIBS="
     libvorbis-0.dll
     libvorbisenc-2.dll
     libwinpthread-1.dll
+    libzstd.dll
     zlib1.dll
 "
 
