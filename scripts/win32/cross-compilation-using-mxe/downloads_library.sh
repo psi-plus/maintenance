@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2019-02-27
+# Updated: 2020-04-30
 # Version: N/A
 #
 # Dependencies:
@@ -61,7 +61,7 @@ GetPsiSources()
         echo;
     fi
     if [ "${1}" = "release" ]; then
-        git checkout "${2}"
+        git checkout "${2}" || return 1
         git submodule init > /dev/null 2> /dev/null
         git submodule update > /dev/null 2> /dev/null
     fi
@@ -89,7 +89,7 @@ GetPluginsSources()
     fi
     if [ "${1}" = "release" ]; then
         cd "${MAIN_DIR}/${MOD}"
-        git checkout "${2}"
+        git checkout "${2}" || return 1
     fi
 }
 
@@ -115,6 +115,9 @@ GetPsiPlusSources()
         git checkout master
         echo;
     fi
+    if [ "${1}" = "release" ]; then
+        git checkout "${2}" || return 1
+    fi
 }
 
 GetPsiTranslations()
@@ -139,7 +142,7 @@ GetPsiTranslations()
     fi
     if [ "${1}" = "release" ]; then
         cd "${MAIN_DIR}/${MOD}"
-        git checkout "${2}"
+        git checkout "${2}" || return 1
     fi
 }
 
@@ -161,6 +164,10 @@ GetPsiPlusTranslations()
         cd "${MAIN_DIR}"
         git clone "${URL}"
         echo;
+    fi
+    if [ "${1}" = "release" ]; then
+        cd "${MAIN_DIR}/${MOD}"
+        git checkout "${2}" || return 1
     fi
 }
 

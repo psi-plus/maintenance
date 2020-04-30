@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2019-10-24
+# Updated: 2020-04-30
 # Version: N/A
 #
 # Dependencies:
@@ -72,7 +72,11 @@ GetPsiPlusVersion()
     [ -z "${PSI_PLUS_DIR_NAME}" ] && return 1
 
     cd "${MAIN_DIR}/${PSI_PLUS_DIR_NAME}"
-    VERSION="$(git tag | sort -V | tail -n1)"
+        if [ "${1}" = "release" ]; then
+        VERSION="${2}"
+    else
+        VERSION="$(git tag | sort -V | tail -n1)"
+    fi
 
     ARCHIVE_DIR_NAME="psi-plus-portable-${VERSION}_${SUFFIX}"
     echo "Current version of Psi+: ${VERSION}"

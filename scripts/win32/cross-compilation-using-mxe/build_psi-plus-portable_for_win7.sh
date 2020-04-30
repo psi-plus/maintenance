@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2019-02-27
+# Updated: 2020-04-30
 # Version: N/A
 #
 # Dependencies:
@@ -30,15 +30,18 @@ SUFFIX="win7"
 
 # Script body
 
+SCRIPT_NAME="$(basename ${0})"
+ShowHelp ${@}
+
 TestInternetConnection
 PrepareMainDir
 
 echo "Getting the sources..."
 echo;
 
-GetPsiPlusSources
-GetPsiPlusVersion
-GetPsiPlusTranslations
+GetPsiPlusSources ${@}
+GetPsiPlusVersion ${@}
+GetPsiPlusTranslations ${@}
 GetMyspellDictionaries
 GetReadMe
 
