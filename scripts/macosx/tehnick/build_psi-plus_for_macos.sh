@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2020-01-03
+# Updated: 2020-04-30
 # Version: N/A
 #
 # Dependencies:
@@ -23,15 +23,18 @@ QT_SDK_VER="$(ls ${HOME}/Qt/ 2>/dev/null | grep '5.' | tail -n1)"
 
 # Script body
 
+SCRIPT_NAME="$(basename ${0})"
+ShowHelp ${@}
+
 TestInternetConnection
 PrepareMainDir
 
 echo "Getting the sources..."
 echo;
 
-GetPsiPlusSources
-GetPsiPlusVersion
-GetPsiPlusTranslations
+GetPsiPlusSources ${@}
+GetPsiPlusVersion ${@}
+GetPsiPlusTranslations ${@}
 GetMyspellDictionaries
 
 echo "Preparing to build..."
