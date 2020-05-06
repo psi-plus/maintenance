@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-03-20
-# Updated: 2020-04-30
+# Updated: 2020-05-07
 # Version: N/A
 #
 # Dependencies:
@@ -15,14 +15,17 @@ set -e
 
 export MAIN_DIR="${HOME}/Tmp/PsiMedia"
 
-export VERSION="x.y.z-n"
-export SUFFIX="win7"
+CUR_DIR="$(dirname $(realpath -s ${0}))"
+. "${CUR_DIR}/downloads_library.sh"
+. "${CUR_DIR}/common_functions.sh"
 
 PROJECT_NAME="psimedia"
 PROJECT_DIR_NAME="psimedia"
 
-PLUGIN_URL=https://github.com/psi-im/psimedia.git
-ARCHIVER_OPTIONS="a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
+PLUGIN_URL="https://github.com/psi-im/psimedia.git"
+
+BUILD_TARGETS="i686-w64-mingw32.shared x86_64-w64-mingw32.shared"
+VERSION="x.y.z-n"
 
 # libgstbadbase-1.0-0.dll
 
@@ -123,129 +126,163 @@ PLUGINS="
     libgstrtpmanager.dll
 "
 
-# Test Internet connection:
-host github.com > /dev/null
+# Extra functions
 
-mkdir -p "${MAIN_DIR}"
-cd "${MAIN_DIR}"
+GetPsimediaSources()
+{
+    MOD="${PROJECT_DIR_NAME}"
+    URL="${PLUGIN_URL}"
+    if [ -d "${MAIN_DIR}/${MOD}" ]; then
+        echo "Updating ${MAIN_DIR}/${MOD}"
+        cd "${MAIN_DIR}/${MOD}"
+        git checkout .
+        git checkout master
+        git pull --all --prune -f
+        MOD_TAG="$(git describe --tags | cut -d - -f1 | sed 's/v//')"
+        MOD_REV="$(git describe --tags | cut -d - -f2)"
+        VERSION="${MOD_TAG}-${MOD_REV}"
+        echo;
+    else
+        echo "Creating ${MAIN_DIR}/${MOD}"
+        cd "${MAIN_DIR}"
+        git clone "${URL}"
+        cd "${MAIN_DIR}/${MOD}"
+        git checkout master
+        MOD_TAG="$(git describe --tags | cut -d - -f1 | sed 's/v//')"
+        MOD_REV="$(git describe --tags | cut -d - -f2)"
+        VERSION="${MOD_TAG}-${MOD_REV}"
+        echo;
+    fi
+}
+
+GetPsimediaVersion()
+{
+    ARCHIVE_DIR_NAME="${PROJECT_NAME}-${VERSION}_${SUFFIX}"
+    echo "Current version of ${PROJECT_NAME}: ${VERSION}"
+    echo;
+}
+
+InstallPsimediaToTmpDir()
+{
+    cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
+    build-project install i686-w64-mingw32.shared x86_64-w64-mingw32.shared
+    cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
+    for DIR in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
+        cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${DIR}-out"
+        cp -a ./usr/plugins/libgstprovider.dll ./usr/
+    done
+}
+
+CopyLibsAndResources()
+{
+    . /etc/sibuserv/sibuserv.conf
+    . ${HOME}/.config/sibuserv/sibuserv.conf || true
+
+    cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
+    BUILD_DIR="${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
+    for TARGET in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
+        BIN_DIR="${BUILD_DIR}/${TARGET}-out/usr"
+        echo "${BIN_DIR}"
+        cd   "${BIN_DIR}"
+
+        for LIB in ${LIBS}
+        do
+            cp -a "${MXE_DIR}/usr/${TARGET}/bin/${LIB}" ./
+        done
+
+        if [ "${TARGET}" = "i686-w64-mingw32.shared" ]
+        then
+            ARCH_SPEC_LIBS="${I686_LIBS}"
+        else
+            ARCH_SPEC_LIBS="${X86_64_LIBS}"
+        fi
+
+        for ARCH_SPEC_LIB in ${ARCH_SPEC_LIBS}
+        do
+            cp -a "${MXE_DIR}/usr/${TARGET}/bin/${ARCH_SPEC_LIB}" ./
+        done
+
+        for QT_LIB in ${QT_LIBS}
+        do
+            cp -a "${MXE_DIR}/usr/${TARGET}/qt5/bin/${QT_LIB}" ./
+        done
+
+        for QT_PLUGINS_DIR in ${QT_PLUGINS_DIRS}
+        do
+            cp -a "${MXE_DIR}/usr/${TARGET}/qt5/plugins/${QT_PLUGINS_DIR}" ./
+        done
+
+        mkdir -p "${BIN_DIR}/lib/gstreamer-1.0"
+        cd "${BIN_DIR}/lib/gstreamer-1.0"
+
+        for PLUGIN in ${PLUGINS}
+        do
+            cp -a "${MXE_DIR}/usr/${TARGET}/bin/gstreamer-1.0/${PLUGIN}" ./ | true
+        done
+    done
+}
+
+CopyFinalResults()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${PROJECT_DIR_NAME}" ] && return 1
+    [ -z "${ARCHIVE_DIR_NAME}" ] && return 1
+
+    cd "${MAIN_DIR}"
+    for TARGET in ${BUILD_TARGETS} ; do
+        DIR_IN="${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${TARGET}-out/usr"
+        if [ "${SUFFIX}" = "winxp" ] ; then
+            DIR_OUT="${ARCHIVE_DIR_NAME}"
+        elif [ "${TARGET}" = "i686-w64-mingw32.shared" ] ; then
+            DIR_OUT="${ARCHIVE_DIR_NAME}_x86"
+        elif [ "${TARGET}" = "x86_64-w64-mingw32.shared" ] ; then
+            DIR_OUT="${ARCHIVE_DIR_NAME}_x86_64"
+        else
+            continue
+        fi
+
+        mkdir -p "${DIR_OUT}"
+        rsync -a --del "${DIR_IN}/" "${DIR_OUT}/" > /dev/null
+    done
+}
+
+# Script body
+
+TestInternetConnection
+PrepareMainDir
+
 echo "Getting the sources..."
 echo;
 
-MOD="${PROJECT_DIR_NAME}"
-URL="${PLUGIN_URL}"
-if [ -d "${MAIN_DIR}/${MOD}" ]; then
-    echo "Updating ${MAIN_DIR}/${MOD}"
-    cd "${MAIN_DIR}/${MOD}"
-    git checkout .
-    git checkout master
-    git pull --all --prune -f
-    MOD_TAG="$(git describe --tags | cut -d - -f1 | sed 's/v//')"
-    MOD_REV="$(git describe --tags | cut -d - -f2)"
-    VERSION="${MOD_TAG}-${MOD_REV}"
-    echo;
-else
-    echo "Creating ${MAIN_DIR}/${MOD}"
-    cd "${MAIN_DIR}"
-    git clone "${URL}"
-    cd "${MAIN_DIR}/${MOD}"
-    git checkout master
-    MOD_TAG="$(git describe --tags | cut -d - -f1 | sed 's/v//')"
-    MOD_REV="$(git describe --tags | cut -d - -f2)"
-    VERSION="${MOD_TAG}-${MOD_REV}"
-    echo;
-fi
-
-ARCHIVE_DIR_NAME="${PROJECT_NAME}-${VERSION}_${SUFFIX}"
-echo "Current version of ${PROJECT_NAME}: ${VERSION}"
-echo;
+GetPsiSources
+GetPsimediaSources
+GetPsimediaVersion
 
 cd "${MAIN_DIR}"
 echo "Preparing to build..."
-
-rm -rf "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
+CleanBuildDir
+echo "Done."
 echo;
 
-cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
 echo "Building..."
-build-project i686-w64-mingw32.shared x86_64-w64-mingw32.shared
+BuildProjectForWindows
 echo;
 
-cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
 echo "Installing..."
-build-project install i686-w64-mingw32.shared x86_64-w64-mingw32.shared
-cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
-for DIR in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
-    cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${DIR}-out"
-    cp -a ./usr/plugins/libgstprovider.dll ./usr/
-done
+InstallPsimediaToTmpDir
 echo;
 
-. /etc/sibuserv/sibuserv.conf
-. ${HOME}/.config/sibuserv/sibuserv.conf || true
-
-cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
 echo "Copying libraries and resources to..."
-BUILD_DIR="${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
-for TARGET in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
-    BIN_DIR="${BUILD_DIR}/${TARGET}-out/usr"
-    echo "${BIN_DIR}"
-    cd   "${BIN_DIR}"
-
-    for LIB in ${LIBS}
-    do
-        cp -a "${MXE_DIR}/usr/${TARGET}/bin/${LIB}" ./
-    done
-
-    if [ "${TARGET}" = "i686-w64-mingw32.shared" ]
-    then
-        ARCH_SPEC_LIBS="${I686_LIBS}"
-    else
-        ARCH_SPEC_LIBS="${X86_64_LIBS}"
-    fi
-
-    for ARCH_SPEC_LIB in ${ARCH_SPEC_LIBS}
-    do
-        cp -a "${MXE_DIR}/usr/${TARGET}/bin/${ARCH_SPEC_LIB}" ./
-    done
-
-    for QT_LIB in ${QT_LIBS}
-    do
-        cp -a "${MXE_DIR}/usr/${TARGET}/qt5/bin/${QT_LIB}" ./
-    done
-
-    for QT_PLUGINS_DIR in ${QT_PLUGINS_DIRS}
-    do
-        cp -a "${MXE_DIR}/usr/${TARGET}/qt5/plugins/${QT_PLUGINS_DIR}" ./
-    done
-
-    mkdir -p "${BIN_DIR}/lib/gstreamer-1.0"
-    cd "${BIN_DIR}/lib/gstreamer-1.0"
-
-    for PLUGIN in ${PLUGINS}
-    do
-        cp -a "${MXE_DIR}/usr/${TARGET}/bin/gstreamer-1.0/${PLUGIN}" ./ | true
-    done
-done
+CopyLibsAndResources
 echo;
 
-cd "${MAIN_DIR}"
 echo "Copying the results to main directory..."
-mkdir -p "${ARCHIVE_DIR_NAME}_x86"
-mkdir -p "${ARCHIVE_DIR_NAME}_x86_64"
-rsync -a --del "${BUILD_DIR}/i686-w64-mingw32.shared-out/usr/" \
-               "${ARCHIVE_DIR_NAME}_x86/" > /dev/null
-rsync -a --del "${BUILD_DIR}/x86_64-w64-mingw32.shared-out/usr/" \
-               "${ARCHIVE_DIR_NAME}_x86_64/" > /dev/null
+CopyFinalResults
+echo "Done."
 echo;
 
 echo "Compressing files into 7z archives..."
-rm -f ${ARCHIVE_DIR_NAME}_x86*.7z
-echo "Creating archive: ${ARCHIVE_DIR_NAME}_x86.7z"
-7z ${ARCHIVER_OPTIONS} "${ARCHIVE_DIR_NAME}_x86.7z" \
-                       "${ARCHIVE_DIR_NAME}_x86" > /dev/null
-echo "Creating archive: ${ARCHIVE_DIR_NAME}_x86_64.7z"
-7z ${ARCHIVER_OPTIONS} "${ARCHIVE_DIR_NAME}_x86_64.7z" \
-                       "${ARCHIVE_DIR_NAME}_x86_64" > /dev/null
+CompressDirs
 echo "Done."
 echo;
 
