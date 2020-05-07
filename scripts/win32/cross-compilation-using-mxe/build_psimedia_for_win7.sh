@@ -74,6 +74,9 @@ LIBS="
     libwebpmux-3.dll
     libwinpthread-1.dll
     libzstd.dll
+    icudt65.dll
+    icuin65.dll
+    icuuc65.dll
     zlib1.dll
 "
 
@@ -144,7 +147,9 @@ InstallPsimediaToTmpDir()
     cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
     for DIR in ${BUILD_TARGETS} ; do
         cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${DIR}-out"
-        cp -a ./usr/plugins/libgstprovider.dll ./usr/
+        mv ./usr/plugins/libgstprovider.dll ./usr/ || return 1
+        mv ./usr/psi/plugins/libmediaplugin.dll ./usr/plugins/ || return 1
+        rm -rf ./usr/psi/
     done
 }
 
@@ -179,12 +184,14 @@ CopyLibsAndResources()
             cp -a "${MXE_DIR}/usr/${TARGET}/qt5/bin/${QT_LIB}" ./
         done
 
+        mkdir -p ./qtplugins
         for QT_PLUGINS_DIR in ${QT_PLUGINS_DIRS} ; do
-            cp -a "${MXE_DIR}/usr/${TARGET}/qt5/plugins/${QT_PLUGINS_DIR}" ./
+            cp -a "${MXE_DIR}/usr/${TARGET}/qt5/plugins/${QT_PLUGINS_DIR}" ./qtplugins/
         done
+        cp -a "${MAIN_DIR}/psi/win32/qt.conf" ./
 
-        mkdir -p "${BIN_DIR}/lib/gstreamer-1.0"
-        cd "${BIN_DIR}/lib/gstreamer-1.0"
+        mkdir -p "${BIN_DIR}/gstreamer-1.0"
+        cd "${BIN_DIR}/gstreamer-1.0"
 
         for PLUGIN in ${PLUGINS} ; do
             cp -a "${MXE_DIR}/usr/${TARGET}/bin/gstreamer-1.0/${PLUGIN}" ./ || true
