@@ -52,7 +52,9 @@ LIBS="
     libharfbuzz-0.dll
     libiconv-2.dll
     libintl-8.dll
+    libjasper.dll
     libjpeg-9.dll
+    libmng-2.dll
     libogg-0.dll
     libopus-0.dll
     libpcre16-0.dll
@@ -61,11 +63,15 @@ LIBS="
     libpng16-16.dll
     libspeex-1.dll
     libstdc++-6.dll
+    libtiff-5.dll
     libtheora-0.dll
     libtheoradec-1.dll
     libtheoraenc-1.dll
     libvorbis-0.dll
     libvorbisenc-2.dll
+    libwebp-7.dll
+    libwebpdemux-2.dll
+    libwebpmux-3.dll
     libwinpthread-1.dll
     libzstd.dll
     zlib1.dll
@@ -96,13 +102,13 @@ QT_PLUGINS_DIRS="
     platforms
 "
 
-
 PLUGINS="
     libgstapp.dll
     libgstaudioconvert.dll
     libgstaudiomixer.dll
     libgstaudioresample.dll
     libgstcoreelements.dll
+    libgstdirectsound.dll
     libgstdirectsoundsrc.dll
     libgstogg.dll
     libgstopus.dll
