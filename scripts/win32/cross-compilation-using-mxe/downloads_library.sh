@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2020-04-30
+# Updated: 2020-05-07
 # Version: N/A
 #
 # Dependencies:
@@ -16,6 +16,7 @@ PLUGINS_DIR_NAME="plugins"
 PSI_TRANSLATIONS_DIR_NAME="psi-l10n"
 PSI_PLUS_DIR_NAME="psi-plus-snapshots"
 PSI_PLUS_TRANSLATIONS_DIR_NAME="psi-plus-l10n"
+PSIMEDIA_DIR_NAME="psimedia"
 DICTIONARIES_DIR_NAME="myspell"
 
 PSI_URL="https://github.com/psi-im/psi.git"
@@ -23,6 +24,7 @@ PLUGINS_URL="https://github.com/psi-im/plugins.git"
 PSI_TRANSLATIONS_URL="https://github.com/psi-im/psi-l10n.git"
 PSI_PLUS_URL="https://github.com/psi-plus/psi-plus-snapshots.git"
 PSI_PLUS_TRANSLATIONS_URL="https://github.com/psi-plus/psi-plus-l10n.git"
+PSIMEDIA_URL="https://github.com/psi-im/psimedia.git"
 DICTIONARIES_URL="https://deb.debian.org/debian/pool/main/libr/libreoffice-dictionaries"
 README_URL="https://sourceforge.net/projects/psiplus/files/Windows/Personal-Builds/tehnick"
 
@@ -169,6 +171,25 @@ GetPsiPlusTranslations()
     if [ "${1}" = "release" ]; then
         cd "${MAIN_DIR}/${MOD}"
         git checkout "${2}" || return 1
+    fi
+}
+
+GetPsimediaSources()
+{
+    MOD="${PROJECT_DIR_NAME}"
+    URL="${PSIMEDIA_URL}"
+    if [ -d "${MAIN_DIR}/${MOD}" ]; then
+        echo "Updating ${MAIN_DIR}/${MOD}"
+        cd "${MAIN_DIR}/${MOD}"
+        git checkout .
+        git checkout master
+        git pull --all --prune -f
+        echo;
+    else
+        echo "Creating ${MAIN_DIR}/${MOD}"
+        cd "${MAIN_DIR}"
+        git clone "${URL}"
+        echo;
     fi
 }
 

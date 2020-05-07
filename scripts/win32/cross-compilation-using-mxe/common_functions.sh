@@ -14,6 +14,8 @@ set -e
 VERSION="x.y.z"
 SUFFIX="win7"
 
+INS_SUBDIR="/psi"
+
 ARCHIVER_OPTIONS="a -t7z -m0=lzma -mx=9 -mfb=64 -md=32m -ms=on"
 
 ShowHelp()
@@ -80,6 +82,25 @@ GetPsiPlusVersion()
 
     ARCHIVE_DIR_NAME="psi-plus-portable-${VERSION}_${SUFFIX}"
     echo "Current version of Psi+: ${VERSION}"
+    echo;
+}
+
+GetPsimediaVersion()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${PSIMEDIA_DIR_NAME}" ] && return 1
+
+    cd "${MAIN_DIR}/${PSIMEDIA_DIR_NAME}"
+    if [ "${1}" = "release" ]; then
+        VERSION="${2}"
+    else
+        MOD_TAG="$(git describe --tags | cut -d - -f1 | sed 's/v//')"
+        MOD_REV="$(git describe --tags | cut -d - -f2)"
+        VERSION="${MOD_TAG}-${MOD_REV}"
+    fi
+
+    ARCHIVE_DIR_NAME="psimedia-${VERSION}_${SUFFIX}"
+    echo "Current version of PsiMedia: ${VERSION}"
     echo;
 }
 
@@ -187,7 +208,7 @@ CopyFinalResults()
 
     cd "${MAIN_DIR}"
     for TARGET in ${BUILD_TARGETS} ; do
-        DIR_IN="${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${TARGET}/psi"
+        DIR_IN="${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${TARGET}${INS_SUBDIR}"
         if [ "${SUFFIX}" = "winxp" ] ; then
             DIR_OUT="${ARCHIVE_DIR_NAME}"
         elif [ "${TARGET}" = "i686-w64-mingw32.shared" ] ; then

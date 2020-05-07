@@ -19,13 +19,12 @@ CUR_DIR="$(dirname $(realpath -s ${0}))"
 . "${CUR_DIR}/downloads_library.sh"
 . "${CUR_DIR}/common_functions.sh"
 
-PROJECT_NAME="psimedia"
 PROJECT_DIR_NAME="psimedia"
-
-PLUGIN_URL="https://github.com/psi-im/psimedia.git"
 
 BUILD_TARGETS="i686-w64-mingw32.shared x86_64-w64-mingw32.shared"
 VERSION="x.y.z-n"
+
+INS_SUBDIR="-out/usr"
 
 # libgstbadbase-1.0-0.dll
 
@@ -128,46 +127,16 @@ PLUGINS="
 
 # Extra functions
 
-GetPsimediaSources()
-{
-    MOD="${PROJECT_DIR_NAME}"
-    URL="${PLUGIN_URL}"
-    if [ -d "${MAIN_DIR}/${MOD}" ]; then
-        echo "Updating ${MAIN_DIR}/${MOD}"
-        cd "${MAIN_DIR}/${MOD}"
-        git checkout .
-        git checkout master
-        git pull --all --prune -f
-        MOD_TAG="$(git describe --tags | cut -d - -f1 | sed 's/v//')"
-        MOD_REV="$(git describe --tags | cut -d - -f2)"
-        VERSION="${MOD_TAG}-${MOD_REV}"
-        echo;
-    else
-        echo "Creating ${MAIN_DIR}/${MOD}"
-        cd "${MAIN_DIR}"
-        git clone "${URL}"
-        cd "${MAIN_DIR}/${MOD}"
-        git checkout master
-        MOD_TAG="$(git describe --tags | cut -d - -f1 | sed 's/v//')"
-        MOD_REV="$(git describe --tags | cut -d - -f2)"
-        VERSION="${MOD_TAG}-${MOD_REV}"
-        echo;
-    fi
-}
-
-GetPsimediaVersion()
-{
-    ARCHIVE_DIR_NAME="${PROJECT_NAME}-${VERSION}_${SUFFIX}"
-    echo "Current version of ${PROJECT_NAME}: ${VERSION}"
-    echo;
-}
-
 InstallPsimediaToTmpDir()
 {
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${PROJECT_DIR_NAME}" ] && return 1
+    [ -z "${BUILD_TARGETS}" ] && return 1
+
     cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
-    build-project install i686-w64-mingw32.shared x86_64-w64-mingw32.shared
+    build-project install ${BUILD_TARGETS}
     cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
-    for DIR in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
+    for DIR in ${BUILD_TARGETS} ; do
         cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${DIR}-out"
         cp -a ./usr/plugins/libgstprovider.dll ./usr/
     done
@@ -180,18 +149,16 @@ CopyLibsAndResources()
 
     cd "${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
     BUILD_DIR="${MAIN_DIR}/build-${PROJECT_DIR_NAME}"
-    for TARGET in i686-w64-mingw32.shared x86_64-w64-mingw32.shared ; do
-        BIN_DIR="${BUILD_DIR}/${TARGET}-out/usr"
+    for TARGET in ${BUILD_TARGETS} ; do
+        BIN_DIR="${BUILD_DIR}/${TARGET}${INS_SUBDIR}"
         echo "${BIN_DIR}"
         cd   "${BIN_DIR}"
 
-        for LIB in ${LIBS}
-        do
+        for LIB in ${LIBS} ; do
             cp -a "${MXE_DIR}/usr/${TARGET}/bin/${LIB}" ./
         done
 
-        if [ "${TARGET}" = "i686-w64-mingw32.shared" ]
-        then
+        if [ "${TARGET}" = "i686-w64-mingw32.shared" ] ; then
             ARCH_SPEC_LIBS="${I686_LIBS}"
         else
             ARCH_SPEC_LIBS="${X86_64_LIBS}"
@@ -202,47 +169,20 @@ CopyLibsAndResources()
             cp -a "${MXE_DIR}/usr/${TARGET}/bin/${ARCH_SPEC_LIB}" ./
         done
 
-        for QT_LIB in ${QT_LIBS}
-        do
+        for QT_LIB in ${QT_LIBS} ; do
             cp -a "${MXE_DIR}/usr/${TARGET}/qt5/bin/${QT_LIB}" ./
         done
 
-        for QT_PLUGINS_DIR in ${QT_PLUGINS_DIRS}
-        do
+        for QT_PLUGINS_DIR in ${QT_PLUGINS_DIRS} ; do
             cp -a "${MXE_DIR}/usr/${TARGET}/qt5/plugins/${QT_PLUGINS_DIR}" ./
         done
 
         mkdir -p "${BIN_DIR}/lib/gstreamer-1.0"
         cd "${BIN_DIR}/lib/gstreamer-1.0"
 
-        for PLUGIN in ${PLUGINS}
-        do
-            cp -a "${MXE_DIR}/usr/${TARGET}/bin/gstreamer-1.0/${PLUGIN}" ./ | true
+        for PLUGIN in ${PLUGINS} ; do
+            cp -a "${MXE_DIR}/usr/${TARGET}/bin/gstreamer-1.0/${PLUGIN}" ./ || true
         done
-    done
-}
-
-CopyFinalResults()
-{
-    [ -z "${MAIN_DIR}" ] && return 1
-    [ -z "${PROJECT_DIR_NAME}" ] && return 1
-    [ -z "${ARCHIVE_DIR_NAME}" ] && return 1
-
-    cd "${MAIN_DIR}"
-    for TARGET in ${BUILD_TARGETS} ; do
-        DIR_IN="${MAIN_DIR}/build-${PROJECT_DIR_NAME}/${TARGET}-out/usr"
-        if [ "${SUFFIX}" = "winxp" ] ; then
-            DIR_OUT="${ARCHIVE_DIR_NAME}"
-        elif [ "${TARGET}" = "i686-w64-mingw32.shared" ] ; then
-            DIR_OUT="${ARCHIVE_DIR_NAME}_x86"
-        elif [ "${TARGET}" = "x86_64-w64-mingw32.shared" ] ; then
-            DIR_OUT="${ARCHIVE_DIR_NAME}_x86_64"
-        else
-            continue
-        fi
-
-        mkdir -p "${DIR_OUT}"
-        rsync -a --del "${DIR_IN}/" "${DIR_OUT}/" > /dev/null
     done
 }
 
