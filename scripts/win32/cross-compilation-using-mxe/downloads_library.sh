@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2020-05-07
+# Updated: 2020-05-08
 # Version: N/A
 #
 # Dependencies:
@@ -176,7 +176,10 @@ GetPsiPlusTranslations()
 
 GetPsimediaSources()
 {
-    MOD="${PROJECT_DIR_NAME}"
+    [ -z "${MAIN_DIR}" ] && return 1
+    cd "${MAIN_DIR}"
+
+    MOD="${PSIMEDIA_DIR_NAME}"
     URL="${PSIMEDIA_URL}"
     if [ -d "${MAIN_DIR}/${MOD}" ]; then
         echo "Updating ${MAIN_DIR}/${MOD}"

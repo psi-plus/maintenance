@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2019-02-27
+# Updated: 2020-05-08
 # Version: N/A
 #
 # Dependencies:
@@ -28,6 +28,8 @@ README_URL="https://sourceforge.net/projects/psi/files/Experimental-Builds/Windo
 BUILD_TARGETS="i686-w64-mingw32.shared x86_64-w64-mingw32.shared"
 SUFFIX="win7"
 
+BUILD_WITH_PSIMEDIA="false"
+
 # Script body
 
 SCRIPT_NAME="$(basename ${0})"
@@ -43,12 +45,17 @@ GetPsiSources ${@}
 GetPsiVersion ${@}
 GetPluginsSources ${@}
 GetPsiTranslations ${@}
+[ "${BUILD_WITH_PSIMEDIA}" = "true" ] && \
+    GetPsimediaSources
 GetMyspellDictionaries
 GetReadMe
 
 echo "Preparing to build..."
 PrepareSourcesTree
 CopyPluginsToSourcesTree
+[ "${BUILD_WITH_PSIMEDIA}" = "true" ] && \
+    CopyPsimediaToSourcesTree || \
+    RemovePsimediaFromSourcesTree
 PrepareToFirstBuild
 CleanBuildDir
 echo "Done."

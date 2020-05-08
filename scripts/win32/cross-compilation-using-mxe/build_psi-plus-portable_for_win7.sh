@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2020-04-30
+# Updated: 2020-05-08
 # Version: N/A
 #
 # Dependencies:
@@ -28,6 +28,8 @@ README_URL="https://sourceforge.net/projects/psiplus/files/Windows/Personal-Buil
 BUILD_TARGETS="i686-w64-mingw32.shared x86_64-w64-mingw32.shared"
 SUFFIX="win7"
 
+BUILD_WITH_PSIMEDIA="true"
+
 # Script body
 
 SCRIPT_NAME="$(basename ${0})"
@@ -42,11 +44,16 @@ echo;
 GetPsiPlusSources ${@}
 GetPsiPlusVersion ${@}
 GetPsiPlusTranslations ${@}
+[ "${BUILD_WITH_PSIMEDIA}" = "true" ] && \
+    GetPsimediaSources
 GetMyspellDictionaries
 GetReadMe
 
 echo "Preparing to build..."
 PrepareSourcesTree
+[ "${BUILD_WITH_PSIMEDIA}" = "true" ] && \
+    CopyPsimediaToSourcesTree || \
+    RemovePsimediaFromSourcesTree
 PrepareToFirstBuild
 CleanBuildDir
 echo "Done."
