@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2020-04-30
+# Updated: 2020-05-08
 # Version: N/A
 #
 # Dependencies:
@@ -46,6 +46,7 @@ GetMyspellDictionaries
 GetReadMe
 
 echo "Preparing to build..."
+RemovePsimediaFromSourcesTree
 PrepareSourcesTree
 PrepareToFirstBuild
 CleanBuildDir
