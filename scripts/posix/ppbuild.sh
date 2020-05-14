@@ -1,26 +1,26 @@
 #!/bin/bash
-
+#Скрипт сборки пси+ различнымм способами под разные системы RPM/DEB/WIN32
+#А также подготовки исходников для разработки
 #CONSTANTS/КОНСТАНТЫ
 home=${HOME:-/home/$USER} #домашний каталог
-lib_prefixes="/usr/lib
-/usr/lib64
-/usr/local/lib
-/usr/local/lib64" #список каталогов для поиска библиотек
 #guthub repositories
 psi_url="https://github.com/psi-im/psi.git"
 psi_plus_url="https://github.com/psi-plus/main.git"
 plugins_url="https://github.com/psi-im/plugins.git"
 langs_url="https://github.com/psi-plus/psi-plus-l10n.git"
 snapshots_url="https://github.com/psi-plus/psi-plus-snapshots.git"
-def_prefix="/usr" #префикс для сборки пси+q
+psimedia_url="https://github.com/psi-im/psimedia.git"
+def_prefix="/usr" #префикс для сборки пси+
+#
 #DEFAULT OPTIONS/ОПЦИИ ПО УМОЛЧАНИЮ
 spell_flag="-DUSE_ENCHANT=OFF -DUSE_HUNSPELL=ON"
 spellchek_engine="hunspell"
+chat_type="webengine" #webkit, basic, webengine
 iswebkit=""
 isoffline=0
 skip_invalid=0
 use_plugins="*"
-let cpu_count=$(grep -c ^processor /proc/cpuinfo)+1
+let cpu_count=$(grep -c ^processor /proc/cpuinfo)
 devm=0
 wbkt=0
 pref=0
@@ -63,9 +63,7 @@ buildpsi=${default_buildpsi} #инициализация переменной
 upstream_src=${buildpsi}/psi #репозиторий Psi
 psiplus_src=${buildpsi}/psi-plus #репозиторий Psi+
 snapshots_src=${buildpsi}/psi-plus-snapshots  #репозиторий снапшотов
-#workdir=${buildpsi}/worksrc #каталог подготовки исходных кодов psi+
-#builddir=${buildpsi}/build #рабочий каталог для компиляции psi+
-tmp_dir=/tmp/ppbuild
+tmp_dir=/tmp/ppbuild #временный каталог для подготовки и сборки
 workdir=${tmp_dir}/worksrc
 builddir=${tmp_dir}/build
 patches=${buildpsi}/psi-plus/patches #путь к патчам psi+, необходим для разработки
@@ -91,7 +89,7 @@ rpmbuilddir=${home}/rpmbuild
 rpmspec=${rpmbuilddir}/SPECS
 rpmsrc=${rpmbuilddir}/SOURCES
 #
-
+#Скачивание репозитория
 fetch_url ()
 {
   local last_dir=$(pwd)
@@ -118,7 +116,7 @@ fetch_url ()
     fi
   fi
 }
-
+#Скачивание исходников
 fetch_all ()
 {
   if [ $isoffline -eq 0 ]; then
@@ -126,9 +124,10 @@ fetch_all ()
     fetch_url ${psi_plus_url} ${psiplus_src}
     fetch_url ${plugins_url} ${buildpsi}/plugins
     fetch_url ${langs_url} ${buildpsi}/langs
+    fetch_url ${psimedia_url} ${buildpsi}/psimedia
   fi
 }
-
+#Скачивание снапшотов
 fetch_snapshots ()
 {
   if [ $isoffline -eq 0 ]; then
@@ -136,13 +135,13 @@ fetch_snapshots ()
   fi
 }
 
-#
+#Выход
 quit ()
 {
   clean_tmp_dirs
   exit 0
 }
-#
+#Чтение опций из файла настроек
 read_options ()
 {
   local pluginlist=""
@@ -173,7 +172,7 @@ read_options ()
   fi
   update_variables
 }
-#
+#Обновление переменных 
 update_variables ()
 {
   upstream_src=${buildpsi}/psi
@@ -185,9 +184,9 @@ update_variables ()
     spell_flag="-DUSE_ENCHANT=ON -DUSE_HUNSPELL=OFF"
   fi
 }
-#
+#Выход с ошибкой
 die() { echo "$@"; exit 1; }
-#
+#Создание каталога
 check_dir ()
 {
   if [ ! -z "$1" ]; then
@@ -196,7 +195,7 @@ check_dir ()
     fi
   fi
 }
-#
+#Скачивание всех исходников
 down_all ()
 {
   check_dir ${upstream_src}
@@ -205,12 +204,12 @@ down_all ()
   check_dir ${buildpsi}/langs
   fetch_all
 }
-#
+#Имя системы
 get_os_codename()
 {
   rpm_oscodename=$(lsb_release -is)
 }
-#
+#Применение патчей
 patch_psi ()
 {
   local patchlist=$(ls ${patches}/ | grep diff)
@@ -244,7 +243,7 @@ patch_psi ()
     do_patch $2
   fi
 }
-#
+#Получение версии пси+
 get_psi_plus_version()
 {
   local plus_tag=$(cd ${psiplus_src} && git describe --tags | cut -d - -f1)
@@ -256,7 +255,7 @@ get_psi_plus_version()
   echo "SHORT_VERSION = $psi_package_version"
   echo "LONG_VERSION = $psi_plus_version"
 }
-#
+#Подготовка исходников и обновление подмодулей
 prepare_psi_src ()
 {
   if [ ! -z "$1" ]; then
@@ -268,22 +267,14 @@ prepare_psi_src ()
     )
   fi
 }
-#
-copy_psiplus_icons()
-{
-  if [ ! -z "$1" ]; then
-    cp -a ${psiplus_src}/iconsets/* $1/iconsets/
-    cp -a ${psiplus_src}/app.ico $1/win32/
-  fi
-}
-#
+#Очистка временных каталогов
 clean_tmp_dirs()
 {
   if [ -d "${tmp_dir}" ] && [ ${clear_tmp_on_exit} -eq 1 ]; then
     rm -rf ${tmp_dir}
   fi
 }
-#
+#Подготовка каталога сборки
 prepare_workspace ()
 {
   local last_dir=$(pwd)
@@ -293,8 +284,9 @@ prepare_workspace ()
   cd ${upstream_src}
   prepare_psi_src ${workdir}
   cd ${buildpsi}/plugins
-  prepare_psi_src ${workdir}/src/plugins
-  copy_psiplus_icons ${workdir}
+  prepare_psi_src ${workdir}/plugins
+  check_dir ${workdir}/plugins/generic/psimedia
+  cd ${buildpsi}/psimedia && prepare_psi_src ${workdir}/plugins/generic/psimedia
   check_dir ${workdir}/translations
   cp -a ${buildpsi}/langs/translations/*.ts ${workdir}/translations/
   cd ${workdir}
@@ -308,7 +300,7 @@ prepare_workspace ()
   fi
   echo $psi_plus_version > ${workdir}/version
 }
-#
+#Подготовка исходников из репы снапшотов
 prepare_snapshots_workspace ()
 {
   fetch_snapshots
@@ -323,13 +315,13 @@ prepare_snapshots_workspace ()
   cd ${workdir}
 }
 
-#
+#Подготовка исходников
 prepare_src ()
 {
   down_all
   prepare_workspace
 }
-#
+#Очистка каталога сборки
 prepare_builddir ()
 {
   if [ ! -z $1 ]; then
@@ -341,7 +333,7 @@ prepare_builddir ()
     fi
   fi
 }
-#
+#Создание бэкапа исходников архивом tar
 backup_tar ()
 {
   echo "Backup ${buildpsi##*/} into ${buildpsi%/*}/${buildpsi##*/}.tar.gz started..."
@@ -349,7 +341,7 @@ backup_tar ()
   tar -pczf ${buildpsi##*/}.tar.gz ${buildpsi##*/}
   echo "Backup finished..."; echo " "
 }
-#
+#Подготовка архива tar
 prepare_tar ()
 {
   check_dir ${rpmbuilddir}
@@ -373,7 +365,7 @@ prepare_tar ()
     echo "Preparing completed"
   fi
 }
-#
+#Сборка исходников CMake-ом
 compile_psiplus ()
 {
   curd=$(pwd)
@@ -383,14 +375,16 @@ compile_psiplus ()
   echo "***Build started***">${buildlog}
   prepare_builddir ${builddir}
   cd ${builddir}
-  flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DPSI_LIBDIR=${buildpsi}/build-plugins"
+  flags="-DPSI_PLUS=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DPSI_LIBDIR=${buildpsi}/build-plugins"
   if [ ! -z "$1" ]; then
     flags="${flags} -DCMAKE_INSTALL_PREFIX=$1"
   else
     flags="${flags}"
   fi
   if [ -z "${iswebkit}" ]; then
-    flags="${flags} -DENABLE_WEBKIT=OFF"
+    flags="${flags} -DCHAT_TYPE=basic"
+  else
+    flags="${flags} -DCHAT_TYPE=${chat_type}"
   fi
   cd ${builddir}
   cbuild_path=${workdir}
@@ -410,6 +404,37 @@ compile_psiplus ()
   cd ${curd}
 }
 #
+install_pp_to_home ()
+{
+  curd=$(pwd)
+  prepare_src
+  cd ${workdir}
+  local buildlog=${buildpsi}/build.log
+  echo "***Build started***">${buildlog}
+  prepare_builddir ${builddir}
+  cd ${builddir}
+  flags="-DPSI_PLUS=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DVERBOSE_PROGRAM_NAME=ON -DCMAKE_INSTALL_PREFIX=${home}/build/psi-plus -DPSI_LIBDIR=${home}/build/psi-plus/lib/psi-plus"
+  if [ -z "${iswebkit}" ]; then
+    flags="${flags} -DCHAT_TYPE=basic"
+  else
+    flags="${flags} -DCHAT_TYPE=${chat_type}"
+  fi
+  cd ${builddir}
+  cbuild_path=${workdir}
+  echo "--Starting cmake 
+  cmake ${flags} ${cbuild_path}">>${buildlog}
+  cmake ${flags} ${cbuild_path}
+  echo "--Starting psi-plus compilation">>${buildlog}
+  cmake --build . --target all -- -j${cpu_count} 2>>${buildlog} || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
+  echo "***Build finished***">>${buildlog}
+  cmake --build . --target install
+  #if [ -d "${home}/build/psi" ]; then
+  #  rm -rf ${home}/build/psi
+  #fi
+  #cp -a ${builddir}/psi ${home}/build/
+  cd ${curd}
+}
+#Сборка из репы снапшотов
 build_all_psiplus ()
 {
   curd=$(pwd)
@@ -419,10 +444,13 @@ build_all_psiplus ()
   echo "***Build started***">${buildlog}
   prepare_builddir ${builddir}
   cd ${builddir}
-  flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DENABLE_PLUGINS=ON -DDEV_MODE=ON -DBUILD_DEV_PLUGINS=ON"
+  flags="-DPSI_PLUS=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DENABLE_PLUGINS=ON -DDEV_MODE=ON -DBUILD_DEV_PLUGINS=ON"
   if [ -z "${iswebkit}" ]; then
-    flags="${flags} -DENABLE_WEBKIT=OFF"
+    flags="${flags} -DCHAT_TYPE=basic"
+  else
+    flags="${flags} -DCHAT_TYPE=${chat_type}"
   fi
+  
   cd ${builddir}
   cbuild_path=${workdir}
   echo "--Starting cmake 
@@ -435,7 +463,7 @@ build_all_psiplus ()
   echo "Psi+ compiled at ${builddir}">>${buildlog}
   cd ${curd}
 }
-#
+#Сборка плагинов утилитой cmake
 build_cmake_plugins ()
 {
   echo_done() {
@@ -446,6 +474,7 @@ build_cmake_plugins ()
     echo "********************************"
     echo " "
   }
+  curd=$(pwd)
   if [ ! -f "${upstream_src}/psi.pro" ]; then
     prepare_src
   fi
@@ -470,152 +499,10 @@ build_cmake_plugins ()
   if [ "${isinstall}" == "y" ]; then
     cmake --build . --target install && echo_done
   fi
-  cd ${workdir}
+  cd ${curd}
 }
 #
-
-#
-build_deb_package ()
-{
-  check_qt_deps
-  compile_psiplus /usr ${workdir}
-  echo "Building Psi+ DEB package with checkinstall"
-  local desc='Psi is a cross-platform powerful Jabber client (Qt, C++) designed for the Jabber power users.
-Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru.'
-  cd ${workdir}
-  echo "${desc}" > description-pak
-  #make spellcheck
-  local spell_dep=""
-  if [ "${spellchek_engine}" == "hunspell" ]; then
-    spell_dep="libhunspell-1.6-0"
-  else
-    spell_dep="libenchant1c2a"
-  fi
-  local webkitdep=""
-  if [ ! -z "${iswebkit}" ]; then
-    webkitdep=", libqt5webkit5"
-  fi
-  qt_deps="libqt5dbus5, libqt5network5, libqt5xml5 , libqt5core5a, libqt5gui5, libqt5widgets5, libqt5x11extras5${webkitdep}"
-  local requires=" ${spell_dep}, 'libc6 (>=2.7-1)', 'libgcc1 (>=1:4.1.1)', 'libqca2', ${qt_deps}, 'libstdc++6 (>=4.1.1)', 'libx11-6', 'libxext6', 'libxss1', 'zlib1g (>=1:1.1.4)' "
-  sudo checkinstall -D --nodoc --pkgname=psi-plus --pkggroup=net --pkgversion=${psi_package_version} --pkgsource=${workdir} --maintainer="thetvg@gmail.com" --requires="${requires}"
-  cp -f ${workdir}/*.deb ${buildpsi}
-}
-#
-prepare_spec ()
-{
-  if [ -z "${iswebkit}" ]; then
-    extraflags="-DENABLE_WEBKIT=OFF ${spell_flag}"
-  fi
-  echo "Creating psi.spec file..."
-  local specfile="Summary: Client application for the Jabber network
-Name: psi-plus
-Version: ${psi_package_version}
-Release: 1
-License: GPL
-Group: Applications/Internet
-URL: http://psi-plus.com
-Source0: %{name}-%{version}.tar.gz
-
-
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
-
-
-BuildRequires: openssl-devel, gcc-c++, zlib-devel
-%{!?_without_freedesktop:BuildRequires: desktop-file-utils}
-
-
-%description
-Psi is the premiere Instant Messaging application designed for Microsoft Windows, 
-Apple Mac OS X and GNU/Linux. Built upon an open protocol named Jabber,           
-si is a fast and lightweight messaging client that utilises the best in open      
-source technologies. The goal of the Psi project is to create a powerful, yet     
-easy-to-use Jabber/XMPP client that tries to strictly adhere to the XMPP drafts.  
-and Jabber JEPs. This means that in most cases, Psi will not implement a feature  
-unless there is an accepted standard for it in the Jabber community. Doing so     
-ensures that Psi will be compatible, stable, and predictable, both from an end-user 
-and developer standpoint.
-Psi+ - Psi IM Mod by psi-dev@conference.jabber.ru
-
-
-%prep
-%setup
-
-
-%build
-cmake -DCMAKE_INSTALL_PREFIX=\"%{_prefix}\" -DINSTALL_PLUGINS_SDK=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo ${extraflags} .
-%{__make} %{?_smp_mflags}
-
-
-%install
-%{__rm} -rf %{buildroot}
-
-
-%{__make} DESTDIR=\"%{buildroot}\" install
-
-
-# Install the pixmap for the menu entry
-#%{__install} -Dp -m0644 iconsets/system/default/logo_128.png \
-#    %{buildroot}%{_datadir}/pixmaps/psi-plus.png ||:               
-
-mkdir -p %{buildroot}%{_datadir}/psi-plus
-mkdir -p %{buildroot}%{_bindir}
-mkdir -p %{buildroot}%{_datadir}/applications
-
-%post
-touch --no-create %{_datadir}/icons/hicolor || :
-%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
-
-
-%postun
-touch --no-create %{_datadir}/icons/hicolor || :
-%{_bindir}/gtk-update-icon-cache --quiet %{_datadir}/icons/hicolor || :
-
-
-%clean
-%{__rm} -rf %{buildroot}
-
-
-%files
-%defattr(-, root, root, 0755)
-%doc COPYING README TODO
-%{_bindir}/psi-plus
-
-%{_datadir}/psi-plus/
-%{_datadir}/pixmaps/psi-plus.png
-%{_datadir}/applications/psi-plus.desktop
-"
-  if [ "${rpm_oscodename}" != "Fedora" ]; then
-    specfile="$(echo ${specfile})
-%{_bindir}/psi-plus.debug
-%{_datadir}/icons/hicolor/*/apps/psi-plus.png
-%exclude %{_datadir}/psi-plus/COPYING
-%exclude %{_datadir}/psi-plus/README
-"
-  fi
-  local tmp_spec=${buildpsi}/test.spec
-  usr_spec=${rpmspec}/psi-plus.spec
-  echo "${specfile}" > ${tmp_spec}
-  cp -f ${tmp_spec} ${usr_spec}
-}
-#
-build_rpm_package ()
-{
-  prepare_src
-  prepare_tar
-  local tar_name=psi-plus-${psi_package_version}
-  local sources=${rpmsrc}
-  if [ -f "${sources}/${tar_name}.tar.gz" ]; then
-    prepare_spec
-    echo "Building Psi+ RPM package"
-    cd ${rpmspec}
-    rpmbuild -ba --clean --rmspec --rmsource ${usr_spec}
-    local rpm_ready=$(find $HOME/rpmbuild/RPMS | grep psi-plus)
-    local rpm_src_ready=$(find $HOME/rpmbuild/SRPMS | grep psi-plus)
-    cp -f ${rpm_ready} ${buildpsi}
-    cp -f ${rpm_src_ready} ${buildpsi}
-  fi
-}
-#
+#Подготовка исходников к разработке или исправлению патчей
 prepare_dev ()
 {
   local psidev=${buildpsi}/psidev
@@ -665,93 +552,12 @@ Patching work src
     patch_psi $patchnumber
   fi
 }
-#
-prepare_plugins_spec ()
-{
-  local specfile="
-Summary: ${summary}
-Name: ${progname}
-Version: ${rpmver}
-Release: 1
-License: GPL-2
-Group: ${group}
-URL: ${urlpath}
-Source0: ${package_name}
-BuildRequires: ${breq}
-Requires: psi-plus
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-build
-
-%description
-${desc}
-
-%prep
-%setup
-
-%build
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=%{buildroot}%{_libdir} -DPLUGINS_PATH=/psi-plus/plugins .
-%{__make} %{?_smp_mflags} 
-
-%install
-[ \"%{buildroot}\" != \"/\"] && rm -rf %{buildroot}
-%{__make} install INSTALL_ROOT=\"%{buildroot}\"
-
-if [ \"%{_target_cpu}\" = \"x86_64\" ] && [ -d \"/usr/lib64\" ]; then
-  mkdir -p %{buildroot}/usr/lib64
-else
-  mkdir -p %{buildroot}/usr/lib
-fi
-
-%clean
-[ \"%{buildroot}\" != \"/\" ] && rm -rf %{buildroot}
-
-%files
-%{_libdir}/psi-plus/plugins
-"
-  echo "${specfile}" > ${rpmspec}/${progname}.spec
-}
-#
-build_rpm_plugins ()
-{
-  local progname="psi-plus-plugins"
-  fetch_all
-  get_psi_plus_version
-  local plugdir=${buildpsi}/plugins
-  check_dir ${plugdir}
-  local b_dir=${buildpsi}/build-plugins
-  check_dir ${b_dir}
-  cd ${b_dir}
-  local rpmver=${psi_package_version}
-  local allpluginsdir=${b_dir}/${progname}-${rpmver}
-  local package_name="${progname}-${rpmver}.tar.gz"
-  local summary="Plugins for psi-plus-${rpmver}"
-  if [ "${rpm_oscodename}" == "Fedora" ]; then
-    extrasuffix=""
-  else
-    extrasuffix="2"
-  fi
-  local breq="libotr${extrasuffix}-devel, libtidy-devel, libgcrypt-devel, libgpg-error-devel"
-  local urlpath="https://github.com/psi-plus/plugins"
-  local group="Applications/Internet"
-  local desc="Plugins for jabber-client Psi+"
-  check_dir ${allpluginsdir}
-  cp -a ${upstream_src}/cmake ${allpluginsdir}/
-  cp -a ${upstream_src}/src/plugins/include ${allpluginsdir}/
-  cp -rf ${plugdir}/* ${allpluginsdir}/
-  cd ${b_dir}
-  tar -pczf $package_name ${progname}-${rpmver}
-  prepare_plugins_spec
-  cp -rf ${package_name} ${rpmsrc}/
-  rpmbuild -ba --clean --rmspec --rmsource ${rpmspec}/${progname}.spec
-  echo "Cleaning..."
-  cd ${buildpsi}
-  rm -rf ${allpluginsdir}
-}
-#
+#Скачиване ресурсов
 get_resources ()
 {
-  fetch_url "https://github.com/psi-plus/resources.git" ${buildpsi}/resources
+  fetch_url "https://github.com/psi-im/resources.git" ${buildpsi}/resources
 }
-#
+#Установка ресурсов в домашний каталог
 install_resources ()
 {
   cd ${buildpsi}
@@ -761,7 +567,7 @@ install_resources ()
   fi
   cp -rf ${buildpsi}/resources/* ${psi_datadir}/
 }
-#
+#Установка иконок из репы ресурсов в домашний каталог
 install_iconsets ()
 {
   cd ${buildpsi}
@@ -771,7 +577,7 @@ install_iconsets ()
   fi  
   cp -rf ${buildpsi}/resources/iconsets ${psi_datadir}/
 }
-#
+#Установка скинов из репы ресурсов в домашний каталог
 install_skins ()
 {
   cd ${buildpsi}
@@ -783,7 +589,7 @@ install_skins ()
     cp -rf ${buildpsi}/resources/skins ${psi_datadir}/
   fi 
 }
-#
+#Установка звуков из репы ресурсов в домашний каталог
 install_sounds ()
 {
   cd ${buildpsi}
@@ -795,7 +601,7 @@ install_sounds ()
     cp -rf ${buildpsi}/resources/sound ${psi_datadir}/
   fi 
 }
-#
+#Установка тем из репы ресурсов в домашний каталог
 install_themes ()
 {
   cd ${buildpsi}
@@ -807,12 +613,12 @@ install_themes ()
     cp -rf ${buildpsi}/resources/themes ${psi_datadir}/
   fi 
 }
-#
+#Обновление ресурсов
 update_resources ()
 {
   get_resources
 }
-#
+#Сборка файлов локализации
 build_locales ()
 {
   local tr_path=${buildpsi}/langs/translations
@@ -826,7 +632,7 @@ build_locales ()
     fi
   fi 
 }
-#
+#Установка файлов локализации в домашний каталог
 install_locales ()
 {
   local tr_path=${buildpsi}/langs/translations
@@ -834,7 +640,7 @@ install_locales ()
   check_dir ${psi_datadir}
   cp -rf ${tr_path}/*.qm ${psi_datadir}/
 }
-#
+#Запуск собранной версии
 run_psiplus ()
 {
   local psi_binary_path=${builddir}/psi
@@ -845,10 +651,10 @@ run_psiplus ()
     echo -e "${red}Psi+ binary not found in ${psi_binary_path}. Try to compile it first.${nocolor}"
   fi
 }
-#
+#Запуск собранной версии в дебаггере
 debug_psi ()
 {
-  local psi_binary_path=${workdir}/cbuild/psi
+  local psi_binary_path=${builddir}/psi
   if [ -f "${psi_binary_path}/psi-plus" ];then
     cd ${psi_binary_path}
     gdb ./psi-plus
@@ -856,7 +662,8 @@ debug_psi ()
     echo -e "${red}Psi+ binary not found in ${psi_binary_path}. Try to compile it first.${nocolor}"
   fi
 }
-#
+#Бэкап и установка переменных окружения для МХЕ
+#Команды запуска cmake под МХЕ
 prepare_mxe()
 {
   OLDPATH=${PATH}
@@ -876,7 +683,7 @@ run_mxe_cmake_64()
   prepare_mxe
   x86_64-w64-mingw32.shared-cmake $@
 }
-#
+#Кросс-компиляция при помощи МХЕ
 compile_psi_mxe()
 {
   curd=$(pwd)
@@ -896,12 +703,14 @@ compile_psi_mxe()
     cmakecmd=run_mxe_cmake_64
   fi
   if [ ${devm} -eq 1 ]; then
-    flags="${flags} -DENABLE_PLUGINS=ON -DBUILD_DEV_PLUGINS=ON -DDEV_MODE=ON"
+    flags="${flags} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DBUILD_DEV_PLUGINS=ON -DDEV_MODE=ON"
   fi
   if [ ${wbkt} -eq 0 ]; then
-    flags="${flags} -DENABLE_WEBKIT=OFF"
+    flags="${flags} -DCHAT_TYPE=basic"
+  else
+    flags="${flags} -DCHAT_TYPE=webkit"
   fi
-  flags="${flags} -DUSE_CCACHE=ON -DVERBOSE_PROGRAM_NAME=ON -DQt5Keychain_DIR=${current_prefix}/lib/cmake/Qt5Keychain"
+  flags="${flags} -DPSI_PLUS=ON -DUSE_CCACHE=ON -DVERBOSE_PROGRAM_NAME=ON"
   wrkdir=${builddir}
   check_dir ${wrkdir}
   cd ${wrkdir}
@@ -911,9 +720,9 @@ compile_psi_mxe()
   echo 
   #echo "Press Enter to continue..." && read tmpvar
   ${cmakecmd} --build . --target all -- -j${cpu_count}
-  ${cmakecmd} --build . --target prepare-bin --
   if [ ${devm} -eq 1 ]; then
-    ${cmakecmd} --build . --target prepare-bin-libs --
+    ${cmakecmd} --build . --target prepare-bin -- #copy default iconsets skins and themes
+    ${cmakecmd} --build . --target prepare-bin-libs -- #copy dependencies
   fi
   if [ -d "${mxe_outd}/$1" ] && [ ${devm} -ne 0 ]; then
     cd ${mxe_outd} && rm -rf $1
@@ -927,17 +736,7 @@ compile_psi_mxe()
     PATH=${OLDPATH}
   fi
 }
-#
-archivate_psi()
-{
-  if [ ! -z "${iswebkit}" ]; then
-      wbk_suff="webkit-"
-  fi
-  mxe_outd=${tmp_dir}/mxe_builds
-  7z a -mx=9 -m0=LZMA -mmt=on ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${mxe_outd}/$1/*
-  cp -r ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${buildpsi}/mxe_builds/
-}
-#
+#Сборка 32х битных версий при помощи МХЕ
 build_i686_mxe()
 {
   wbkt=1
@@ -948,7 +747,7 @@ build_i686_mxe()
   compile_psi_mxe qt5
   archivate_all qt5
 }
-#
+#Сборка 64х битных версий при помощи МХЕ
 build_x86_64_mxe()
 {
   wbkt=1
@@ -959,26 +758,26 @@ build_x86_64_mxe()
   compile_psi_mxe qt5_64
   archivate_all qt5_64
 }
-#
+#Сборка всех возможных вариантов при помощи МХЕ
 build_all_mxe()
 {
   build_i686_mxe
   build_x86_64_mxe
 }
-#
+#Архивация МХЕ сборки при помощи 7z
 archivate_all()
 {
   wbk_suff="all-"
   mxe_outd=${tmp_dir}/mxe_builds
-  7z a -mx=9 -m0=LZMA -mmt=on ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${mxe_outd}/$1/*
+  7z a -mx=9 -m0=LZMA -mmt=on -xr!*.a ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${mxe_outd}/$1/*
   cp -r ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${buildpsi}/mxe_builds/
 }
-#
+#Список зависимостей
 check_qt_deps()
 {
-	check_deps "checkinstall qtmultimedia5-dev libqt5multimedia5-plugins qtbase5-dev qttools5-dev qttools5-dev-tools libqca2-dev pkg-config cmake libqt5x11extras5-dev"
+	check_deps "cmake libhunspell-dev libhttp-parser-dev libidn11-dev libminizip-dev libotr5-dev libqca-qt5-2-dev libqt5svg5-dev libqt5webkit5-dev libqt5x11extras5-dev libsignal-protocol-c-dev libsm-dev libssl-dev libtidy-dev libxss-dev qt5keychain-dev qtmultimedia5-dev zlib1g-dev qtmultimedia5-dev libqt5multimedia5-plugins qtbase5-dev qttools5-dev qttools5-dev-tools pkg-config libqt5x11extras5-dev"
 }
-#
+#Проверка зависимостей в Ubuntu
 check_deps()
 {
 	if [ ! -z "$1" ]; then
@@ -996,7 +795,7 @@ check_deps()
 		fi
 	fi
 }
-#
+#Запись настроек
 set_config ()
 {
   local use_webkit="n"
@@ -1107,30 +906,27 @@ ${blue}===========${nocolor}";;
   echo "$buildpsi" >> ${config_file}
   update_variables
 }
-#
+#Вывод меню
 print_menu ()
 {
   echo -e "${blue}Choose action TODO!${nocolor}
 ${pink}[1]${nocolor} - Download All needed source files to build psi+
 ${pink}[2]${nocolor} - Prepare psi+ sources
 ${pink}[3]${nocolor} - Build psi+ binary
----${pink}[31]${nocolor} - Build psi+ plugins using
----${pink}[32]${nocolor} - Build psi+ with plugins from snapshots
-${pink}[4]${nocolor} - Build Debian package with checkinstall
-${pink}[5]${nocolor} - Build openSUSE RPM-package
----${pink}[51]${nocolor} - Build plugins openSUSE RPM-package
-${pink}[6]${nocolor} - Set libpsibuild options
+${pink}[4]${nocolor} - Build psi+ plugins
+${pink}[5]${nocolor} - Build psi+ with plugins from snapshots
+${pink}--[51]${nocolor} - Build complete psi+ and install to HOME
+${pink}[6]${nocolor} - Set ppbuild options
 ${pink}[7]${nocolor} - Prepare psi+ sources for development
 ${pink}[8]${nocolor} - Get help on additional actions
 ${pink}[9]${nocolor} - Run compiled psi-plus binary
 ${pink}[0]${nocolor} - Exit"
 }
-#
+#Справка по командам
 get_help ()
 {
   echo -e "${red}---------------HELP-----------------------${nocolor}
 ${pink}[32]${nocolor} - Build psi-plus with plugins from snapshots
-${pink}[71]${nocolor} - Copy Psi+ icons to test build in ${buildpsi}/psidev/git
 ${pink}[ia]${nocolor} - Install all resources to $psi_datadir
 ${pink}[ii]${nocolor} - Install iconsets to $psi_datadir
 ${pink}[is]${nocolor} - Install skins to $psi_datadir
@@ -1143,11 +939,12 @@ ${pink}[bs]${nocolor} - Backup ${buildpsi##*/} directory in ${buildpsi%/*}
 ${pink}[pw]${nocolor} - Prepare psi+ workspace (clean ${buildpsi}/build dir)
 ${pink}[dp]${nocolor} - Run psi-plus binary under gdb debugger
 ${pink}[bam]${nocolor} - Build both 32bit and 64bit builds with MXE
+${pink}[cd]${nocolor} - Check build dependencies in Debian
 ${red}-------------------------------------------${nocolor}
 ${blue}Press Enter to continue...${nocolor}"
   read
 }
-#
+#Обработка команд
 choose_action ()
 {
   read vibor
@@ -1155,14 +952,10 @@ choose_action ()
     "1" ) down_all;;
     "2" ) prepare_src;;
     "3" ) compile_psiplus /usr;;
-    "31" ) build_cmake_plugins;;
-    "32" ) build_all_psiplus;;
-    "4" ) build_deb_package;;
-    "5" ) build_rpm_package;;
-    "51" ) build_rpm_plugins;;
+    "4" ) build_cmake_plugins;;
+    "5" ) build_all_psiplus;;
     "6" ) set_config;;
     "7" ) prepare_dev;;
-    "71" ) copy_psiplus_icons ${buildpsi}/psidev/git;;
     "8" ) get_help;;
     "9" ) run_psiplus;;
     "ia" ) install_resources;;
@@ -1177,17 +970,19 @@ choose_action ()
     "pw" ) prepare_workspace;;
     "dp" ) debug_psi;;
     "bam" ) build_all_mxe;;
+    "cd" ) check_qt_deps;;
+    "51" ) install_pp_to_home;;
     "0" ) quit;;
   esac
 }
-#
+#Создание файла настроек
 cd ${githubdir}
 read_options
 if [ ! -f "${config_file}" ]; then
   set_config
 fi
 clear
-#
+#Цикл меню
 while true; do
   print_menu
   choose_action
