@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
+# The script accepts metadata json files (all of them) from plugins
+# and generates translations files in the current directory
 
 import sys
 import os
 import json
 
-
-languages=["ru", "de"]
-translations=dict((k, {}) for k in languages)
+languages = ["ru", "de"]
+translations = dict((k, {}) for k in languages)
 
 
 def parse_translations(filename, js):
-    translatable=["name"]
-    sources={}
-    trans={}
+    translatable = ["name"]
+    sources = {}
+    trans = {}
 
     for full_prop, value in js.items():
         parts = full_prop.split(":")
@@ -25,7 +26,7 @@ def parse_translations(filename, js):
         else:
             sources[parts[0]] = value
 
-    context = "meta:"+os.path.split(filename)[1][:-5]
+    context = "meta:" + os.path.split(filename)[1][:-5]
     for prop, source in sources.items():
         for lang in languages:
             translation = trans.get(prop, {}).get(lang, "")
@@ -35,9 +36,8 @@ def parse_translations(filename, js):
 
 
 def dump_ts(out, contexts):
-    messages=[]
     for context, trans in contexts.items():
-        messages=[]
+        messages = []
         for source, (filename, line, translation) in trans.items():
             messages.append(f"""    <message>
         <location filename="{filename}" line="{line}"/>
@@ -45,7 +45,7 @@ def dump_ts(out, contexts):
         <translation>{translation}</translation>
     </message>""")
 
-        messages="\n".join(messages)
+        messages = "\n".join(messages)
         out.write(f"""<context>
     <name>{context}</name>
 {messages}
@@ -58,5 +58,5 @@ for fname in sys.argv[1:]:
         parse_translations(fname, js)
 
 for lang, trs in translations.items():
-    with open("plugin_meta_"+lang+".ts", "w") as f:
+    with open("plugin_meta_" + lang + ".ts", "w") as f:
         dump_ts(f, trs)
