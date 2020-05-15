@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2020-05-08
+# Updated: 2020-05-15
 # Version: N/A
 #
 # Dependencies:
@@ -44,16 +44,11 @@ echo;
 GetPsiPlusSources ${@}
 GetPsiPlusVersion ${@}
 GetPsiPlusTranslations ${@}
-[ "${BUILD_WITH_PSIMEDIA}" = "true" ] && \
-    GetPsimediaSources
 GetMyspellDictionaries
 GetReadMe
 
 echo "Preparing to build..."
 PrepareSourcesTree
-[ "${BUILD_WITH_PSIMEDIA}" = "true" ] && \
-    CopyPsimediaToSourcesTree || \
-    RemovePsimediaFromSourcesTree
 PrepareToFirstBuild
 CleanBuildDir
 echo "Done."

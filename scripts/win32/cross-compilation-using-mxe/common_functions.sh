@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2020-05-08
+# Updated: 2020-05-15
 # Version: N/A
 #
 # Dependencies:
@@ -126,7 +126,7 @@ CopyPluginsToSourcesTree()
 
     for DIR in cmake dev generic unix CMakeLists.txt ; do
         rsync -a --del "${MAIN_DIR}/${PLUGINS_DIR_NAME}/${DIR}" \
-                       "${MAIN_DIR}/${PROJECT_DIR_NAME}/src/plugins/" > /dev/null
+                       "${MAIN_DIR}/${PROJECT_DIR_NAME}/plugins/" > /dev/null
     done
 }
 
@@ -137,7 +137,7 @@ CopyPsimediaToSourcesTree()
     [ -z "${PSIMEDIA_DIR_NAME}" ] && return 1
 
     rsync -a --del "${MAIN_DIR}/${PSIMEDIA_DIR_NAME}" \
-                   "${MAIN_DIR}/${PROJECT_DIR_NAME}/" \
+                   "${MAIN_DIR}/${PROJECT_DIR_NAME}/plugins/generic/" \
                    --exclude=".git/" \
                    > /dev/null
 }
@@ -148,7 +148,7 @@ RemovePsimediaFromSourcesTree()
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
 
     if [ ! -z "${PSIMEDIA_DIR_NAME}" ] ; then
-        rm -rf "${MAIN_DIR}/${PROJECT_DIR_NAME}/${PSIMEDIA_DIR_NAME}"
+        rm -rf "${MAIN_DIR}/${PROJECT_DIR_NAME}/plugins/generic/${PSIMEDIA_DIR_NAME}"
     fi
 }
 
@@ -175,7 +175,7 @@ PrepareToFirstBuild()
     sed -i "s|option( PRODUCTION .*$|option( PRODUCTION \"\" ON )|g" CMakeLists.txt
     sed -i "s|option( USE_MXE .*$|option( USE_MXE \"\" ON )|g" CMakeLists.txt
     sed -i "s|option( USE_KEYCHAIN .*$|option( USE_KEYCHAIN \"\" OFF )|g" CMakeLists.txt
-    sed -i "s|option( BUILD_DEV_PLUGINS .*$|option( BUILD_DEV_PLUGINS \"\" ON )|g" src/plugins/CMakeLists.txt
+    sed -i "s|option( BUILD_DEV_PLUGINS .*$|option( BUILD_DEV_PLUGINS \"\" ON )|g" plugins/CMakeLists.txt
     
     if [ "${BUILD_WITH_PSIMEDIA}" = "true" ] ; then
         sed -i "s|option( BUILD_PSIMEDIA .*$|option( BUILD_PSIMEDIA \"\" ON )|g" CMakeLists.txt
