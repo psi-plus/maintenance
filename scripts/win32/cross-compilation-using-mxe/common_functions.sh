@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2020-05-15
+# Updated: 2020-05-19
 # Version: N/A
 #
 # Dependencies:
@@ -124,9 +124,13 @@ CopyPluginsToSourcesTree()
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
     [ -z "${PLUGINS_DIR_NAME}" ] && return 1
 
-    for DIR in cmake dev generic unix CMakeLists.txt ; do
+    for DIR in dev generic unix ; do
         rsync -a --del "${MAIN_DIR}/${PLUGINS_DIR_NAME}/${DIR}" \
                        "${MAIN_DIR}/${PROJECT_DIR_NAME}/plugins/" > /dev/null
+    done
+    for DIR in cmake CMakeLists.txt ; do
+        rsync -a "${MAIN_DIR}/${PLUGINS_DIR_NAME}/${DIR}" \
+                 "${MAIN_DIR}/${PROJECT_DIR_NAME}/plugins/" > /dev/null
     done
 }
 
