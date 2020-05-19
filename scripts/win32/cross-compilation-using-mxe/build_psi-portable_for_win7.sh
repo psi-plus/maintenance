@@ -28,7 +28,7 @@ README_URL="https://sourceforge.net/projects/psi/files/Experimental-Builds/Windo
 BUILD_TARGETS="i686-w64-mingw32.shared x86_64-w64-mingw32.shared"
 SUFFIX="win7"
 
-BUILD_WITH_PSIMEDIA="false"
+BUILD_WITH_PSIMEDIA="true"
 
 # Script body
 
