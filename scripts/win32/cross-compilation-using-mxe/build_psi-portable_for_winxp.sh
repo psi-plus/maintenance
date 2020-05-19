@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2020-05-08
+# Updated: 2020-05-20
 # Version: N/A
 #
 # Dependencies:
@@ -53,7 +53,7 @@ CopyPluginsToSourcesTree
 PrepareToFirstBuild
 CleanBuildDir
 cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
-sed -i "s|option( USE_QJDNS .*$|option( USE_QJDNS \"\" ON )|g" CMakeLists.txt
+sed -i -E "s|(option\( USE_QJDNS .*) .+ (\).*)$|\1 ON \2|g" CMakeLists.txt
 echo "Done."
 echo;
 

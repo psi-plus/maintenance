@@ -174,19 +174,20 @@ PrepareToFirstBuild()
     FILE=CMakeLists.txt
 
     cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
-    sed -i -E "s|(option\( BUILD_DEV_PLUGINS .*) .+ (\))$|\1 ON \2|g"   ${FILE}
-    sed -i -E "s|(option\( ENABLE_PLUGINS .*) .+ (\))$|\1 ON \2|g"      ${FILE}
-    sed -i -E "s|(option\( ENABLE_PORTABLE .*) .+ (\))$|\1 ON \2|g"     ${FILE}
-    sed -i -E "s|(option\( PRODUCTION .*) .+ (\))$|\1 ON \2|g"          ${FILE}
-    sed -i -E "s|(option\( USE_KEYCHAIN .*) .+ (\))$|\1 OFF \2|g"       ${FILE}
-    sed -i -E "s|(option\( USE_MXE .*) .+ (\))$|\1 ON \2|g"             ${FILE}
-    sed -i -E "s|(option\( VERBOSE_PROGRAM_NAME .*) .+ (\))$|\1 ON \2|g" ${FILE}
+    sed -i -E "s|(option\( ENABLE_PLUGINS .*) .+ (\).*)$|\1 ON \2|g"      ${FILE}
+    sed -i -E "s|(option\( ENABLE_PORTABLE .*) .+ (\).*)$|\1 ON \2|g"     ${FILE}
+    sed -i -E "s|(option\( PRODUCTION .*) .+ (\).*)$|\1 ON \2|g"          ${FILE}
+    sed -i -E "s|(option\( USE_KEYCHAIN .*) .+ (\).*)$|\1 OFF \2|g"       ${FILE}
+    sed -i -E "s|(option\( USE_MXE .*) .+ (\).*)$|\1 ON \2|g"             ${FILE}
+    sed -i -E "s|(option\( VERBOSE_PROGRAM_NAME .*) .+ (\).*)$|\1 ON \2|g" ${FILE}
     sed -i -E "s|(set\( CHAT_TYPE) .+ (CACHE STRING .*)$|\1 BASIC \2|g" ${FILE}
 
+    sed -i -E "s|(option\( BUILD_DEV_PLUGINS .*) .+ (\).*)$|\1 ON \2|g"   plugins/${FILE}
+
     if [ "${BUILD_WITH_PSIMEDIA}" = "true" ] ; then
-        sed -i -E "s|(option\( BUILD_PSIMEDIA .*) .+ (\))$|\1 ON \2|g"  ${FILE}
+        sed -i -E "s|(option\( BUILD_PSIMEDIA .*) .+ (\).*)$|\1 ON \2|g"  ${FILE}
     else
-        sed -i -E "s|(option\( BUILD_PSIMEDIA .*) .+ (\))$|\1 OFF \2|g" ${FILE}
+        sed -i -E "s|(option\( BUILD_PSIMEDIA .*) .+ (\).*)$|\1 OFF \2|g" ${FILE}
     fi
 }
 
