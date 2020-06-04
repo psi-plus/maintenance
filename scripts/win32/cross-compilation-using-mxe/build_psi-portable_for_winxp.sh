@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2020-05-20
+# Updated: 2020-06-03
 # Version: N/A
 #
 # Dependencies:
@@ -50,7 +50,7 @@ echo "Preparing to build..."
 RemovePsimediaFromSourcesTree
 PrepareSourcesTree
 CopyPluginsToSourcesTree
-PrepareToFirstBuild
+PrepareToFirstBuildForWindows
 CleanBuildDir
 cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
 sed -i -E "s|(option\( USE_QJDNS .*) .+ (\).*)$|\1 ON \2|g" CMakeLists.txt
@@ -58,7 +58,7 @@ echo "Done."
 echo;
 
 echo "Building basic version of Psi..."
-BuildProjectForWindows
+BuildProjectUsingSibuserv
 echo;
 
 echo "Preparing to the next step..."
@@ -67,7 +67,7 @@ echo "Done."
 echo;
 
 echo "Building webkit version of Psi..."
-BuildProjectForWindows
+BuildProjectUsingSibuserv
 echo;
 
 echo "Copying libraries and resources to..."

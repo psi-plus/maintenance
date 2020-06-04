@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-03-20
-# Updated: 2020-05-08
+# Updated: 2020-06-03
 # Version: N/A
 #
 # Dependencies:
@@ -218,7 +218,7 @@ echo "Done."
 echo;
 
 echo "Building..."
-BuildProjectForWindows
+BuildProjectUsingSibuserv
 echo;
 
 echo "Installing..."

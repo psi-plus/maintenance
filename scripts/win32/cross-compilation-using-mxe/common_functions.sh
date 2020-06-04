@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2020-05-20
+# Updated: 2020-06-04
 # Version: N/A
 #
 # Dependencies:
@@ -166,7 +166,32 @@ CleanBuildDir()
     rm -rf "${MAIN_DIR}/${PROJECT_DIR_NAME}/builddir"
 }
 
-PrepareToFirstBuild()
+PrepareToFirstBuildForLinux()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${PROJECT_DIR_NAME}" ] && return 1
+
+    FILE=CMakeLists.txt
+
+    cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
+    sed -i -E "s|(option\( ENABLE_PLUGINS .*) .+ (\).*)$|\1 ON \2|g"      ${FILE}
+    sed -i -E "s|(option\( PRODUCTION .*) .+ (\).*)$|\1 ON \2|g"          ${FILE}
+    sed -i -E "s|(option\( USE_KEYCHAIN .*) .+ (\).*)$|\1 OFF \2|g"       ${FILE}
+    sed -i -E "s|(option\( USE_X11 .*) .+ (\).*)$|\1 OFF \2|g"           ${FILE}
+    sed -i -E "s|(option\( USE_XSS .*) .+ (\).*)$|\1 OFF \2|g"            ${FILE}
+    sed -i -E "s|(option\( VERBOSE_PROGRAM_NAME .*) .+ (\).*)$|\1 ON \2|g" ${FILE}
+    sed -i -E "s|(set\( CHAT_TYPE) .+ (CACHE STRING .*)$|\1 BASIC \2|g" ${FILE}
+
+    sed -i -E "s|(option\( BUILD_DEV_PLUGINS .*) .+ (\).*)$|\1 ON \2|g"   plugins/${FILE}
+
+    if [ "${BUILD_WITH_PSIMEDIA}" = "true" ] ; then
+        sed -i -E "s|(option\( BUILD_PSIMEDIA .*) .+ (\).*)$|\1 ON \2|g"  ${FILE}
+    else
+        sed -i -E "s|(option\( BUILD_PSIMEDIA .*) .+ (\).*)$|\1 OFF \2|g" ${FILE}
+    fi
+}
+
+PrepareToFirstBuildForWindows()
 {
     [ -z "${MAIN_DIR}" ] && return 1
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
@@ -202,7 +227,7 @@ PrepareToSecondBuild()
     sed -i "s|CHAT_TYPE:STRING=.*$|CHAT_TYPE:STRING=WEBKIT|g" */${FILE}
 }
 
-BuildProjectForWindows()
+BuildProjectUsingSibuserv()
 {
     [ -z "${MAIN_DIR}" ] && return 1
     [ -z "${PROJECT_DIR_NAME}" ] && return 1
@@ -252,6 +277,10 @@ CopyFinalResults()
             DIR_OUT="${ARCHIVE_DIR_NAME}_x86"
         elif [ "${TARGET}" = "x86_64-w64-mingw32.shared" ] ; then
             DIR_OUT="${ARCHIVE_DIR_NAME}_x86_64"
+        elif [ "${TARGET}" = "Ubuntu-14.04_i386_shared" ] ; then
+            DIR_OUT="${ARCHIVE_DIR_NAME}_i386/usr"
+        elif [ "${TARGET}" = "Ubuntu-14.04_amd64_shared" ] ; then
+            DIR_OUT="${ARCHIVE_DIR_NAME}_amd64/usr"
         else
             continue
         fi

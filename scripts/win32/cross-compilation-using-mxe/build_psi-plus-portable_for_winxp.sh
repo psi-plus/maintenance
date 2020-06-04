@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2017-07-14
-# Updated: 2020-05-15
+# Updated: 2020-06-03
 # Version: N/A
 #
 # Dependencies:
@@ -47,7 +47,7 @@ GetReadMe
 
 echo "Preparing to build..."
 PrepareSourcesTree
-PrepareToFirstBuild
+PrepareToFirstBuildForWindows
 CleanBuildDir
 cd "${MAIN_DIR}/${PROJECT_DIR_NAME}"
 sed -i "s|option( USE_QJDNS .*$|option( USE_QJDNS \"\" ON )|g" CMakeLists.txt
@@ -55,7 +55,7 @@ echo "Done."
 echo;
 
 echo "Building basic version of Psi+..."
-BuildProjectForWindows
+BuildProjectUsingSibuserv
 echo;
 
 echo "Preparing to the next step..."
@@ -64,7 +64,7 @@ echo "Done."
 echo;
 
 echo "Building webkit version of Psi+..."
-BuildProjectForWindows
+BuildProjectUsingSibuserv
 echo;
 
 echo "Copying libraries and resources to..."
