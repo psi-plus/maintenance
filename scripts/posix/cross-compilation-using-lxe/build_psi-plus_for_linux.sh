@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-05
+# Updated: 2020-06-06
 # Version: N/A
 #
 # Dependencies:
@@ -24,9 +24,6 @@ PROGRAM_NAME="psi-plus"
 PROJECT_DIR_NAME="psi-plus-snapshots"
 TRANSLATIONS_DIR_NAME="psi-plus-l10n"
 
-README_FILE_NAME="README.txt"
-README_URL="https://sourceforge.net/projects/psiplus/files/Linux/tehnick"
-
 BUILD_TARGETS="Ubuntu-14.04_i386_shared Ubuntu-14.04_amd64_shared"
 SUFFIX="linux"
 
@@ -46,8 +43,6 @@ echo;
 GetPsiPlusSources ${@}
 GetPsiPlusVersion ${@}
 GetPsiPlusTranslations ${@}
-GetMyspellDictionaries
-GetReadMe
 
 echo "Preparing to build..."
 PrepareSourcesTree

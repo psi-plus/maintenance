@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-05
+# Updated: 2020-06-06
 # Version: N/A
 #
 # Dependencies:
@@ -18,14 +18,11 @@ export MAIN_DIR="${HOME}/Tmp/Psi"
 CUR_DIR="$(dirname $(realpath -s ${0}))"
 . "${CUR_DIR}/downloads_library.sh"
 . "${CUR_DIR}/common_functions.sh"
-# . "${CUR_DIR}/dependencies_data.sh"
+. "${CUR_DIR}/dependencies_data.sh"
 
 PROGRAM_NAME="psi"
 PROJECT_DIR_NAME="psi"
 TRANSLATIONS_DIR_NAME="psi-l10n"
-
-README_FILE_NAME="README.txt"
-README_URL="https://sourceforge.net/projects/psiplus/files/Linux/tehnick"
 
 BUILD_TARGETS="Ubuntu-14.04_i386_shared Ubuntu-14.04_amd64_shared"
 SUFFIX="linux"
@@ -49,8 +46,6 @@ GetPluginsSources ${@}
 GetPsiTranslations ${@}
 [ "${BUILD_WITH_PSIMEDIA}" = "true" ] && \
     GetPsimediaSources
-GetMyspellDictionaries
-GetReadMe
 
 echo "Preparing to build..."
 PrepareSourcesTree
