@@ -17,8 +17,6 @@ INS_SUBDIR="-out/usr"
 LIBS="
     libbz2.so.1.0
     libbz2.so.1.0.6
-    libcc1.so.0
-    libcc1.so.0.0.0
     libcrypto.so.1.0.0
     libexpat.so.1
     libexpat.so.1.6.0
@@ -50,10 +48,6 @@ LIBS="
     libidn.so.11.6.11
     libjpeg.so.8
     libjpeg.so.8.3.0
-    libkms.so.1
-    libkms.so.1.0.0
-    libminiupnpc.so.2.0
-    libminiupnpc.so.16
     libminizip.so.1
     libminizip.so.1.0.0
     libotr.so.5
@@ -78,8 +72,6 @@ LIBS="
     libpng12.so.0.50.0
     libpng.so.3
     libpng.so.3.50.0
-    libpspell.so.15
-    libpspell.so.15.1.5
     libsignal-protocol-c.so.2
     libsignal-protocol-c.so.2.3.2
     libsqlite3.so.0
@@ -118,9 +110,6 @@ QT_LIBS="
     libQt5Gui.so.5
     libQt5Gui.so.5.12
     libQt5Gui.so.5.12.3
-    libQt5Help.so.5
-    libQt5Help.so.5.12
-    libQt5Help.so.5.12.3
     libQt5MultimediaQuick.so.5
     libQt5MultimediaQuick.so.5.12
     libQt5MultimediaQuick.so.5.12.3
@@ -166,9 +155,6 @@ QT_LIBS="
     libQt5Svg.so.5
     libQt5Svg.so.5.12
     libQt5Svg.so.5.12.3
-    libQt5Test.so.5
-    libQt5Test.so.5.12
-    libQt5Test.so.5.12.3
     libQt5WebChannel.so.5
     libQt5WebChannel.so.5.12
     libQt5WebChannel.so.5.12.3
@@ -250,7 +236,7 @@ export MAIN_DIR=\$(dirname \$(readlink -f "\${0}"))
 export PATH="\${MAIN_DIR}/usr/bin:\${PATH}"
 export LD_LIBRARY_PATH="\${MAIN_DIR}/usr/lib"
 
-\${MAIN_DIR}/usr/bin/${PROGRAM_NAME} \$@
+\${MAIN_DIR}/usr/bin/${PROGRAM_NAME}${PROGRAM_NAME_SUFFIX} \$@
 
 EOF
     chmod uog+x "${FILE}"
@@ -339,7 +325,7 @@ CopyLibsAndResources()
 
         DEST="./share/${PROGRAM_NAME}/translations"
         mkdir -p "${DEST}/"
-        rsync -a "${SYSROOT}/qt5/translations"/*.qm "${DEST}/"
+        rsync -a "${SYSROOT}/qt5/translations"/qt*.qm "${DEST}/"
 
         WriteQtConf
     done
@@ -357,5 +343,58 @@ WriteLaunchers()
         cd "${MAIN_DIR}/${DIR}"
         WriteAppRun
     done
+}
+
+PrepareAppImageDirs()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${PROGRAM_NAME}" ] && return 1
+    [ -z "${VERSION}" ] && return 1
+    [ -z "${SUFFIX}" ] && return 1
+
+    if [ "${PROGRAM_NAME}" = "psi-plus" ] ; then
+        PRETTY_PROGRAM_NAME="Psi+"
+    elif [ "${PROGRAM_NAME}" = "psi" ] ; then
+        PRETTY_PROGRAM_NAME="Psi"
+    else
+        echo "Unknown PROGRAM_NAME!"
+        return 1
+    fi
+    
+    PROGRAM_NAME_SUFFIX="-webkit"
+    ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}-webkit_${SUFFIX}"
+    CopyFinalResults
+    WriteLaunchers
+    # Clean up
+    cd "${MAIN_DIR}"
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/bin/psi-plus
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/psi-plus.desktop
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/psi-plus.png
+    
+    ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}_${SUFFIX}"
+    unset PROGRAM_NAME_SUFFIX
+    CopyFinalResults
+    WriteLaunchers
+    # Clean up
+    cd "${MAIN_DIR}"
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/bin/psi-plus-webkit
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/psi-plus-webkit.desktop
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/psi-plus-webkit.png
+    # Remove QtWebKit releated files
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5MultimediaQuick*
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5Qml*
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5Quick*
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5Sensors*
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5Web*
+    rm -rf "${ARCHIVE_DIR_NAME}"*/usr/lib/qt5/libexec
+}
+
+CompressAppImageDirs()
+{
+    ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}-webkit_${SUFFIX}"
+    CompressDirs
+
+    ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}_${SUFFIX}"
+    CompressDirs
 }
 

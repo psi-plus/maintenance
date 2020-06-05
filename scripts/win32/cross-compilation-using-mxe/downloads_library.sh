@@ -46,9 +46,9 @@ GetPsiSources()
     if [ -d "${MAIN_DIR}/${MOD}" ]; then
         echo "Updating ${MAIN_DIR}/${MOD}"
         cd "${MAIN_DIR}/${MOD}"
-        git checkout .
+        git checkout HEAD .
         git checkout master
-        git pull --all --prune -f
+        git pull --ff-only --all --prune -f
         git submodule init
         git submodule update
         echo;
@@ -79,9 +79,9 @@ GetPluginsSources()
     if [ -d "${MAIN_DIR}/${MOD}" ]; then
         echo "Updating ${MAIN_DIR}/${MOD}"
         cd "${MAIN_DIR}/${MOD}"
-        git checkout .
+        git checkout HEAD .
         git checkout master
-        git pull --all --prune -f
+        git pull --ff-only --all --prune -f
         echo;
     else
         echo "Creating ${MAIN_DIR}/${MOD}"
@@ -105,9 +105,9 @@ GetPsiPlusSources()
     if [ -d "${MAIN_DIR}/${MOD}" ]; then
         echo "Updating ${MAIN_DIR}/${MOD}"
         cd "${MAIN_DIR}/${MOD}"
-        git checkout .
+        git checkout HEAD .
         git checkout master
-        git pull --all --prune -f
+        git pull --ff-only --all --prune -f
         echo;
     else
         echo "Creating ${MAIN_DIR}/${MOD}"
@@ -132,9 +132,9 @@ GetPsiTranslations()
     if [ -d "${MAIN_DIR}/${MOD}" ]; then
         echo "Updating ${MAIN_DIR}/${MOD}"
         cd "${MAIN_DIR}/${MOD}"
-        git checkout .
+        git checkout HEAD .
         git checkout master
-        git pull --all --prune -f
+        git pull --ff-only --all --prune -f
         echo;
     else
         echo "Creating ${MAIN_DIR}/${MOD}"
@@ -158,9 +158,9 @@ GetPsiPlusTranslations()
     if [ -d "${MAIN_DIR}/${MOD}" ]; then
         echo "Updating ${MAIN_DIR}/${MOD}"
         cd "${MAIN_DIR}/${MOD}"
-        git checkout .
+        git checkout HEAD .
         git checkout master
-        git pull --all --prune -f
+        git pull --ff-only --all --prune -f
         echo;
     else
         echo "Creating ${MAIN_DIR}/${MOD}"
@@ -184,9 +184,9 @@ GetPsimediaSources()
     if [ -d "${MAIN_DIR}/${MOD}" ]; then
         echo "Updating ${MAIN_DIR}/${MOD}"
         cd "${MAIN_DIR}/${MOD}"
-        git checkout .
+        git checkout HEAD .
         git checkout master
-        git pull --all --prune -f
+        git pull --ff-only --all --prune -f
         echo;
     else
         echo "Creating ${MAIN_DIR}/${MOD}"

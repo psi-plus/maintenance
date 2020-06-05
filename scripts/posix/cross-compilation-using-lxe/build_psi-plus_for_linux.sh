@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-04
+# Updated: 2020-06-05
 # Version: N/A
 #
 # Dependencies:
@@ -78,13 +78,12 @@ CopyLibsAndResources
 echo;
 
 echo "Copying the results to main directory..."
-CopyFinalResults
-WriteLaunchers
+PrepareAppImageDirs
 echo "Done."
 echo;
 
 echo "Compressing directories into 7z archives..."
-CompressDirs
+CompressAppImageDirs
 echo "Done."
 echo;
 
