@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-04
+# Updated: 2020-06-07
 # Version: N/A
 #
 # Dependencies:
@@ -218,8 +218,8 @@ WriteQtConf()
     FILE="./bin/qt.conf"
     cat > "${FILE}" << EOF
 [Paths]
+Plugins=../lib/qt5/plugins
 LibraryExecutables=../lib/qt5/libexec
-Plugins = ../lib/qt5/plugins
 
 EOF
 }
@@ -235,6 +235,26 @@ WriteAppRun()
 export MAIN_DIR=\$(dirname \$(readlink -f "\${0}"))
 export PATH="\${MAIN_DIR}/usr/bin:\${PATH}"
 export LD_LIBRARY_PATH="\${MAIN_DIR}/usr/lib"
+export QT_PLUGIN_PATH="\${MAIN_DIR}/usr/lib/qt5/plugins"
+
+
+GetFullFileName()
+{
+    find "\${1}" -name '*libstdc++.so*' 2> /dev/null | \
+        grep "libstdc++\.so\.6\." | \
+        sed -ne "s|^.*\(libstdc++\.so\.6.*\)\$|\1|p" | \
+        sort -V | tail -n1
+}
+
+BUNDLED_LIBSTDCPP=\$(GetFullFileName "\${MAIN_DIR}/usr/lib")
+SYSTEM_LIBSTDCPP=\$(GetFullFileName /usr/lib*)
+NEWEST_LIBSTDCPP=\$(echo "\${BUNDLED_LIBSTDCPP}
+\${SYSTEM_LIBSTDCPP}" | sort -V | tail -n1)
+
+if [ "\${NEWEST_LIBSTDCPP}" = "\${BUNDLED_LIBSTDCPP}" ] ; then
+    export LD_LIBRARY_PATH="\${LD_LIBRARY_PATH}:\${MAIN_DIR}/usr/lib/gcc"
+fi
+
 
 \${MAIN_DIR}/usr/bin/${PROGRAM_NAME}${PROGRAM_NAME_SUFFIX} \$@
 
@@ -266,6 +286,19 @@ InstallToTmpDir()
     done
 }
 
+CopyLibs()
+{
+    [ -z "${LIB_DIR}" ] && return 1
+    [ -z "${DEST}" ] && return 1
+    [ -z "${1}" ] && return 1
+
+    mkdir -p "${DEST}/"
+    for LIB in ${@} ; do
+        rsync -a "${LIB_DIR}/${LIB}" "${DEST}/"
+    done
+    chrpath -d "${DEST}"/* 2> /dev/null || true
+}
+
 CopyLibsAndResources()
 {
     [ -z "${MAIN_DIR}" ] && return 1
@@ -282,12 +315,8 @@ CopyLibsAndResources()
         INST_DIR="${BUILD_DIR}/${TARGET}${INS_SUBDIR}"
         echo "${INST_DIR}"
         cd   "${INST_DIR}"
-        
-        SYSROOT="${LXE_DIR}/dist/${TARGET}/sysroot"
 
-        for LIB in ${LIBS} ; do
-            rsync -a "${SYSROOT}/usr/lib/${LIB}" ./lib/
-        done
+        SYSROOT="${LXE_DIR}/dist/${TARGET}/sysroot"
 
         if [ "${TARGET}" = "Ubuntu-14.04_i386_shared" ] ; then
             ARCH_SPEC_LIBS="${I586_LIBS}"
@@ -297,18 +326,17 @@ CopyLibsAndResources()
             continue
         fi
 
-        DEST="./lib"
-        for ARCH_SPEC_LIB in ${ARCH_SPEC_LIBS}
-        do
-            rsync -a "${SYSROOT}/usr/lib/${ARCH_SPEC_LIB}" "${DEST}/"
-        done
-        chrpath -d "${DEST}"/* 2> /dev/null || true
+        LIB_DIR="${SYSROOT}/usr/lib"
+        DEST="./lib/gcc"
+        CopyLibs ${ARCH_SPEC_LIBS}
 
+        LIB_DIR="${SYSROOT}/usr/lib"
         DEST="./lib"
-        for QT_LIB in ${QT_LIBS} ; do
-            rsync -a "${SYSROOT}/qt5/lib/${QT_LIB}" "${DEST}/"
-        done
-        chrpath -d "${DEST}"/* 2> /dev/null || true
+        CopyLibs ${LIBS}
+
+        LIB_DIR="${SYSROOT}/qt5/lib"
+        DEST="./lib"
+        CopyLibs ${QT_LIBS}
 
         DEST="./lib/qt5/libexec"
         mkdir -p "${DEST}/"
@@ -360,7 +388,7 @@ PrepareAppImageDirs()
         echo "Unknown PROGRAM_NAME!"
         return 1
     fi
-    
+
     PROGRAM_NAME_SUFFIX="-webkit"
     ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}-webkit_${SUFFIX}"
     CopyFinalResults
@@ -370,7 +398,7 @@ PrepareAppImageDirs()
     rm -f "${ARCHIVE_DIR_NAME}"*/usr/bin/psi-plus
     rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/psi-plus.desktop
     rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/psi-plus.png
-    
+
     ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}_${SUFFIX}"
     unset PROGRAM_NAME_SUFFIX
     CopyFinalResults
