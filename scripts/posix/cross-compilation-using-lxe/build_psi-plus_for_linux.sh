@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-06
+# Updated: 2020-06-08
 # Version: N/A
 #
 # Dependencies:
@@ -18,14 +18,14 @@ export MAIN_DIR="${HOME}/Tmp/Psi+"
 CUR_DIR="$(dirname $(realpath -s ${0}))"
 . "${CUR_DIR}/downloads_library.sh"
 . "${CUR_DIR}/common_functions.sh"
-. "${CUR_DIR}/dependencies_data.sh"
+. "${CUR_DIR}/linux_functions.sh"
 
 PROGRAM_NAME="psi-plus"
 PROJECT_DIR_NAME="psi-plus-snapshots"
 TRANSLATIONS_DIR_NAME="psi-plus-l10n"
 
 BUILD_TARGETS="Ubuntu-14.04_i386_shared Ubuntu-14.04_amd64_shared"
-SUFFIX="linux"
+SUFFIX=""
 
 BUILD_WITH_PSIMEDIA="false"
 
@@ -72,13 +72,13 @@ echo "Copying libraries and resources to..."
 CopyLibsAndResources
 echo;
 
-echo "Copying the results to main directory..."
-PrepareAppImageDirs
+echo "Preparing application directories..."
+PrepareAppDirs
 echo "Done."
 echo;
 
-echo "Compressing directories into 7z archives..."
-CompressAppImageDirs
+echo "Building AppImage files..."
+BuildAppImageFiles
 echo "Done."
 echo;
 

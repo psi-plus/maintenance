@@ -3,11 +3,13 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-07
+# Updated: 2020-06-08
 # Version: N/A
 #
 # Dependencies:
-# git, wget, curl, rsync, find, sed, p7zip
+# rsync, find, sed, appimagetool
+# Sibuserv: https://github.com/sibuserv/sibuserv
+# LXE: https://github.com/sibuserv/lxe/tree/hobby
 
 set -e
 
@@ -218,8 +220,10 @@ WriteQtConf()
     FILE="./bin/qt.conf"
     cat > "${FILE}" << EOF
 [Paths]
-Plugins=../lib/qt5/plugins
-LibraryExecutables=../lib/qt5/libexec
+Prefix = ../
+Libraries = lib
+LibraryExecutables = lib/qt5/libexec
+Plugins = lib/qt5/plugins
 
 EOF
 }
@@ -359,55 +363,87 @@ CopyLibsAndResources()
     done
 }
 
-WriteLaunchers()
+GetArchSuffix()
+{
+    [ -z "${1}" ] && return 1
+
+    if [ "${TARGET}" = "Ubuntu-14.04_i386_shared" ] ; then
+        echo "-i686"
+    elif [ "${TARGET}" = "Ubuntu-14.04_amd64_shared" ] ; then
+        echo "-x86_64"
+    else
+        return 1
+    fi
+}
+
+CopyAppDirFiles()
 {
     [ -z "${MAIN_DIR}" ] && return 1
     [ -z "${ARCHIVE_DIR_NAME}" ] && return 1
+    [ -z "${PROGRAM_NAME}" ] && return 1
 
-    cd "${MAIN_DIR}"
-    for DIR in ${ARCHIVE_DIR_NAME}* ; do
+    for TARGET in ${BUILD_TARGETS} ; do
+        ARCHITECTURE_SUFFIX="$(GetArchSuffix ${TARGET})"
+        DIR="${ARCHIVE_DIR_NAME}${ARCHITECTURE_SUFFIX}"
         [ ! -d "${MAIN_DIR}/${DIR}" ] && continue
 
+        echo "${DIR}"
         cd "${MAIN_DIR}/${DIR}"
+        cp -a usr/share/*/${PROGRAM_NAME}${PROGRAM_NAME_SUFFIX}.desktop ./
+        cp -a usr/share/*/${PROGRAM_NAME}${PROGRAM_NAME_SUFFIX}.png ./
+        cp -a ${PROGRAM_NAME}${PROGRAM_NAME_SUFFIX}.png .DirIcon
+        # Workaround for bug: https://github.com/AppImage/AppImageKit/issues/871
+        sed -i -E "s|Version=.*|Version=1.0|g" \
+            ${PROGRAM_NAME}${PROGRAM_NAME_SUFFIX}.desktop
+        # end
         WriteAppRun
     done
 }
 
-PrepareAppImageDirs()
+GetPrettyProgramName()
+{
+    [ -z "${PROGRAM_NAME}" ] && return 1
+
+    if [ "${PROGRAM_NAME}" = "psi-plus" ] ; then
+        echo "Psi+"
+    elif [ "${PROGRAM_NAME}" = "psi" ] ; then
+        echo "Psi"
+    else
+        return 1
+    fi
+}
+
+PrepareAppDirs()
 {
     [ -z "${MAIN_DIR}" ] && return 1
     [ -z "${PROGRAM_NAME}" ] && return 1
     [ -z "${VERSION}" ] && return 1
-    [ -z "${SUFFIX}" ] && return 1
 
-    if [ "${PROGRAM_NAME}" = "psi-plus" ] ; then
-        PRETTY_PROGRAM_NAME="Psi+"
-    elif [ "${PROGRAM_NAME}" = "psi" ] ; then
-        PRETTY_PROGRAM_NAME="Psi"
-    else
-        echo "Unknown PROGRAM_NAME!"
-        return 1
-    fi
+    PRETTY_PROGRAM_NAME="$(GetPrettyProgramName)"
+    [ -z "${PRETTY_PROGRAM_NAME}" ] && \
+        echo "Unknown PRETTY_PROGRAM_NAME!" && return 1
 
     PROGRAM_NAME_SUFFIX="-webkit"
-    ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}-webkit_${SUFFIX}"
+    ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}-webkit${SUFFIX}"
+    cd "${MAIN_DIR}" && rm -rf "${ARCHIVE_DIR_NAME}"
     CopyFinalResults
-    WriteLaunchers
+    CopyAppDirFiles
     # Clean up
     cd "${MAIN_DIR}"
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/bin/psi-plus
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/psi-plus.desktop
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/psi-plus.png
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/bin/${PROGRAM_NAME}
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/${PROGRAM_NAME}.desktop
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/${PROGRAM_NAME}.png
 
-    ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}_${SUFFIX}"
     unset PROGRAM_NAME_SUFFIX
+    ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}${SUFFIX}"
+    cd "${MAIN_DIR}" && rm -rf "${ARCHIVE_DIR_NAME}"
     CopyFinalResults
-    WriteLaunchers
+    CopyAppDirFiles
     # Clean up
     cd "${MAIN_DIR}"
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/bin/psi-plus-webkit
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/psi-plus-webkit.desktop
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/psi-plus-webkit.png
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/bin/${PROGRAM_NAME}-webkit
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/${PROGRAM_NAME}-webkit.desktop
+    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/${PROGRAM_NAME}-webkit.png
     # Remove QtWebKit releated files
     rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5MultimediaQuick*
     rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5Qml*
@@ -417,12 +453,24 @@ PrepareAppImageDirs()
     rm -rf "${ARCHIVE_DIR_NAME}"*/usr/lib/qt5/libexec
 }
 
-CompressAppImageDirs()
+BuildAppImageFiles()
 {
-    ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}-webkit_${SUFFIX}"
-    CompressDirs
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${ARCHIVE_DIR_NAME}" ] && return 1
+    [ -z "${ARCHIVER_OPTIONS}" ] && return 1
 
-    ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}_${SUFFIX}"
-    CompressDirs
+    PRETTY_PROGRAM_NAME="$(GetPrettyProgramName)"
+    [ -z "${PRETTY_PROGRAM_NAME}" ] && \
+        echo "Unknown PRETTY_PROGRAM_NAME!" && return 1
+
+    cd "${MAIN_DIR}"
+    rm -f "${PRETTY_PROGRAM_NAME}-${VERSION}"*.AppImage
+    for DIR in "${PRETTY_PROGRAM_NAME}-${VERSION}"* ; do
+        [ ! -d "${DIR}" ] && continue
+
+        echo "Creating: ${DIR}.AppImage"
+        # -s --comp
+        appimagetool -n "${DIR}" "${DIR}.AppImage" 2>&1 > appimagetool.log
+    done
 }
 

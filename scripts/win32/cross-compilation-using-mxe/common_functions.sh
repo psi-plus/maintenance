@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2020-06-05
+# Updated: 2020-06-08
 # Version: N/A
 #
 # Dependencies:
@@ -277,9 +277,9 @@ CopyFinalResults()
         elif [ "${TARGET}" = "x86_64-w64-mingw32.shared" ] ; then
             DIR_OUT="${ARCHIVE_DIR_NAME}_x86_64"
         elif [ "${TARGET}" = "Ubuntu-14.04_i386_shared" ] ; then
-            DIR_OUT="${ARCHIVE_DIR_NAME}_i386/usr"
+            DIR_OUT="${ARCHIVE_DIR_NAME}-i686/usr"
         elif [ "${TARGET}" = "Ubuntu-14.04_amd64_shared" ] ; then
-            DIR_OUT="${ARCHIVE_DIR_NAME}_amd64/usr"
+            DIR_OUT="${ARCHIVE_DIR_NAME}-x86_64/usr"
         else
             continue
         fi
