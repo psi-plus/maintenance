@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-08
+# Updated: 2020-06-09
 # Version: N/A
 #
 # Dependencies:
@@ -285,7 +285,6 @@ InstallToTmpDir()
               "usr/bin/"
         cp -a "usr/share/pixmaps/${PROGRAM_NAME}-webkit.png" \
               "usr/share/pixmaps/${PROGRAM_NAME}.png"
-        rm -r "usr/share/icons"
         chrpath -d "usr/bin"/* 2> /dev/null || true
     done
 }
