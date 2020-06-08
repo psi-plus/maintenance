@@ -400,6 +400,37 @@ CopyAppDirFiles()
     done
 }
 
+CleanUpAppDirs()
+{
+    [ -z "${MAIN_DIR}" ] && return 1
+    [ -z "${ARCHIVE_DIR_NAME}" ] && return 1
+    [ -z "${PROGRAM_NAME}" ] && return 1
+
+    for TARGET in ${BUILD_TARGETS} ; do
+        ARCHITECTURE_SUFFIX="$(GetArchSuffix ${TARGET})"
+        DIR="${ARCHIVE_DIR_NAME}${ARCHITECTURE_SUFFIX}"
+        [ ! -d "${MAIN_DIR}/${DIR}" ] && continue
+
+        cd "${MAIN_DIR}/${DIR}"
+        if [ "${PROGRAM_NAME_SUFFIX}" = "-webkit" ] ; then
+            rm -f usr/bin/${PROGRAM_NAME}
+            rm -f usr/share/*/${PROGRAM_NAME}.desktop
+            rm -f usr/share/*/${PROGRAM_NAME}.png
+        else
+            rm -f usr/bin/${PROGRAM_NAME}-webkit
+            rm -f usr/share/*/${PROGRAM_NAME}-webkit.desktop
+            rm -f usr/share/*/${PROGRAM_NAME}-webkit.png
+            # Remove QtWebKit releated files
+            rm -f usr/lib/libQt5MultimediaQuick*
+            rm -f usr/lib/libQt5Qml*
+            rm -f usr/lib/libQt5Quick*
+            rm -f usr/lib/libQt5Sensors*
+            rm -f usr/lib/libQt5Web*
+            rm -rf usr/lib/qt5/libexec
+        fi
+    done
+}
+
 GetPrettyProgramName()
 {
     [ -z "${PROGRAM_NAME}" ] && return 1
@@ -428,29 +459,14 @@ PrepareAppDirs()
     cd "${MAIN_DIR}" && rm -rf "${ARCHIVE_DIR_NAME}"
     CopyFinalResults
     CopyAppDirFiles
-    # Clean up
-    cd "${MAIN_DIR}"
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/bin/${PROGRAM_NAME}
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/${PROGRAM_NAME}.desktop
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/${PROGRAM_NAME}.png
+    CleanUpAppDirs
 
     unset PROGRAM_NAME_SUFFIX
     ARCHIVE_DIR_NAME="${PRETTY_PROGRAM_NAME}-${VERSION}${SUFFIX}"
     cd "${MAIN_DIR}" && rm -rf "${ARCHIVE_DIR_NAME}"
     CopyFinalResults
     CopyAppDirFiles
-    # Clean up
-    cd "${MAIN_DIR}"
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/bin/${PROGRAM_NAME}-webkit
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/${PROGRAM_NAME}-webkit.desktop
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/share/*/${PROGRAM_NAME}-webkit.png
-    # Remove QtWebKit releated files
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5MultimediaQuick*
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5Qml*
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5Quick*
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5Sensors*
-    rm -f "${ARCHIVE_DIR_NAME}"*/usr/lib/libQt5Web*
-    rm -rf "${ARCHIVE_DIR_NAME}"*/usr/lib/qt5/libexec
+    CleanUpAppDirs
 }
 
 BuildAppImageFiles()
@@ -469,8 +485,7 @@ BuildAppImageFiles()
         [ ! -d "${DIR}" ] && continue
 
         echo "Creating: ${DIR}.AppImage"
-        # -s --comp
-        appimagetool -n "${DIR}" "${DIR}.AppImage" 2>&1 > appimagetool.log
+        appimagetool "${DIR}" "${DIR}.AppImage" 2>&1 > appimagetool.log
     done
 }
 
