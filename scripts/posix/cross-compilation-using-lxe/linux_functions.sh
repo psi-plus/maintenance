@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-09
+# Updated: 2020-06-10
 # Version: N/A
 #
 # Dependencies:
@@ -81,6 +81,15 @@ LIBS="
     libssl.so.1.0.0
     libtidy.so.5
     libtidy.so.5.4.0
+    libxcb-xkb.so
+    libxcb-xkb.so.1
+    libxcb-xkb.so.1.0.0
+    libxkbcommon.so
+    libxkbcommon-x11.so
+    libxkbcommon-x11.so.0
+    libxkbcommon-x11.so.0.0.0
+    libxkbcommon.so.0
+    libxkbcommon.so.0.0.0
     libxml2.so.2
     libxml2.so.2.9.1
     libxslt.so.1
