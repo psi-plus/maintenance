@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-10
+# Updated: 2020-06-11
 # Version: N/A
 #
 # Dependencies:
@@ -20,8 +20,6 @@ LIBS="
     libbz2.so.1.0
     libbz2.so.1.0.6
     libcrypto.so.1.0.0
-    libexpat.so.1
-    libexpat.so.1.6.0
     libexslt.so.0
     libexslt.so.0.8.17
     libgcrypt.so.11
@@ -94,8 +92,6 @@ LIBS="
     libxml2.so.2.9.1
     libxslt.so.1
     libxslt.so.1.1.28
-    libz.so.1
-    libz.so.1.2.11
 "
 
 I586_LIBS="
