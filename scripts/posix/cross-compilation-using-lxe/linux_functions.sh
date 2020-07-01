@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-11
+# Updated: 2020-07-01
 # Version: N/A
 #
 # Dependencies:
@@ -476,8 +476,6 @@ PrepareAppDirs()
 BuildAppImageFiles()
 {
     [ -z "${MAIN_DIR}" ] && return 1
-    [ -z "${ARCHIVE_DIR_NAME}" ] && return 1
-    [ -z "${ARCHIVER_OPTIONS}" ] && return 1
 
     PRETTY_PROGRAM_NAME="$(GetPrettyProgramName)"
     [ -z "${PRETTY_PROGRAM_NAME}" ] && \

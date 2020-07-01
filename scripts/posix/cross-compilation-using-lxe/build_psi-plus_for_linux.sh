@@ -3,11 +3,11 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-08
+# Updated: 2020-07-01
 # Version: N/A
 #
 # Dependencies:
-# git, wget, curl, rsync, find, sed, p7zip
+# git, rsync, find, sed, appimagetool
 # Sibuserv: https://github.com/sibuserv/sibuserv
 # LXE: https://github.com/sibuserv/lxe/tree/hobby
 
