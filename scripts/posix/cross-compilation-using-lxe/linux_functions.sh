@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-07-01
+# Updated: 2020-07-29
 # Version: N/A
 #
 # Dependencies:
@@ -486,8 +486,19 @@ BuildAppImageFiles()
     for DIR in "${PRETTY_PROGRAM_NAME}-${VERSION}"* ; do
         [ ! -d "${DIR}" ] && continue
 
+        case "${DIR}" in
+        *x86_64*)
+            APPIMAGETOOL="appimagetool-x86_64.AppImage"
+        ;;
+        *i686*)
+            APPIMAGETOOL="appimagetool-i686.AppImage"
+        ;;
+        *)
+            APPIMAGETOOL="appimagetool"
+        esac
+
         echo "Creating: ${DIR}.AppImage"
-        appimagetool "${DIR}" "${DIR}.AppImage" 2>&1 > appimagetool.log
+        "${APPIMAGETOOL}" "${DIR}" "${DIR}.AppImage" 2>&1 > appimagetool.log
     done
 }
 
