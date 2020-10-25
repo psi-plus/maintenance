@@ -483,6 +483,10 @@ BuildAppImageFiles()
 
     cd "${MAIN_DIR}"
     rm -f "${PRETTY_PROGRAM_NAME}-${VERSION}"*.AppImage
+
+    # Workaround for https://github.com/AppImage/AppImageKit/issues/603
+    # APPIMAGETOOL_EXTRA_OPTIONS="--no-appstream"
+
     for DIR in "${PRETTY_PROGRAM_NAME}-${VERSION}"* ; do
         [ ! -d "${DIR}" ] && continue
 
@@ -498,7 +502,8 @@ BuildAppImageFiles()
         esac
 
         echo "Creating: ${DIR}.AppImage"
-        "${APPIMAGETOOL}" "${DIR}" "${DIR}.AppImage" 2>&1 > appimagetool.log
+        "${APPIMAGETOOL}" "${APPIMAGETOOL_EXTRA_OPTIONS}" \
+                          "${DIR}" "${DIR}.AppImage" 2>&1 > appimagetool.log
     done
 }
 
