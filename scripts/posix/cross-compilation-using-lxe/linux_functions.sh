@@ -486,6 +486,7 @@ BuildAppImageFiles()
 
     # Workaround for https://github.com/AppImage/AppImageKit/issues/603
     # APPIMAGETOOL_EXTRA_OPTIONS="--no-appstream"
+    APPIMAGETOOL_EXTRA_OPTIONS="--verbose"
 
     for DIR in "${PRETTY_PROGRAM_NAME}-${VERSION}"* ; do
         [ ! -d "${DIR}" ] && continue
@@ -504,6 +505,7 @@ BuildAppImageFiles()
         echo "Creating: ${DIR}.AppImage"
         "${APPIMAGETOOL}" "${APPIMAGETOOL_EXTRA_OPTIONS}" \
                           "${DIR}" "${DIR}.AppImage" 2>&1 > appimagetool.log
+        echo;
     done
 }
 
