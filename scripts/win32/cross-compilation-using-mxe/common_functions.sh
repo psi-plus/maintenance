@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2020-06-08
+# Updated: 2021-05-05
 # Version: N/A
 #
 # Dependencies:
@@ -179,9 +179,15 @@ PrepareToFirstBuildForLinux()
     sed -i -E "s|(option\( USE_KEYCHAIN .*) .+ (\).*)$|\1 OFF \2|g"       ${FILE}
     sed -i -E "s|(option\( LIMIT_X11_USAGE .*) .+ (\).*)$|\1 ON \2|g"     ${FILE}
     sed -i -E "s|(option\( VERBOSE_PROGRAM_NAME .*) .+ (\).*)$|\1 ON \2|g" ${FILE}
-    sed -i -E "s|(set\( CHAT_TYPE) .+ (CACHE STRING .*)$|\1 BASIC \2|g" ${FILE}
+    sed -i -E "s|(set\( CHAT_TYPE) .+ (CACHE STRING .*)$|\1 BASIC \2|g"   ${FILE}
+
+    sed -i -E "s|(option\( BUNDLED_QCA .*) .+ (\).*)$|\1 OFF \2|g"        ${FILE}
+    sed -i -E "s|(option\( BUNDLED_USRSCTP .*) .+ (\).*)$|\1 ON \2|g"     ${FILE}
 
     sed -i -E "s|(option\( BUILD_DEV_PLUGINS .*) .+ (\).*)$|\1 ON \2|g"   plugins/${FILE}
+
+    # Temporary workaround until library usrsctp is not packaged in LXE:
+    sed -i -E "s|(option\( JINGLE_SCTP .*) .+ (\).*)$|\1 OFF \2|g"        iris/${FILE}
 
     if [ "${BUILD_WITH_PSIMEDIA}" = "true" ] ; then
         sed -i -E "s|(option\( BUILD_PSIMEDIA .*) .+ (\).*)$|\1 ON \2|g"  ${FILE}
@@ -204,7 +210,10 @@ PrepareToFirstBuildForWindows()
     sed -i -E "s|(option\( USE_KEYCHAIN .*) .+ (\).*)$|\1 OFF \2|g"       ${FILE}
     sed -i -E "s|(option\( USE_MXE .*) .+ (\).*)$|\1 ON \2|g"             ${FILE}
     sed -i -E "s|(option\( VERBOSE_PROGRAM_NAME .*) .+ (\).*)$|\1 ON \2|g" ${FILE}
-    sed -i -E "s|(set\( CHAT_TYPE) .+ (CACHE STRING .*)$|\1 BASIC \2|g" ${FILE}
+    sed -i -E "s|(set\( CHAT_TYPE) .+ (CACHE STRING .*)$|\1 BASIC \2|g"   ${FILE}
+
+    sed -i -E "s|(option\( BUNDLED_QCA .*) .+ (\).*)$|\1 OFF \2|g"        ${FILE}
+    sed -i -E "s|(option\( BUNDLED_USRSCTP .*) .+ (\).*)$|\1 ON \2|g"     ${FILE}
 
     sed -i -E "s|(option\( BUILD_DEV_PLUGINS .*) .+ (\).*)$|\1 ON \2|g"   plugins/${FILE}
 
