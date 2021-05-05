@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-07-01
+# Updated: 2021-05-06
 # Version: N/A
 #
 # Dependencies:
@@ -43,6 +43,7 @@ echo;
 GetPsiPlusSources ${@}
 GetPsiPlusVersion ${@}
 GetPsiPlusTranslations ${@}
+GetMyspellDictionaries
 
 echo "Preparing to build..."
 PrepareSourcesTree

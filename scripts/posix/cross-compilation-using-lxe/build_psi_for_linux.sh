@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-06-08
+# Updated: 2021-05-06
 # Version: N/A
 #
 # Dependencies:
@@ -46,6 +46,7 @@ GetPluginsSources ${@}
 GetPsiTranslations ${@}
 [ "${BUILD_WITH_PSIMEDIA}" = "true" ] && \
     GetPsimediaSources
+GetMyspellDictionaries
 
 echo "Preparing to build..."
 PrepareSourcesTree
