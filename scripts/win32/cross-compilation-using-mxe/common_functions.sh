@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2018-12-19
-# Updated: 2021-05-05
+# Updated: 2021-05-07
 # Version: N/A
 #
 # Dependencies:
@@ -212,7 +212,7 @@ PrepareToFirstBuildForWindows()
     sed -i -E "s|(option\( VERBOSE_PROGRAM_NAME .*) .+ (\).*)$|\1 ON \2|g" ${FILE}
     sed -i -E "s|(set\( CHAT_TYPE) .+ (CACHE STRING .*)$|\1 BASIC \2|g"   ${FILE}
 
-    sed -i -E "s|(option\( BUNDLED_QCA .*) .+ (\).*)$|\1 OFF \2|g"        ${FILE}
+    sed -i -E "s|(option\( BUNDLED_QCA .*) .+ (\).*)$|\1 ON \2|g"         ${FILE}
     sed -i -E "s|(option\( BUNDLED_USRSCTP .*) .+ (\).*)$|\1 ON \2|g"     ${FILE}
 
     sed -i -E "s|(option\( BUILD_DEV_PLUGINS .*) .+ (\).*)$|\1 ON \2|g"   plugins/${FILE}
