@@ -3,7 +3,7 @@
 # Author:  Boris Pek <tehnick-8@yandex.ru>
 # License: MIT (Expat)
 # Created: 2020-06-03
-# Updated: 2020-07-29
+# Updated: 2021-07-17
 # Version: N/A
 #
 # Dependencies:
@@ -187,8 +187,6 @@ QT_LIBS="
     libQt5Xml.so.5
     libQt5Xml.so.5.12
     libQt5Xml.so.5.12.3
-    libqca-qt5.so.2
-    libqca-qt5.so.2.1.3
 "
 
 QT_LIBEXEC="
@@ -199,7 +197,6 @@ QT_LIBEXEC="
 
 QT_PLUGINS_DIRS="
     bearer
-    crypto
     generic
     iconengines
     imageformats
