@@ -49,6 +49,7 @@ DEF_CMAKE_INST_SUFFIX="share/psi+/plugins"
 #список плагинов для сборки через ";" (otrplugin;cleanerplugin и.т.д.)
 DEF_PLUG_LIST="ALL"
 #тип сборки плагинов
+#Release | Debug | RelWithDebInfo
 DEF_CMAKE_BUILD_TYPE="Release"
 #MXE PATH
 mxe_root=${githubdir}/mxe
@@ -246,12 +247,15 @@ patch_psi ()
 #Получение версии пси+
 get_psi_plus_version()
 {
-  local plus_tag=$(cd ${psiplus_src} && git describe --tags | cut -d - -f1)
-  local psi_num=$("${upstream_src}/admin/git_revnumber.sh" "${plus_tag}")
-  local plus_num=$(cd ${psiplus_src} && git describe --tags | cut -d - -f2)
-  local sum_commit=$(expr ${psi_num} + ${plus_num})
-  psi_package_version="${plus_tag}.${sum_commit}"
-  psi_plus_version=$(${psiplus_src}/admin/psi-plus-nightly-version ${upstream_src})
+  local psi_tag=$(cd ${upstream_src} ; git describe --tags | cut -d - -f1)
+  local psi_num=$("${upstream_src}/admin/git_revnumber.sh" "${psi_tag}")
+  local psi_rev=$(cd ${upstream_src} ; git rev-parse --short HEAD)
+  local sum_commit=${psi_num}
+  local rev_date_list=$(cd ${upstream_src} ; git log -n1 --date=short --pretty=format:'%ad')
+  local rev_date=$(echo "${rev_date_list}" | sort -r | head -n1)
+  psi_package_version="${psi_tag}.${sum_commit}"
+  psi_plus_version="${psi_tag}.${sum_commit} (${rev_date}, ${psi_rev})"
+
   echo "SHORT_VERSION = $psi_package_version"
   echo "LONG_VERSION = $psi_plus_version"
 }
@@ -375,7 +379,7 @@ compile_psiplus ()
   echo "***Build started***">${buildlog}
   prepare_builddir ${builddir}
   cd ${builddir}
-  flags="-DPSI_PLUS=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DPSI_LIBDIR=${buildpsi}/build-plugins"
+  flags="-DPSI_PLUS=ON -DBUNDLED_QCA=ON -DBUNDLED_USRSCTP=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DPSI_LIBDIR=${buildpsi}/build-plugins"
   if [ ! -z "$1" ]; then
     flags="${flags} -DCMAKE_INSTALL_PREFIX=$1"
   else
@@ -407,13 +411,15 @@ compile_psiplus ()
 install_pp_to_home ()
 {
   curd=$(pwd)
-  prepare_src
+  if [ ! -d "${workdir}" ]; then
+    prepare_src
+  fi
   cd ${workdir}
   local buildlog=${buildpsi}/build.log
   echo "***Build started***">${buildlog}
   prepare_builddir ${builddir}
   cd ${builddir}
-  flags="-DPSI_PLUS=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DVERBOSE_PROGRAM_NAME=ON -DCMAKE_INSTALL_PREFIX=${home}/build/psi-plus -DPSI_LIBDIR=${home}/build/psi-plus/lib/psi-plus"
+  flags="-DPSI_PLUS=ON -DBUNDLED_QCA=ON -DBUNDLED_USRSCTP=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DVERBOSE_PROGRAM_NAME=ON -DCMAKE_INSTALL_PREFIX=${home}/build/psi-plus"
   if [ -z "${iswebkit}" ]; then
     flags="${flags} -DCHAT_TYPE=basic"
   else
@@ -444,7 +450,7 @@ build_all_psiplus ()
   echo "***Build started***">${buildlog}
   prepare_builddir ${builddir}
   cd ${builddir}
-  flags="-DPSI_PLUS=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DENABLE_PLUGINS=ON -DDEV_MODE=ON -DBUILD_DEV_PLUGINS=ON"
+  flags="-DPSI_PLUS=ON -DBUNDLED_QCA=ON -DBUNDLED_USRSCTP=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DENABLE_PLUGINS=ON -DDEV_MODE=ON -DBUILD_DEV_PLUGINS=ON"
   if [ -z "${iswebkit}" ]; then
     flags="${flags} -DCHAT_TYPE=basic"
   else
@@ -686,6 +692,7 @@ run_mxe_cmake_64()
 #Кросс-компиляция при помощи МХЕ
 compile_psi_mxe()
 {
+  local buildlog=${buildpsi}/build-mxe-${1}.log
   curd=$(pwd)
   flags=""
   if [ ! -d "${workdir}" ]; then
@@ -710,16 +717,16 @@ compile_psi_mxe()
   else
     flags="${flags} -DCHAT_TYPE=webkit"
   fi
-  flags="${flags} -DPSI_PLUS=ON -DUSE_CCACHE=ON -DVERBOSE_PROGRAM_NAME=ON"
+  flags="${flags} -DPSI_PLUS=ON -DBUNDLED_QCA=ON -DBUNDLED_USRSCTP=ON -DUSE_CCACHE=ON -DVERBOSE_PROGRAM_NAME=ON -DBUNDLED_QCA=ON"
   wrkdir=${builddir}
   check_dir ${wrkdir}
   cd ${wrkdir}
   echo "--Starting cmake
   ${cmakecmd} ${flags} ${workdir}"
-  ${cmakecmd} ${flags} ${workdir}
+  ${cmakecmd} ${flags} ${workdir} > ${buildlog}
   echo 
   #echo "Press Enter to continue..." && read tmpvar
-  ${cmakecmd} --build . --target all -- -j${cpu_count}
+  ${cmakecmd} --build . --target all -- -j${cpu_count} 2>>${buildlog}
   if [ ${devm} -eq 1 ]; then
     ${cmakecmd} --build . --target prepare-bin -- #copy default iconsets skins and themes
     ${cmakecmd} --build . --target prepare-bin-libs -- #copy dependencies
@@ -775,7 +782,7 @@ archivate_all()
 #Список зависимостей
 check_qt_deps()
 {
-	check_deps "cmake libhunspell-dev libhttp-parser-dev libidn11-dev libminizip-dev libotr5-dev libqca-qt5-2-dev libqt5svg5-dev libqt5webkit5-dev libqt5x11extras5-dev libsignal-protocol-c-dev libsm-dev libssl-dev libtidy-dev libxss-dev qt5keychain-dev qtmultimedia5-dev zlib1g-dev qtmultimedia5-dev libqt5multimedia5-plugins qtbase5-dev qttools5-dev qttools5-dev-tools pkg-config libqt5x11extras5-dev"
+	check_deps "cmake libhunspell-dev libhttp-parser-dev libminizip-dev libotr5-dev libqt5svg5-dev libqt5webkit5-dev libqt5x11extras5-dev libsignal-protocol-c-dev libsm-dev libssl-dev libtidy-dev libxss-dev qt5keychain-dev qtmultimedia5-dev zlib1g-dev qtmultimedia5-dev libqt5multimedia5-plugins qtbase5-dev qttools5-dev qttools5-dev-tools pkg-config libqt5x11extras5-dev"
 }
 #Проверка зависимостей в Ubuntu
 check_deps()
