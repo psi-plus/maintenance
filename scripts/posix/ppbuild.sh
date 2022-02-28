@@ -10,11 +10,12 @@ plugins_url="https://github.com/psi-im/plugins.git"
 langs_url="https://github.com/psi-plus/psi-plus-l10n.git"
 snapshots_url="https://github.com/psi-plus/psi-plus-snapshots.git"
 psimedia_url="https://github.com/psi-im/psimedia.git"
+resources_url="https://github.com/psi-im/resources.git"
 def_prefix="/usr" #префикс для сборки пси+
 #
 #DEFAULT OPTIONS/ОПЦИИ ПО УМОЛЧАНИЮ
-spell_flag="-DUSE_ENCHANT=OFF -DUSE_HUNSPELL=ON"
-spellchek_engine="hunspell"
+spell_flag="-DUSE_ENCHANT=OFF -DUSE_HUNSPELL=ON -DUSE_ASPELL=OFF"
+spellchek_engine="hunspell" #enchant, aspell
 chat_type="webengine" #webkit, basic, webengine
 iswebkit=""
 isoffline=0
@@ -57,7 +58,8 @@ mxe_root=${githubdir}/mxe
 i686_mxe_prefix=${mxe_root}/usr/i686-w64-mingw32.shared
 x86_64_mxe_prefix=${mxe_root}/usr/x86_64-w64-mingw32.shared
 OLDPATH=${PATH}
-
+#default cmake FLAGS
+DEF_CMAKE_FLAGS="-DBUNDLED_QCA=ON -DBUNDLED_USRSCTP=ON"
 
 #WARNING: следующие переменные будут изменены в процессе работы скрипта автоматически
 buildpsi=${default_buildpsi} #инициализация переменной
@@ -126,6 +128,7 @@ fetch_all ()
     fetch_url ${plugins_url} ${buildpsi}/plugins
     fetch_url ${langs_url} ${buildpsi}/langs
     fetch_url ${psimedia_url} ${buildpsi}/psimedia
+    fetch_url ${resources_url} ${buildpsi}/resources
   fi
 }
 #Скачивание снапшотов
@@ -182,7 +185,10 @@ update_variables ()
   patches=${buildpsi}/psi-plus/patches
   inst_path=${buildpsi}/${inst_suffix}
   if [ "${spellchek_engine}" == "enchant" ]; then
-    spell_flag="-DUSE_ENCHANT=ON -DUSE_HUNSPELL=OFF"
+    spell_flag="-DUSE_ENCHANT=ON -DUSE_HUNSPELL=OFF -DUSE_ASPELL=OFF"
+  else if [ "${spellchek_engine}" == "aspell" ]; then
+      spell_flag="-DUSE_ENCHANT=OFF -DUSE_HUNSPELL=OFF -DUSE_ASPELL=ON"
+    fi
   fi
 }
 #Выход с ошибкой
@@ -203,6 +209,7 @@ down_all ()
   check_dir ${psiplus_src}
   check_dir ${buildpsi}/plugins
   check_dir ${buildpsi}/langs
+  check_dir ${buildpsi}/resources
   fetch_all
 }
 #Имя системы
@@ -287,12 +294,17 @@ prepare_workspace ()
   check_dir ${workdir}
   cd ${upstream_src}
   prepare_psi_src ${workdir}
-  cd ${buildpsi}/plugins
-  prepare_psi_src ${workdir}/plugins
+  cd ${buildpsi}/plugins && prepare_psi_src ${workdir}/plugins
   check_dir ${workdir}/plugins/generic/psimedia
   cd ${buildpsi}/psimedia && prepare_psi_src ${workdir}/plugins/generic/psimedia
   check_dir ${workdir}/translations
-  cp -a ${buildpsi}/langs/translations/*.ts ${workdir}/translations/
+  if [ -d "${buildpsi}/langs/translations" ]; then
+    cp -a ${buildpsi}/langs/translations/*.ts ${workdir}/translations/
+  fi
+  if [ -d "${buildpsi}/resources/skins" ]; then
+    check_dir ${workdir}/skins
+    cp -a ${buildpsi}/resources/skins/* ${workdir}/skins/
+  fi
   cd ${workdir}
   patch_psi
   get_psi_plus_version
@@ -315,7 +327,9 @@ prepare_snapshots_workspace ()
   cd ${snapshots_src}
   prepare_psi_src ${workdir}
   check_dir ${workdir}/translations
-  cp -a ${buildpsi}/langs/translations/*.ts ${workdir}/translations/
+  if [ -d "${buildpsi}/langs/translations" ]; then
+    cp -a ${buildpsi}/langs/translations/*.ts ${workdir}/translations/
+  fi
   cd ${workdir}
 }
 
@@ -356,7 +370,7 @@ prepare_tar ()
   local tar_name=psi-plus-${psi_package_version}
   local new_src=${buildpsi}/${tar_name}
   cp -r ${workdir} ${new_src}
-  if [ -d ${new_src} ]; then
+  if [ -d "${new_src}" ]; then
     cd ${buildpsi}
     tar -czf ${tar_name}.tar.gz ${tar_name}
     rm -r -f ${new_src}
@@ -379,7 +393,7 @@ compile_psiplus ()
   echo "***Build started***">${buildlog}
   prepare_builddir ${builddir}
   cd ${builddir}
-  flags="-DPSI_PLUS=ON -DBUNDLED_QCA=ON -DBUNDLED_USRSCTP=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DPSI_LIBDIR=${buildpsi}/build-plugins"
+  flags="-DPSI_PLUS=ON ${DEF_CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DPSI_LIBDIR=${buildpsi}/build-plugins"
   if [ ! -z "$1" ]; then
     flags="${flags} -DCMAKE_INSTALL_PREFIX=$1"
   else
@@ -397,8 +411,8 @@ compile_psiplus ()
   fi
   echo "--Starting cmake 
   cmake ${flags} ${cbuild_path}">>${buildlog}
-  cmake ${flags} ${cbuild_path}
-  echo "--Starting psi-plus compilation">>${buildlog}
+  cmake ${flags} ${cbuild_path} &&
+  echo "--Starting psi-plus compilation">>${buildlog} &&
   cmake --build . --target all -- -j${cpu_count} 2>>${buildlog} || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
   echo "***Build finished***">>${buildlog}
   if [ -z "$1" ]; then
@@ -419,7 +433,7 @@ install_pp_to_home ()
   echo "***Build started***">${buildlog}
   prepare_builddir ${builddir}
   cd ${builddir}
-  flags="-DPSI_PLUS=ON -DBUNDLED_QCA=ON -DBUNDLED_USRSCTP=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DVERBOSE_PROGRAM_NAME=ON -DCMAKE_INSTALL_PREFIX=${home}/build/psi-plus"
+  flags="-DPSI_PLUS=ON ${DEF_CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DVERBOSE_PROGRAM_NAME=ON -DCMAKE_INSTALL_PREFIX=${home}/build/psi-plus"
   if [ -z "${iswebkit}" ]; then
     flags="${flags} -DCHAT_TYPE=basic"
   else
@@ -429,11 +443,11 @@ install_pp_to_home ()
   cbuild_path=${workdir}
   echo "--Starting cmake 
   cmake ${flags} ${cbuild_path}">>${buildlog}
-  cmake ${flags} ${cbuild_path}
-  echo "--Starting psi-plus compilation">>${buildlog}
-  cmake --build . --target all -- -j${cpu_count} 2>>${buildlog} || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
-  echo "***Build finished***">>${buildlog}
-  cmake --build . --target install
+  cmake ${flags} ${cbuild_path} &&
+  echo "--Starting psi-plus compilation">>${buildlog} &&
+  cmake --build . --target all -- -j${cpu_count} 2>>${buildlog} &&
+  echo "***Build finished***">>${buildlog} &&
+  cmake --build . --target install || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}" 
   #if [ -d "${home}/build/psi" ]; then
   #  rm -rf ${home}/build/psi
   #fi
@@ -450,7 +464,7 @@ build_all_psiplus ()
   echo "***Build started***">${buildlog}
   prepare_builddir ${builddir}
   cd ${builddir}
-  flags="-DPSI_PLUS=ON -DBUNDLED_QCA=ON -DBUNDLED_USRSCTP=ON -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DENABLE_PLUGINS=ON -DDEV_MODE=ON -DBUILD_DEV_PLUGINS=ON"
+  flags="-DPSI_PLUS=ON ${DEF_CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DENABLE_PLUGINS=ON -DDEV_MODE=ON -DBUILD_DEV_PLUGINS=ON"
   if [ -z "${iswebkit}" ]; then
     flags="${flags} -DCHAT_TYPE=basic"
   else
@@ -461,11 +475,11 @@ build_all_psiplus ()
   cbuild_path=${workdir}
   echo "--Starting cmake 
   cmake ${flags} ${cbuild_path}">>${buildlog}
-  cmake ${flags} ${cbuild_path}
-  echo "--Starting psi-plus compilation">>${buildlog}
-  cmake --build . --target all -- -j${cpu_count} 2>>${buildlog} || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
-  echo "***Build finished***">>${buildlog}
-  cmake --build . --target prepare-bin
+  cmake ${flags} ${cbuild_path} &&
+  echo "--Starting psi-plus compilation">>${buildlog} &&
+  cmake --build . --target all -- -j${cpu_count} 2>>${buildlog} &&
+  echo "***Build finished***">>${buildlog} &&
+  cmake --build . --target prepare-bin || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
   echo "Psi+ compiled at ${builddir}">>${buildlog}
   cd ${curd}
 }
@@ -481,7 +495,7 @@ build_cmake_plugins ()
     echo " "
   }
   curd=$(pwd)
-  if [ ! -f "${upstream_src}/psi.pro" ]; then
+  if [ ! -f "${upstream_src}/CMakeLists.txt" ]; then
     prepare_src
   fi
   local plugdir=${buildpsi}/plugins
@@ -500,8 +514,8 @@ build_cmake_plugins ()
     p_inst_path=${pl_preffix}/${pl_suffix}
   fi  
   echo " "; echo "Build psi+ plugins using CMAKE started..."; echo " "
-  cmake ${plug_cmake_flags} ${plugdir}
-  cmake --build . --target all -- -j${cpu_count} && echo_done
+  cmake ${plug_cmake_flags} ${plugdir} &&
+  cmake --build . --target all -- -j${cpu_count} && echo_done || die
   if [ "${isinstall}" == "y" ]; then
     cmake --build . --target install && echo_done
   fi
@@ -571,7 +585,9 @@ install_resources ()
   if [ ! -d "resources" ]; then
     get_resources
   fi
-  cp -rf ${buildpsi}/resources/* ${psi_datadir}/
+  if [ -d "${buildpsi}/resources" ]; then
+    cp -rf ${buildpsi}/resources/* ${psi_datadir}/
+  fi
 }
 #Установка иконок из репы ресурсов в домашний каталог
 install_iconsets ()
@@ -580,15 +596,17 @@ install_iconsets ()
   check_dir ${psi_datadir}
   if [ -d "resources" ]; then
     get_resources
-  fi  
-  cp -rf ${buildpsi}/resources/iconsets ${psi_datadir}/
+  fi
+  if [ -d "${buildpsi}/resources/iconsets" ]; then
+    cp -rf ${buildpsi}/resources/iconsets ${psi_datadir}/
+  fi
 }
 #Установка скинов из репы ресурсов в домашний каталог
 install_skins ()
 {
   cd ${buildpsi}
   check_dir ${psi_datadir}
-  if [ -d "resources" ]; then
+  if [ -d "${buildpsi}/resources/skins" ]; then
     cp -rf ${buildpsi}/resources/skins ${psi_datadir}/
   else
     get_resources
@@ -600,7 +618,7 @@ install_sounds ()
 {
   cd ${buildpsi}
   check_dir ${psi_datadir}
-  if [ -d "resources" ]; then
+  if [ -d "${buildpsi}/resources/sound" ]; then
     cp -rf ${buildpsi}/resources/sound ${psi_datadir}/
   else
     get_resources
@@ -612,7 +630,7 @@ install_themes ()
 {
   cd ${buildpsi}
   check_dir ${psi_datadir}
-  if [ -d "resources" ]; then
+  if [ -d "${buildpsi}/resources/themes" ]; then
     cp -rf ${buildpsi}/resources/themes ${psi_datadir}/
   else
     get_resources
@@ -644,7 +662,9 @@ install_locales ()
   local tr_path=${buildpsi}/langs/translations
   build_locales
   check_dir ${psi_datadir}
-  cp -rf ${tr_path}/*.qm ${psi_datadir}/
+  if [ -d "${tr_path}" ]; then
+    cp -rf ${tr_path}/*.qm ${psi_datadir}/
+  fi
 }
 #Запуск собранной версии
 run_psiplus ()
@@ -717,16 +737,16 @@ compile_psi_mxe()
   else
     flags="${flags} -DCHAT_TYPE=webkit"
   fi
-  flags="${flags} -DPSI_PLUS=ON -DBUNDLED_QCA=ON -DBUNDLED_USRSCTP=ON -DUSE_CCACHE=ON -DVERBOSE_PROGRAM_NAME=ON -DBUNDLED_QCA=ON"
+  flags="${flags} -DPSI_PLUS=ON ${DEF_CMAKE_FLAGS} -DUSE_CCACHE=ON -DVERBOSE_PROGRAM_NAME=ON -DPLUGINS_NO_DEBUG=ON"
   wrkdir=${builddir}
   check_dir ${wrkdir}
   cd ${wrkdir}
   echo "--Starting cmake
   ${cmakecmd} ${flags} ${workdir}"
-  ${cmakecmd} ${flags} ${workdir} > ${buildlog}
-  echo 
+  ${cmakecmd} ${flags} ${workdir} > ${buildlog} &&
+  echo &&
   #echo "Press Enter to continue..." && read tmpvar
-  ${cmakecmd} --build . --target all -- -j${cpu_count} 2>>${buildlog}
+  ${cmakecmd} --build . --target all -- -j${cpu_count} 2>>${buildlog} || die
   if [ ${devm} -eq 1 ]; then
     ${cmakecmd} --build . --target prepare-bin -- #copy default iconsets skins and themes
     ${cmakecmd} --build . --target prepare-bin-libs -- #copy dependencies
@@ -736,8 +756,15 @@ compile_psi_mxe()
   fi
   check_dir ${mxe_outd}/$1
   cp -rf ${wrkdir}/psi/*  ${mxe_outd}/$1/
-  cp -a ${wrkdir}/psi/translations ${mxe_outd}/$1/
-  cp -rf ${buildpsi}/mxe_prepare/* ${mxe_outd}/$1/
+  if [ -d "${wrkdir}/psi/translations" ]; then
+    cp -a ${wrkdir}/psi/translations ${mxe_outd}/$1/
+  fi
+  if [ -d "${wrkdir}/psi/skins" ]; then
+    cp -a ${wrkdir}/psi/skins ${mxe_outd}/$1/
+  fi
+  if [ -d "${buildpsi}/mxe_prepare" ]; then
+    cp -rf ${buildpsi}/mxe_prepare/* ${mxe_outd}/$1/
+  fi
   cd ${curd}
   if [ ! -z "${OLDPATH}" ]; then
     PATH=${OLDPATH}
@@ -776,8 +803,11 @@ archivate_all()
 {
   wbk_suff="all-"
   mxe_outd=${tmp_dir}/mxe_builds
-  7z a -mx=9 -m0=LZMA -mmt=on -xr!*.a ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${mxe_outd}/$1/*
-  cp -r ${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z ${buildpsi}/mxe_builds/
+  out_pkg_name="${mxe_outd}/psi-plus-${wbk_suff}${psi_package_version}-$1.7z"
+  7z a -mx=9 -m0=LZMA -mmt=on -xr!*.a ${out_pkg_name} ${mxe_outd}/$1/*
+  if [ -f "${out_pkg_name}" ]; then
+    cp -r ${out_pkg_name} ${buildpsi}/mxe_builds/
+  fi
 }
 #Список зависимостей
 check_qt_deps()
@@ -836,7 +866,7 @@ set_config ()
 --${pink}[0]${nocolor} - Do nothing"
     read deistvo
     case ${deistvo} in
-      "1" ) echo -e "Do you want use WebKit ${pink}[y/n]${nocolor} ?"
+      "1" ) echo -e "Do you want use WebKit/Webengine ${pink}[y/n]${nocolor} ?"
             read variable
             if [ "$variable" == "y" ]; then
               iswebkit="--enable-webkit"
@@ -873,6 +903,7 @@ set_config ()
       "5" ) echo -e "Please set spellcheck engine for psi+. Available values:${pink}
 hunspell
 enchant
+aspell
 ${nocolor} ?"
             read variable
             if [ ! -z "$variable" ]; then
@@ -977,6 +1008,8 @@ choose_action ()
     "pw" ) prepare_workspace;;
     "dp" ) debug_psi;;
     "bam" ) build_all_mxe;;
+    "b32" ) build_i686_mxe;;
+    "b64" ) build_x86_64_mxe;;
     "cd" ) check_qt_deps;;
     "51" ) install_pp_to_home;;
     "0" ) quit;;
