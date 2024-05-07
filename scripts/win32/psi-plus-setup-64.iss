@@ -1,4 +1,5 @@
-﻿[Components]
+﻿;
+[Components]
 Name: "bin64"; Description: "Psi+"; Types: full compact custom; Flags: exclusive
 Name: "bin64w"; Description: "Psi+ WebEngine"; Types: full compact custom; Flags: exclusive
 Name: "common"; Description: "Psi+ common files"; Types: full custom compact; Flags: fixed
@@ -24,12 +25,13 @@ Name: "plugins\jabberdiskplugin"; Description: "Jabber Disk plugin"; Types: full
 Name: "plugins\juickplugin"; Description: "Juick plugin"; Types: full
 Name: "plugins\mediaplugin"; Description: "PsiMedia plugin"; Types: full compact
 Name: "plugins\messagefilterplugin"; Description: "Message Filter plugin"; Types: full
+Name: "plugins\noughtsandcrossesplugin"; Description: "Noughts And Crosses plugin"; Types: full
 Name: "plugins\omemoplugin"; Description: "OMEMO plugin"; Types: full
 Name: "plugins\openpgpplugin"; Description: "OpenPGP plugin"; Types: full
 Name: "plugins\otrplugin"; Description: "OTR plugin"; Types: full
 Name: "plugins\pepchangenotifyplugin"; Description: "PEP Change Notify plugin"; Types: full
 Name: "plugins\qipxstatusesplugin"; Description: "Qip X-Statuses plugin"; Types: full
-Name: "plugins\screenshotplugin"; Description: "Screenshot plugin"; Types: full
+Name: "plugins\skinsplugin"; Description: "Skins plugin"; Types: full
 Name: "plugins\stopspamplugin"; Description: "Stop Spam plugin"; Types: full
 Name: "plugins\storagenotesplugin"; Description: "Storage Notes plugin"; Types: full
 Name: "plugins\translateplugin"; Description: "Translate plugin"; Types: full
@@ -106,8 +108,9 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 #define WorkDir "C:\build\Installer"
 #define ResDir "C:\build\resources"
 #define PsiPSrcDir "C:\build\psi-plus-snapshots"
-#define AppVer GetFileVersion("C:\build\Installer\bin64-qt5\psi-plus.exe")
+#define AppVer GetFileVersion("C:\build\Installer\bin64\psi-plus.exe")
 #define CurrYear GetDateTimeString('yyyy', '', '')
+#define PluginsPrefix "plugins64"
 AppName=Psi+
 AppVersion={#AppVer}-x64
 AppCopyright=© 2008-{#CurrYear} Psi+ Project
@@ -127,15 +130,15 @@ OutputDir={#WorkDir}
 OutputBaseFilename=psi-plus-{#AppVer}-x64-setup
 Compression=lzma2/ultra64
 InternalCompressLevel=ultra64
-DefaultDirName={pf}\Psi-plus
+DefaultDirName={commonpf}\Psi-plus
 ArchitecturesAllowed=x64 ia64
 UninstallDisplayName=Psi+ {#AppVer}
 DefaultGroupName=Psi+ (x64)
 AppSupportURL=https://github.com/psi-plus/main/issues
-AppUpdatesURL=https://drive.google.com/drive/folders/0B_6HeEGc8_zqNUZxSzgyaVpMcmM?resourcekey=0-1EEjvrBB8y9BoDfOzQ2Shw&usp=sharingd
+AppUpdatesURL=https://sourceforge.net/projects/psiplus/files/Windows/Personal-Builds/KukuRuzo/
 UninstallDisplayIcon={app}\{#MyAppExeName}
 ArchitecturesInstallIn64BitMode=x64 ia64
-MinVersion=0,6.1
+MinVersion=0,6.1sp1
 DisableProgramGroupPage=auto
 PrivilegesRequired=poweruser
 UsePreviousGroup=False
@@ -156,15 +159,16 @@ SetupLogging=True
 Source: "{#PsiPSrcDir}\certs\*"; DestDir: "{app}\certs"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
 Source: "{#PsiPSrcDir}\iconsets\roster\*.jisp"; DestDir: "{app}\iconsets\roster"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
 Source: "{#PsiPSrcDir}\sound\*"; DestDir: "{app}\sound"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
-Source: "{#PsiPSrcDir}\skins\*"; DestDir: "{app}\skins"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
+;Source: "{#PsiPSrcDir}\skins\*"; DestDir: "{app}\skins"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
+Source: "{#ResDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common; Excludes: "iconsets, *skins\mac, sounds"
 Source: "{#PsiPSrcDir}\client_icons.txt"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
 Source: "{#PsiPSrcDir}\CHANGELOG"; DestDir: "{app}"; DestName: "CHANGELOG.TXT"; Flags: ignoreversion skipifsourcedoesntexist; Components: common
-Source: "{#WorkDir}\translations-64-qt5\*"; DestDir: "{app}\translations"; Flags: ignoreversion recursesubdirs; Components: common
-Source: "{#WorkDir}\lib64-qt5\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: common
-Source: "{#WorkDir}\psimedia-qt5\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: plugins\mediaplugin
-Source: "{#WorkDir}\webengine64-qt5\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: bin64w
-Source: "{#WorkDir}\bin64-qt5\psi-plus.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin64
-Source: "{#WorkDir}\bin64-w-qt5\psi-plus.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin64w
+Source: "{#WorkDir}\translations64\*"; DestDir: "{app}\translations"; Flags: ignoreversion recursesubdirs; Components: common
+Source: "{#WorkDir}\lib64\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: common
+Source: "{#WorkDir}\psimedia\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: plugins\mediaplugin
+Source: "{#WorkDir}\webengine64\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: bin64w
+Source: "{#WorkDir}\bin64\psi-plus.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin64
+Source: "{#WorkDir}\bin64\psi-plus-webengine.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin64w
 Source: "{#PsiPSrcDir}\COPYING"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist; Components: common
 Source: "common\README.txt"; DestDir: "{app}"; Flags: ignoreversion; Components: common
 ;Dicts
@@ -281,58 +285,69 @@ Source: "common\myspell\dicts\uk_UA.dic"; DestDir: "{app}\myspell\dicts"; Flags:
 Source: "common\myspell\dicts\vi_VN.aff"; DestDir: "{app}\myspell\dicts"; Flags: ignoreversion; Components: dicts\vi_VN
 Source: "common\myspell\dicts\vi_VN.dic"; DestDir: "{app}\myspell\dicts"; Flags: ignoreversion; Components: dicts\vi_VN
 ;Plugins
-Source: "plugins64-qt5\attentionplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\attentionplugin
-Source: "plugins64-qt5\autoreplyplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\autoreplyplugin
-Source: "plugins64-qt5\battleshipgameplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\battleshipgameplugin
-Source: "plugins64-qt5\birthdayreminderplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\birthdayreminderplugin
-Source: "plugins64-qt5\chessplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\chessplugin
-Source: "plugins64-qt5\cleanerplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\cleanerplugin
-Source: "plugins64-qt5\clientswitcherplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\clientswitcherplugin
-Source: "plugins64-qt5\conferenceloggerplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\conferenceloggerplugin
-Source: "plugins64-qt5\contentdownloaderplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\contentdownloaderplugin
-Source: "plugins64-qt5\enummessagesplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\enummessagesplugin
-Source: "plugins64-qt5\extendedmenuplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\extendedmenuplugin
-Source: "plugins64-qt5\extendedoptionsplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\extendedoptionsplugin
-Source: "plugins64-qt5\gomokugameplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\gomokugameplugin
-Source: "plugins64-qt5\historykeeperplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\historykeeperplugin
-Source: "plugins64-qt5\imageplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\imageplugin
-Source: "plugins64-qt5\imagepreviewplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\imagepreviewplugin and bin64
-Source: "plugins64-qt5\jabberdiskplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\jabberdiskplugin
-Source: "plugins64-qt5\juickplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\juickplugin
-Source: "plugins64-qt5\mediaplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\mediaplugin
-Source: "plugins64-qt5\messagefilterplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\messagefilterplugin
-Source: "plugins64-qt5\omemoplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\omemoplugin
-Source: "plugins64-qt5\openpgpplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\openpgpplugin
-Source: "plugins64-qt5\otrplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\otrplugin
-Source: "plugins64-qt5\pepchangenotifyplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\pepchangenotifyplugin
-Source: "plugins64-qt5\qipxstatusesplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\qipxstatusesplugin
-Source: "plugins64-qt5\screenshotplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\screenshotplugin
-Source: "plugins64-qt5\stopspamplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\stopspamplugin
-Source: "plugins64-qt5\storagenotesplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\storagenotesplugin
-Source: "plugins64-qt5\translateplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\translateplugin
-Source: "plugins64-qt5\videostatusplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\videostatusplugin
-Source: "plugins64-qt5\watcherplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\watcherplugin
-Source: "{#WorkDir}\vcredist\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: common
+Source: "{#PluginsPrefix}\attentionplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\attentionplugin
+Source: "{#PluginsPrefix}\autoreplyplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\autoreplyplugin
+Source: "{#PluginsPrefix}\battleshipgameplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\battleshipgameplugin
+Source: "{#PluginsPrefix}\birthdayreminderplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\birthdayreminderplugin
+Source: "{#PluginsPrefix}\chessplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\chessplugin
+Source: "{#PluginsPrefix}\cleanerplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\cleanerplugin
+Source: "{#PluginsPrefix}\clientswitcherplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\clientswitcherplugin
+Source: "{#PluginsPrefix}\conferenceloggerplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\conferenceloggerplugin
+Source: "{#PluginsPrefix}\contentdownloaderplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\contentdownloaderplugin
+Source: "{#PluginsPrefix}\enummessagesplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\enummessagesplugin
+Source: "{#PluginsPrefix}\extendedmenuplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\extendedmenuplugin
+Source: "{#PluginsPrefix}\extendedoptionsplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\extendedoptionsplugin
+Source: "{#PluginsPrefix}\gomokugameplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\gomokugameplugin
+Source: "{#PluginsPrefix}\historykeeperplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\historykeeperplugin
+Source: "{#PluginsPrefix}\imageplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\imageplugin
+Source: "{#PluginsPrefix}\imagepreviewplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\imagepreviewplugin and bin64
+Source: "{#PluginsPrefix}\jabberdiskplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\jabberdiskplugin
+Source: "{#PluginsPrefix}\juickplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\juickplugin
+Source: "{#PluginsPrefix}\mediaplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\mediaplugin
+Source: "{#PluginsPrefix}\messagefilterplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\messagefilterplugin
+Source: "{#PluginsPrefix}\noughtsandcrossesplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\noughtsandcrossesplugin
+Source: "{#PluginsPrefix}\omemoplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\omemoplugin
+Source: "{#PluginsPrefix}\openpgpplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\openpgpplugin
+Source: "{#PluginsPrefix}\otrplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\otrplugin
+Source: "{#PluginsPrefix}\pepchangenotifyplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\pepchangenotifyplugin
+Source: "{#PluginsPrefix}\qipxstatusesplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\qipxstatusesplugin
+Source: "{#PluginsPrefix}\skinsplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\skinsplugin
+Source: "{#PluginsPrefix}\stopspamplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\stopspamplugin
+Source: "{#PluginsPrefix}\storagenotesplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\storagenotesplugin
+Source: "{#PluginsPrefix}\translateplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\translateplugin
+Source: "{#PluginsPrefix}\videostatusplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\videostatusplugin
+Source: "{#PluginsPrefix}\watcherplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\watcherplugin
+
+Source: "{tmp}\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall skipifsourcedoesntexist external; Components: common
 
 [Run]
 #define VCmsg "Installing Microsoft Visual C++ Redistributable...."
-Filename: "{tmp}\vc_redist.x64.exe"; StatusMsg: "{#VCmsg}";Check: not VCinstalled
-Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: postinstall nowait skipifsilent
+Filename: "{tmp}\vc_redist.x64.exe"; Flags: postinstall skipifdoesntexist; StatusMsg: "{#VCmsg}"; Tasks: downloadvcred; Check: not VCinstalled
+Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: postinstall nowait skipifsilent; Components: bin64
+Filename: "{app}\psi-plus-webengine.exe"; WorkingDir: "{app}"; Flags: nowait postinstall skipifsilent; Components: bin64w
 
 [Icons]
-Name: "{userdesktop}\Psi+ (x64)"; Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"; IconIndex: 0; Tasks: desktopitems
-Name: "{group}\Psi+ (x64)"; Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"
-Name: "{group}\Uninstall Psi+ x64"; Filename: "{uninstallexe}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"; Tasks: uninstallitems
+Name: "{userdesktop}\Psi+ (x64)"; Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"; Components: bin64; Tasks: desktopitems_normal
+Name: "{userdesktop}\Psi+ (x64)"; Filename: "{app}\psi-plus-webengine.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus-webengine.exe"; Components: bin64w; Tasks: desktopitems_normal
+Name: "{group}\Psi+ (x64)"; Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"; Components: bin64
+Name: "{group}\Psi+ (x64)"; Filename: "{app}\psi-plus-webengine.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus-webengine.exe"; Components: bin64w
+Name: "{group}\Uninstall Psi+ (x64)"; Filename: "{uninstallexe}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"; Components: bin64; Tasks: uninstallitems
+Name: "{group}\Uninstall Psi+ (x64)"; Filename: "{uninstallexe}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus-webengine.exe"; Components: bin64w; Tasks: uninstallitems
 
 [ThirdParty]
 UseRelativePaths=True
 
 [Tasks]
-Name: "desktopitems"; Description: "{cm:InstallDS}"; Components: common
+Name: "desktopitems_normal"; Description: "{cm:InstallDS}"; Components: common
 Name: "uninstallitems"; Description: "{cm:InstallUN}"; Flags: unchecked; Components: common
 Name: "createregentry"; Description: "{cm:CreateRE}"; Components: common
+Name: "downloadvcred"; Description: "Download VCRedist_x64 2015-2022 (Needed to run psi-plus)"; Components: common; Check: not VCinstalled
 
 [CustomMessages]
+english.InstallDI=Desktop Icons:
+russian.InstallDI=Рабочий стол:
+french.InstallDI=Icônes du bureau:
+ukrainian.InstallDI=Робочий стіл:
 english.InstallDS=Create Psi+ desktop shortcut
 russian.InstallDS=Установить иконку Psi+ на Рабочий стол
 french.InstallDS=Créer un raccourci de bureau
@@ -372,21 +387,36 @@ ukrainian.spelldicdesc=Словники перевірки правопису
 Root: "HKCR"; Subkey: "xmpp"; ValueType: string; ValueData: "URL:XMPP Protocol"; Flags: uninsdeletekeyifempty; Tasks: createregentry
 Root: "HKCR"; Subkey: "xmpp"; ValueType: dword; ValueName: "EditFlags"; ValueData: "2"; Flags: uninsdeletekeyifempty; Tasks: createregentry
 Root: "HKCR"; Subkey: "xmpp"; ValueType: string; ValueName: "URL Protocol"; Flags: uninsdeletekeyifempty; Tasks: createregentry
-Root: "HKCR"; Subkey: "xmpp\DefaultIcon"; ValueType: string; ValueData: """{app}\psi-plus.exe"""; Flags: uninsclearvalue uninsdeletekeyifempty; Tasks: createregentry
-Root: "HKCR"; Subkey: "xmpp\shell\open\command"; ValueType: string; ValueData: """{app}\psi-plus.exe"" ""--uri=%1"""; Flags: uninsclearvalue uninsdeletekeyifempty; Tasks: createregentry
+Root: "HKCR"; Subkey: "xmpp\DefaultIcon"; ValueType: string; ValueData: """{app}\psi-plus.exe"""; Flags: uninsclearvalue uninsdeletekeyifempty; Components: bin64; Tasks: createregentry
+Root: "HKCR"; Subkey: "xmpp\shell\open\command"; ValueType: string; ValueData: """{app}\psi-plus.exe"" ""--uri=%1"""; Flags: uninsclearvalue uninsdeletekeyifempty; Components: bin64; Tasks: createregentry
+Root: "HKCR"; Subkey: "xmpp\DefaultIcon"; ValueType: string; ValueData: """{app}\psi-plus-webengine.exe"""; Flags: uninsclearvalue uninsdeletekeyifempty; Components: bin64w; Tasks: createregentry
+Root: "HKCR"; Subkey: "xmpp\shell\open\command"; ValueType: string; ValueData: """{app}\psi-plus-webengine.exe"" ""--uri=%1"""; Flags: uninsclearvalue uninsdeletekeyifempty; Components: bin64w; Tasks: createregentry
 
 [Messages]
 english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%nWARNING! Since 1.5.1594 version installer do not contains iconpacks to reduce size. Please use Content Downloader plugin to install needed iconpacks
 french.WelcomeLabel2=Cela installera [name/ver] sur votre ordinateur.%n%nIl est recommandé de fermer toutes les autres applications avant de continuer.%n%nAVERTISSEMENT ! Depuis la version 1.5.1594, le programme d'installation ne contient pas de packs d'icônes pour réduire la taille. Veuillez utiliser le plugin Content Downloader pour installer les packs d'icônes nécessaires 
 russian.WelcomeLabel2=Это установит [name/ver] на ваш компьютер.%n%nПеред продолжением рекомендуется закрыть все другие приложения.%n%nВНИМАНИЕ! Начиная с версии 1.5.1594, инсталлятор не содержит пакеты иконок для уменьшения размера. Пожалуйста, воспользуйтесь Content Downloader плагином, чтобы установить необходимые иконки
+ukrainian.WelcomeLabel2=Це встановить [name/ver] на ваш комп'ютер.%n%nПеред продовженням рекомендовано закрити всі інші програми.%n%УВАГА! Починаючи з версії 1.5.1594, інсталятор не містить пакетів іконок для зменшення розміру. Будь ласка, скористайтесь Content Downloader плагіном, щоб встановити необхідні іконки
 
 [Code]
-
 function InitializeUninstall(): Boolean;
   var ErrorCode: Integer;
+  SelectedComponents: string;
+  vCurID      :String;
 begin
-  ShellExec('open','taskkill.exe','/f /im {#MyAppExeName}','',SW_HIDE,ewNoWait,ErrorCode);
-  ShellExec('open','tskill.exe',' {#MyAppName}','',SW_HIDE,ewNoWait,ErrorCode);
+  vCurID:= '{#SetupSetting("AppId")}';
+  vCurID:= Copy(vCurID, 2, Length(vCurID) - 1);
+  RegQueryStringValue(HKEY_LOCAL_MACHINE,
+    'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1',
+    ExpandConstant('{#SelectedComponentsReg}'), SelectedComponents);
+  if Pos('bin64', SelectedComponents) > 0 then begin
+    ShellExec('open','taskkill.exe','/f /im psi-plus.exe','',SW_HIDE,ewNoWait,ErrorCode);
+    ShellExec('open','tskill.exe',' {#MyAppName}','',SW_HIDE,ewNoWait,ErrorCode);
+  end
+  else if Pos('bin64w', SelectedComponents) > 0 then begin
+    ShellExec('open','taskkill.exe','/f /im psi-plus-webengine.exe','',SW_HIDE,ewNoWait,ErrorCode);
+    ShellExec('open','tskill.exe',' {#MyAppName}','',SW_HIDE,ewNoWait,ErrorCode);
+  end;
   result := True;
 end;
 
@@ -444,19 +474,17 @@ begin
     RegQueryStringValue(HKEY_LOCAL_MACHINE,
       'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1',
       'DisplayVersion', oldVersion);
+
       if MsgBox(ExpandConstant('{cm:vPart1}') + ' ' + oldVersion + ' ' + ExpandConstant('{cm:vPart2}') + vCurAppName + ExpandConstant('{cm:vPart3}') + ' ' + oldVersion + ' ' + ExpandConstant('{cm:vPart4}'),
         mbConfirmation, MB_YESNO) = IDNO then
       begin
         Result := False;
       end
-      else
-        begin
-          if (InitializeUninstall() = true) then
-          begin
+      else if (InitializeUninstall() = true) then begin
             RegQueryStringValue(HKEY_LOCAL_MACHINE,
               'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1',
               'UninstallString', uninstaller);
-            ShellExec('runas', uninstaller, '/SILENT', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
+            ShellExec('runas', uninstaller, '/SILENT /NORESTART /SUPPRESSMSGBOXES', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
             //Restore setup config
             RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#SetupTypeReg}'), SetupType);
             RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#SelectedComponentsReg}'), SelectedComponents);
@@ -466,13 +494,62 @@ begin
             RegWriteDWordValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#NoIconsDWReg}'), NoIconsDW);
             //
             Result := True;
-          end;
         end; 
   end
   else
   begin
     Result := True;
   end;
+end;
+
+var
+  DownloadPage: TDownloadWizardPage;
+
+function OnDownloadProgress(const Url, FileName: String; const Progress, ProgressMax: Int64): Boolean;
+begin
+  if Progress = ProgressMax then
+    Log(Format('Successfully downloaded file to {tmp}: %s', [FileName]));
+  Result := True;
+end;
+
+procedure InitializeWizard;
+begin
+  DownloadPage := CreateDownloadPage(SetupMessage(msgWizardPreparing), SetupMessage(msgPreparingDesc), @OnDownloadProgress);
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var 
+  doDownload: Boolean;
+  vCurID      :String;
+begin
+  if CurPageID = wpLicense then begin
+    vCurID:= '{#SetupSetting("AppId")}';
+    vCurID:= Copy(vCurID, 2, Length(vCurID) - 1);
+    RegDeleteKeyIncludingSubkeys(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1');
+    Result := True;
+  end
+  else if CurPageID = wpSelectTasks then begin
+    DownloadPage.Clear;
+    if WizardIsTaskSelected('downloadvcred') then begin
+      doDownload := True;
+      DownloadPage.Add('https://aka.ms/vs/17/release/vc_redist.x64.exe', 'vc_redist.x64.exe', '');
+    end;
+    if doDownload then begin
+      DownloadPage.Show;
+      try
+        try
+          DownloadPage.Download;
+          Result := True;
+        except
+          SuppressibleMsgBox(AddPeriod(GetExceptionMessage), mbCriticalError, MB_OK, IDOK);
+          Result := False;
+        end;
+      finally
+        DownloadPage.Hide;
+      end;
+    end;
+  end;
+  Result := True;
 end;
 
 function VCinstalled: Boolean;
@@ -492,9 +569,14 @@ function VCinstalled: Boolean;
       if RegQueryDWordValue(HKEY_LOCAL_MACHINE, key, 'Bld', bld) then begin
         if RegQueryDWordValue(HKEY_LOCAL_MACHINE, key, 'RBld', rbld) then begin
             Log('VC 2019 Redist Major is: ' + IntToStr(major) + ' Minor is: ' + IntToStr(minor) + ' Bld is: ' + IntToStr(bld) + ' Rbld is: ' + IntToStr(rbld));
-            // Version info was found. Return true if later or equal to our 14.29.30135.0 redistributable
+            // Version info was found. Return true if later or equal to our 14.29.30139.0 redistributable
             // Note brackets required because of weird operator precendence
-            Result := (major >= 14) and (minor >= 29) and (bld >= 30135) and (rbld >= 0)
+            if (major >= 14) and (minor >= 29) and (bld >= 30153) and (rbld >= 0) then begin
+              Result := True;
+            end
+            else begin
+              Result := False;
+            end;
         end;
       end;
     end;

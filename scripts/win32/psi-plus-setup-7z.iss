@@ -24,12 +24,13 @@ Name: "plugins\jabberdiskplugin"; Description: "Jabber Disk plugin"; Types: full
 Name: "plugins\juickplugin"; Description: "Juick plugin"; Types: full
 Name: "plugins\mediaplugin"; Description: "PsiMedia plugin"; Types: full compact
 Name: "plugins\messagefilterplugin"; Description: "Message Filter plugin"; Types: full
+Name: "plugins\noughtsandcrossesplugin"; Description: "Noughts And Crosses plugin"; Types: full
 Name: "plugins\omemoplugin"; Description: "OMEMO plugin"; Types: full
 Name: "plugins\openpgpplugin"; Description: "OpenPGP plugin"; Types: full
 Name: "plugins\otrplugin"; Description: "OTR plugin"; Types: full
 Name: "plugins\pepchangenotifyplugin"; Description: "PEP Change Notify plugin"; Types: full
 Name: "plugins\qipxstatusesplugin"; Description: "Qip X-Statuses plugin"; Types: full
-Name: "plugins\screenshotplugin"; Description: "Screenshot plugin"; Types: full
+Name: "plugins\skinsplugin"; Description: "Skins plugin"; Types: full
 Name: "plugins\stopspamplugin"; Description: "Stop Spam plugin"; Types: full
 Name: "plugins\storagenotesplugin"; Description: "Storage Notes plugin"; Types: full
 Name: "plugins\translateplugin"; Description: "Translate plugin"; Types: full
@@ -126,17 +127,17 @@ SetupIconFile={#PsiPSrcDir}\win32\app-plus.ico
 OutputDir="C:\build\Installer"
 OutputBaseFilename=psi-plus-{#AppVer}-x86-setup
 Compression=lzma2/ultra64
-InternalCompressLevel=ultra
-DefaultDirName={pf}\Psi-plus
+InternalCompressLevel=ultra64
+DefaultDirName={commonpf}\Psi-plus
 ArchitecturesAllowed=x86 x64 ia64
 UninstallDisplayName=Psi+ {#AppVer}-x86
 DefaultGroupName=Psi+ (x86)
 AppSupportURL=https://github.com/psi-plus/main/issues
-AppUpdatesURL=https://drive.google.com/drive/folders/0B_6HeEGc8_zqNUZxSzgyaVpMcmM?resourcekey=0-1EEjvrBB8y9BoDfOzQ2Shw&usp=sharingd
+AppUpdatesURL=https://sourceforge.net/projects/psiplus/files/Windows/Personal-Builds/KukuRuzo/
 UninstallDisplayIcon={app}\{#MyAppExeName}
 DisableProgramGroupPage=auto
 AllowNoIcons=True
-MinVersion=0,6.1
+MinVersion=0,6.1sp1
 PrivilegesRequired=poweruser
 UsePreviousGroup=False
 DisableWelcomePage=False
@@ -155,11 +156,11 @@ SetupLogging=True
 Source: "{#PsiPSrcDir}\certs\*"; DestDir: "{app}\certs"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
 Source: "{#PsiPSrcDir}\iconsets\roster\*.jisp"; DestDir: "{app}\iconsets\roster"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
 Source: "{#PsiPSrcDir}\sound\*"; DestDir: "{app}\sound"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
-Source: "{#PsiPSrcDir}\skins\*"; DestDir: "{app}\skins"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
+;Source: "{#PsiPSrcDir}\skins\*"; DestDir: "{app}\skins"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
 Source: "{#PsiPSrcDir}\CHANGELOG"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist; Components: common
-;Source: "{#ResDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common; Excludes: "*clients\unknown*, *clients\variants*, *emoticons\utils*, *skins\mac"
+Source: "{#ResDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common; Excludes: "iconsets, *skins\mac, sounds"
 Source: "{#WorkDir}\psi-plus.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin32
-Source: "{#WorkDir}\psi-plus-webkit.exe"; DestDir: "{app}"; DestName: "psi-plus.exe"; Flags: ignoreversion; Components: bin32w
+Source: "{#WorkDir}\psi-plus-webkit.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin32w
 Source: "{#PsiPSrcDir}\COPYING"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist; Components: common
 Source: "{#WorkDir}\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: common; Excludes: "psi-plus.exe, psi-plus-webkit.exe, myspell, plugins"
 ;Dicts
@@ -296,12 +297,13 @@ Source: "{#WorkDir}\plugins\libjabberdiskplugin.dll"; DestDir: "{app}\plugins"; 
 Source: "{#WorkDir}\plugins\libjuickplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\juickplugin
 Source: "{#WorkDir}\plugins\libmediaplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\mediaplugin
 Source: "{#WorkDir}\plugins\libmessagefilterplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\messagefilterplugin
+Source: "{#WorkDir}\plugins\libnoughtsandcrossesplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\noughtsandcrossesplugin
 Source: "{#WorkDir}\plugins\libomemoplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\omemoplugin
 Source: "{#WorkDir}\plugins\libopenpgpplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\openpgpplugin
 Source: "{#WorkDir}\plugins\libotrplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\otrplugin
 Source: "{#WorkDir}\plugins\libpepchangenotifyplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\pepchangenotifyplugin
 Source: "{#WorkDir}\plugins\libqipxstatusesplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\qipxstatusesplugin
-Source: "{#WorkDir}\plugins\libscreenshotplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\screenshotplugin
+Source: "{#WorkDir}\plugins\libskinsplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\skinsplugin
 Source: "{#WorkDir}\plugins\libstopspamplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\stopspamplugin
 Source: "{#WorkDir}\plugins\libstoragenotesplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\storagenotesplugin
 Source: "{#WorkDir}\plugins\libtranslateplugin.dll"; DestDir: "{app}\plugins"; Flags: ignoreversion; Components: plugins\translateplugin
@@ -316,26 +318,38 @@ Name: "{app}\skins"
 Name: "{app}\translations"
 
 [Run]
-Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: postinstall nowait skipifsilent; Components: bin32
+Filename: "{app}\psi-plus-webkit.exe"; WorkingDir: "{app}"; Flags: postinstall nowait skipifsilent; Components: bin32w
 
 [Icons]
-Name: "{userdesktop}\Psi+(x86)"; Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"; IconIndex: 0; Tasks: desktopitems
-Name: "{group}\Uninstall Psi+(x86)"; Filename: "{uninstallexe}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"; IconIndex: 0; Tasks: uninstallitems
-Name: "{group}\Psi+(x86)"; Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"
+Name: "{userdesktop}\Psi+ (x86)"; Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"; Components: bin32; Tasks: desktopitems_normal
+Name: "{userdesktop}\Psi+ (x86)"; Filename: "{app}\psi-plus-webkit.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus-webkit.exe"; Components: bin32w; Tasks: desktopitems_normal
+Name: "{group}\Uninstall Psi+ (x86)"; Filename: "{uninstallexe}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"; Components: bin32; Tasks: uninstallitems
+Name: "{group}\Uninstall Psi+ (x86)"; Filename: "{uninstallexe}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus-webkit.exe"; Components: bin32w; Tasks: uninstallitems
+Name: "{group}\Psi+ (x86)"; Filename: "{app}\psi-plus.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus.exe"; Components: bin32
+Name: "{group}\Psi+ (x86)"; Filename: "{app}\psi-plus-webkit.exe"; WorkingDir: "{app}"; Flags: createonlyiffileexists; IconFilename: "{app}\psi-plus-webkit.exe"; Components: bin32w
 
 [ThirdParty]
 UseRelativePaths=True
 
 [Tasks]
-Name: "desktopitems"; Description: "{cm:InstallDS}"; Components: common
+Name: "desktopitems_normal"; Description: "{cm:InstallDS}"; GroupDescription: "{cm:InstallDI}"; Flags: exclusive; Components: common
 Name: "uninstallitems"; Description: "{cm:InstallUN}"; Flags: unchecked; Components: common
 Name: "createregentry"; Description: "{cm:CreateRE}"; Components: common
 
 [CustomMessages]
+english.InstallDI=Desktop Icons:
+russian.InstallDI=Рабочий стол:
+french.InstallDI=Icônes du bureau:
+ukrainian.InstallDI=Робочий стіл:
 english.InstallDS=Create Psi+ desktop shortcut
 russian.InstallDS=Установить иконку Psi+ на Рабочий стол
 french.InstallDS=Créer un raccourci de bureau
 ukrainian.InstallDS=Встановити іконку Psi+ на робочий стіл
+english.InstallDSDM=Create Psi+ desktop shortcut (dark mode)
+russian.InstallDSDM=Установить иконку Psi+ на Рабочий стол (темный режим)
+french.InstallDSDM=Créer un raccourci de bureau (mode sombre)
+ukrainian.InstallDSDM=Встановити іконку Psi+ на робочий стіл (темний режим)
 english.InstallUN=Create Uninstall icon in Program Group
 russian.InstallUN=Создать иконку Uninstall в меню программы
 french.InstallUN=Créer un raccourci de désinstallation dans le groupe du logiciel
@@ -370,21 +384,36 @@ ukrainian.spelldicdesc=Словники перевірки правопису
 Root: "HKCR"; Subkey: "xmpp"; ValueType: string; ValueData: "URL:XMPP Protocol"; Flags: uninsdeletekeyifempty; Tasks: createregentry
 Root: "HKCR"; Subkey: "xmpp"; ValueType: dword; ValueName: "EditFlags"; ValueData: "2"; Flags: uninsdeletekeyifempty; Tasks: createregentry
 Root: "HKCR"; Subkey: "xmpp"; ValueType: string; ValueName: "URL Protocol"; Flags: uninsdeletekeyifempty; Tasks: createregentry
-Root: "HKCR"; Subkey: "xmpp\DefaultIcon"; ValueType: string; ValueData: """{app}\psi-plus.exe"""; Flags: uninsclearvalue uninsdeletekeyifempty; Tasks: createregentry
-Root: "HKCR"; Subkey: "xmpp\shell\open\command"; ValueType: string; ValueData: """{app}\psi-plus.exe"" ""--uri=%1"""; Flags: uninsclearvalue uninsdeletekeyifempty; Tasks: createregentry
+Root: "HKCR"; Subkey: "xmpp\DefaultIcon"; ValueType: string; ValueData: """{app}\psi-plus.exe"""; Flags: uninsclearvalue uninsdeletekeyifempty; Components: bin32; Tasks: createregentry
+Root: "HKCR"; Subkey: "xmpp\shell\open\command"; ValueType: string; ValueData: """{app}\psi-plus.exe"" ""--uri=%1"""; Flags: uninsclearvalue uninsdeletekeyifempty; Components: bin32; Tasks: createregentry
+Root: "HKCR"; Subkey: "xmpp\DefaultIcon"; ValueType: string; ValueData: """{app}\psi-plus-webkit.exe"""; Flags: uninsclearvalue uninsdeletekeyifempty; Components: bin32w; Tasks: createregentry
+Root: "HKCR"; Subkey: "xmpp\shell\open\command"; ValueType: string; ValueData: """{app}\psi-plus-webkit.exe"" ""--uri=%1"""; Flags: uninsclearvalue uninsdeletekeyifempty; Components: bin32w; Tasks: createregentry
 
 [Messages]
 english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%nWARNING! Since 1.5.1594 version installer do not contains iconpacks to reduce size. Please use Content Downloader plugin to install needed iconpacks
 french.WelcomeLabel2=Cela installera [name/ver] sur votre ordinateur.%n%nIl est recommandé de fermer toutes les autres applications avant de continuer.%n%nAVERTISSEMENT ! Depuis la version 1.5.1594, le programme d'installation ne contient pas de packs d'icônes pour réduire la taille. Veuillez utiliser le plugin Content Downloader pour installer les packs d'icônes nécessaires 
 russian.WelcomeLabel2=Это установит [name/ver] на ваш компьютер.%n%nПеред продолжением рекомендуется закрыть все другие приложения.%n%nВНИМАНИЕ! Начиная с версии 1.5.1594, инсталлятор не содержит пакеты иконок для уменьшения размера. Пожалуйста, воспользуйтесь Content Downloader плагином, чтобы установить необходимые иконки
+ukrainian.WelcomeLabel2=Це встановить [name/ver] на ваш комп'ютер.%n%nПеред продовженням рекомендовано закрити всі інші програми.%n%УВАГА! Починаючи з версії 1.5.1594, інсталятор не містить пакетів іконок для зменшення розміру. Будь ласка, скористайтесь Content Downloader плагіном, щоб встановити необхідні іконки
 
 [Code]
-
 function InitializeUninstall(): Boolean;
   var ErrorCode: Integer;
+  SelectedComponents: string;
+  vCurID      :String;
 begin
-  ShellExec('open','taskkill.exe','/f /im {#MyAppExeName}','',SW_HIDE,ewNoWait,ErrorCode);
-  ShellExec('open','tskill.exe',' {#MyAppName}','',SW_HIDE,ewNoWait,ErrorCode);
+  vCurID:= '{#SetupSetting("AppId")}';
+  vCurID:= Copy(vCurID, 2, Length(vCurID) - 1);
+  RegQueryStringValue(HKEY_LOCAL_MACHINE,
+    'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1',
+    ExpandConstant('{#SelectedComponentsReg}'), SelectedComponents);
+  if Pos('bin32', SelectedComponents) > 0 then begin
+    ShellExec('open','taskkill.exe','/f /im psi-plus.exe','',SW_HIDE,ewNoWait,ErrorCode);
+    ShellExec('open','tskill.exe',' {#MyAppName}','',SW_HIDE,ewNoWait,ErrorCode);
+  end
+  else if Pos('bin32w', SelectedComponents) > 0 then begin
+    ShellExec('open','taskkill.exe','/f /im psi-plus-webengine.exe','',SW_HIDE,ewNoWait,ErrorCode);
+    ShellExec('open','tskill.exe',' {#MyAppName}','',SW_HIDE,ewNoWait,ErrorCode);
+  end;
   result := True;
 end;
 
@@ -447,28 +476,36 @@ begin
       begin
         Result := False;
       end
-      else
-        begin
-          if (InitializeUninstall() = true) then
-          begin
-            RegQueryStringValue(HKEY_LOCAL_MACHINE,
-              'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1',
-              'UninstallString', uninstaller);
-            ShellExec('runas', uninstaller, '/SILENT', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
-            //Restore setup config
-            RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#SetupTypeReg}'), SetupType);
-            RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#SelectedComponentsReg}'), SelectedComponents);
-            RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#DeSelectedComponentsReg}'), DeSelectedComponents);
-            RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#SelectedTasksReg}'), SelectedTasks);
-            RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#AppPathReg}'), AppPath);
-            RegWriteDWordValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#NoIconsDWReg}'), NoIconsDW);
-            //
-            Result := True;
-          end;
-        end; 
+      else if (InitializeUninstall() = true) then begin
+        RegQueryStringValue(HKEY_LOCAL_MACHINE,
+          'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1',
+          'UninstallString', uninstaller);
+        ShellExec('runas', uninstaller, '/SILENT', '', SW_HIDE, ewWaitUntilTerminated, ErrorCode);
+        //Restore setup config
+        RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#SetupTypeReg}'), SetupType);
+        RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#SelectedComponentsReg}'), SelectedComponents);
+        RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#DeSelectedComponentsReg}'), DeSelectedComponents);
+        RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#SelectedTasksReg}'), SelectedTasks);
+        RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#AppPathReg}'), AppPath);
+        RegWriteDWordValue(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1', ExpandConstant('{#NoIconsDWReg}'), NoIconsDW);
+        //
+        Result := True;
+      end; 
   end
   else
   begin
     Result := True;
   end;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var 
+  vCurID      :String;
+begin
+  if CurPageID = wpLicense then begin
+    vCurID:= '{#SetupSetting("AppId")}';
+    vCurID:= Copy(vCurID, 2, Length(vCurID) - 1);
+    RegDeleteKeyIncludingSubkeys(HKEY_LOCAL_MACHINE, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\' + vCurID + '_is1');
+  end;
+  Result := True;
 end;

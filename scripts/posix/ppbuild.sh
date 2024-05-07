@@ -59,7 +59,7 @@ i686_mxe_prefix=${mxe_root}/usr/i686-w64-mingw32.shared
 x86_64_mxe_prefix=${mxe_root}/usr/x86_64-w64-mingw32.shared
 OLDPATH=${PATH}
 #default cmake FLAGS
-DEF_CMAKE_FLAGS="-DBUNDLED_QCA=ON -DBUNDLED_USRSCTP=ON"
+DEF_CMAKE_FLAGS="-DBUNDLED_IRIS_ALL=ON"
 
 #WARNING: следующие переменные будут изменены в процессе работы скрипта автоматически
 buildpsi=${default_buildpsi} #инициализация переменной
@@ -192,7 +192,7 @@ update_variables ()
   fi
 }
 #Выход с ошибкой
-die() { echo "$@"; exit 1; }
+die() { echo -e "$@"; exit 1; }
 #Создание каталога
 check_dir ()
 {
@@ -282,7 +282,7 @@ prepare_psi_src ()
 clean_tmp_dirs()
 {
   if [ -d "${tmp_dir}" ] && [ ${clear_tmp_on_exit} -eq 1 ]; then
-    rm -rf ${tmp_dir}
+    rm -rfv ${tmp_dir}
   fi
 }
 #Подготовка каталога сборки
@@ -413,7 +413,7 @@ compile_psiplus ()
   cmake ${flags} ${cbuild_path}">>${buildlog}
   cmake ${flags} ${cbuild_path} &&
   echo "--Starting psi-plus compilation">>${buildlog} &&
-  cmake --build . --target all -- -j${cpu_count} 2>>${buildlog} || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
+  cmake --build . --target all --parallel ${cpu_count} 2>>${buildlog} || die "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
   echo "***Build finished***">>${buildlog}
   if [ -z "$1" ]; then
     cmake --build . --target prepare-bin
@@ -445,9 +445,9 @@ install_pp_to_home ()
   cmake ${flags} ${cbuild_path}">>${buildlog}
   cmake ${flags} ${cbuild_path} &&
   echo "--Starting psi-plus compilation">>${buildlog} &&
-  cmake --build . --target all -- -j${cpu_count} 2>>${buildlog} &&
+  cmake --build . --target all --parallel ${cpu_count} 2>>${buildlog} &&
   echo "***Build finished***">>${buildlog} &&
-  cmake --build . --target install || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}" 
+  cmake --build . --target install || die "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}" 
   #if [ -d "${home}/build/psi" ]; then
   #  rm -rf ${home}/build/psi
   #fi
@@ -477,9 +477,9 @@ build_all_psiplus ()
   cmake ${flags} ${cbuild_path}">>${buildlog}
   cmake ${flags} ${cbuild_path} &&
   echo "--Starting psi-plus compilation">>${buildlog} &&
-  cmake --build . --target all -- -j${cpu_count} 2>>${buildlog} &&
+  cmake --build . --target all --parallel ${cpu_count} 2>>${buildlog} &&
   echo "***Build finished***">>${buildlog} &&
-  cmake --build . --target prepare-bin || echo -e "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
+  cmake --build . --target prepare-bin || die "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
   echo "Psi+ compiled at ${builddir}">>${buildlog}
   cd ${curd}
 }
@@ -515,7 +515,7 @@ build_cmake_plugins ()
   fi  
   echo " "; echo "Build psi+ plugins using CMAKE started..."; echo " "
   cmake ${plug_cmake_flags} ${plugdir} &&
-  cmake --build . --target all -- -j${cpu_count} && echo_done || die
+  cmake --build . --target all --parallel ${cpu_count} && echo_done || die "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
   if [ "${isinstall}" == "y" ]; then
     cmake --build . --target install && echo_done
   fi
@@ -737,7 +737,7 @@ compile_psi_mxe()
   else
     flags="${flags} -DCHAT_TYPE=webkit"
   fi
-  flags="${flags} -DPSI_PLUS=ON ${DEF_CMAKE_FLAGS} -DUSE_CCACHE=ON -DVERBOSE_PROGRAM_NAME=ON -DPLUGINS_NO_DEBUG=ON"
+  flags="${flags} -DPSI_PLUS=ON ${DEF_CMAKE_FLAGS}  -DUSE_CCACHE=ON -DVERBOSE_PROGRAM_NAME=ON -DPLUGINS_NO_DEBUG=ON"
   wrkdir=${builddir}
   check_dir ${wrkdir}
   cd ${wrkdir}
@@ -746,7 +746,7 @@ compile_psi_mxe()
   ${cmakecmd} ${flags} ${workdir} > ${buildlog} &&
   echo &&
   #echo "Press Enter to continue..." && read tmpvar
-  ${cmakecmd} --build . --target all -- -j${cpu_count} 2>>${buildlog} || die
+  ${cmakecmd} --build . --target all --parallel ${cpu_count} 2>>${buildlog} || die "${red}There were errors. Open ${buildlog} to see${nocolor}"
   if [ ${devm} -eq 1 ]; then
     ${cmakecmd} --build . --target prepare-bin -- #copy default iconsets skins and themes
     ${cmakecmd} --build . --target prepare-bin-libs -- #copy dependencies
