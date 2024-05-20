@@ -128,8 +128,8 @@ body {
 }
 
 .grnext {
-    margin-top: 0;
-    padding-top: 0;
+    margin-top: -0.1em;
+    padding-top: 0.3em;
     border-top-right-radius: 0;
     border-top-left-radius: 0;
     /* We clip it like
@@ -138,16 +138,18 @@ body {
        |         |
        |_________|
        where central part for text. everything else for shadow.
+       this 0.09em below together with margin-top: -0.1em; is a workaround for
+       shadow clipping Google Chrome bug.
     */
-    clip-path: polygon(
-        0 -0.5em,
-        -1em 0,
-        0 calc(100% + .5em),
+    clip-path: polygon(0 0,
+        0 -.5em,
+        -.5em -.5em,
+        -.5em calc(100% + .5em),
         calc(100% + .5em) calc(100% + .5em),
-        calc(100% + 1em) -.5em,
+        calc(100% + .5em) -.5em,
         100% -.5em,
-        100% 0,
-        0 0
+        100% 0.09em,
+        0 0.09em
     );
 }
 
@@ -160,7 +162,13 @@ body {
 }
 
 .grnext.mymsg .time {
-	left: auto;
+    left: -.1em;
+    right: auto;
+    float: left;
+    padding-left: 0;
+    padding-right: 0.5em;
+    box-sizing: border-box;
+    margin-top: 0.1em;
 }
 
 .grnext .nick {
@@ -199,7 +207,7 @@ body {
     <span class="nick">rion</span>
     <span class="time">10:01</span>
     <span class="msgtext">Next message Next message Next message Next message Next message Next message Next message Next message Next message </span>
-    <div class="reactions"></div>
+    <div class="reactions"><span>1 😋</span></div>
 </div>
 
 <div class="msg grnext mymsg">
