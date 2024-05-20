@@ -11,6 +11,17 @@ body {
     background: url(background.jpg);
     background-size: cover;
     color: black;
+    font-family: sans, times;
+}
+
+.sysmsg {
+    background-color: rgb(122, 246, 246);
+    color: #444;
+    padding: .4em 1em;
+    width: 70%;
+    margin: 0 auto;
+    border-radius: 1em;
+    text-align: center;
 }
 
 .msg {
@@ -36,7 +47,7 @@ body {
     margin-left: -2.44em;
     display: inline-block;
     z-index: -1;
-    clip: rect(0.6em, 3em, 1.5em, 2em);
+    clip-path: rect(0.6em, 3em, 1.5em, 2em);
 }
 
 .mymsg {
@@ -52,7 +63,7 @@ body {
     margin-left: inherit;
     margin-right: -2.44em;
     border-color: #ffc;
-    clip: rect(0.6em, 2em, 1.5em, 0);
+    clip-path: rect(0.6em, 2em, 1.5em, 0);
 }
 
 .nick {
@@ -76,7 +87,7 @@ body {
     position: absolute;
     font-size:80%;
     font-weight: bold;
-    color: #555;
+    color: #777;
 }
 
 .mymsg .time {
@@ -99,7 +110,7 @@ body {
 }
 
 .msgtext {
-    color: #333;
+    color: #111;
 }
 
 .reactions > span {
@@ -114,6 +125,48 @@ body {
     margin-right: .5em;
     background-color: #f8f8f8;
 }
+
+
+.grnext {
+    margin-top: 0;
+    padding: 0.5em;
+    padding-top: 0;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+}
+
+.grnext .time {
+	margin-top: 0.2em;
+	float: right;
+	position: inherit;
+	right: -.1em;
+	padding-left: 1em;
+}
+
+.grnext.mymsg .time {
+	left: auto;
+}
+
+.grnext .nick {
+    display: none;
+}
+
+.grnext .avatar {
+    display: none;
+}
+
+.grnext:before {
+    display: none;
+}
+
+.msg:has(+ .grnext) {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+
         </style>
     </head>
     <body>
@@ -125,11 +178,35 @@ body {
     <div class="reactions"></div>
 </div>
 
+<div class="msg grnext mymsg">
+    <span class="avatar">😺</span>
+    <span class="nick">rion</span>
+    <span class="time">10:01</span>
+    <span class="msgtext">Next message Next message Next message Next message Next message Next message Next message Next message Next message </span>
+    <div class="reactions"></div>
+</div>
+
+<div class="msg grnext mymsg">
+    <span class="avatar">😺</span>
+    <span class="nick">rion</span>
+    <span class="time">10:02</span>
+    <span class="msgtext">3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message</span>
+    <div class="reactions"></div>
+</div>
+
 <div class="msg">
     <span class="avatar">🧙🏾‍♂️</span>
     <span class="nick">nick</span>
     <span class="time">10:05</span>
     <span class="msgtext">Another text</span>
+    <div class="reactions"></div>
+</div>
+
+<div class="msg grnext">
+    <span class="avatar">🧙🏾‍♂️</span>
+    <span class="nick">nick</span>
+    <span class="time">10:05</span>
+    <span class="msgtext">Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. </span>
     <div class="reactions"></div>
 </div>
 
@@ -144,6 +221,10 @@ body {
         notes of a file/function name. Then post the image...
     </span>
     <div class="reactions"><span>2 👍👍🏻</span><span>1 🔥</span></div>
+</div>
+
+<div class="sysmsg">
+    This is a notification
 </div>
 
     </body>
