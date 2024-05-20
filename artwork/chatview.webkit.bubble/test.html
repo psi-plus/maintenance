@@ -9,6 +9,7 @@ body {
     margin: 0;
     box-sizing: border-box;
     background: url(background.jpg);
+    background-attachment: fixed;
     background-size: cover;
     color: black;
     font-family: sans, times;
@@ -32,6 +33,8 @@ body {
     position: relative;
     background-color: white;
     border-radius: 0 .6em .6em .6em;
+    box-shadow: 0px 0px 0.5em black;
+    clip-path: inset(-0.5em -5em -0.5em -5em);
 }
 
 .msg::before {
@@ -72,7 +75,6 @@ body {
     #background-color: green;
     font-weight: bold;
     position: absolute;
-    #color: gray;
 }
 
 .mymsg .nick {
@@ -83,7 +85,6 @@ body {
     margin-top: -1.6em;
     display: inline-block;
     right: .5em;
-    #background-color: blue;
     position: absolute;
     font-size:80%;
     font-weight: bold;
@@ -126,13 +127,28 @@ body {
     background-color: #f8f8f8;
 }
 
-
 .grnext {
     margin-top: 0;
-    padding: 0.5em;
     padding-top: 0;
     border-top-right-radius: 0;
     border-top-left-radius: 0;
+    /* We clip it like
+        _       _
+       | |_____| |
+       |         |
+       |_________|
+       where central part for text. everything else for shadow.
+    */
+    clip-path: polygon(
+        0 -0.5em,
+        -1em 0,
+        0 calc(100% + .5em),
+        calc(100% + .5em) calc(100% + .5em),
+        calc(100% + 1em) -.5em,
+        100% -.5em,
+        100% 0,
+        0 0
+    );
 }
 
 .grnext .time {
