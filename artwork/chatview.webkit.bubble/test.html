@@ -1,5 +1,146 @@
 <html>
     <head>
+        <script type="text/javascript">
+var events = [
+    {"type": "message", "id": "018f9a57-6ed4-7ef5-8a86-ca6c5407b004", "nick": "rion", "text": "This is text\nanother line"},
+    {"type": "message", "id": "018f9a57-6ed4-7328-976c-090bdbc9aabd", "nick": "rion", "text": "Next message Next message Next message Next message Next message Next message Next message Next message Next message"},
+    {"type": "message", "id": "018f9a57-6ed4-7d35-8968-bee2b92ece51", "nick": "rion", "text": "3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message"},
+    {"type": "reaction", "id": "018f9a57-6ed4-7e74-898a-48ee2253aca2", "nick": "rion", "target": "018f9a57-6ed4-7328-976c-090bdbc9aabd", "text": "😋"},
+    {"type": "message", "id": "018f9a57-6ed4-7491-9acb-eea4e5a58304", "nick": "nickname", "text": "Another text"},
+    {"type": "message", "id": "018f9a57-6ed4-768e-bf78-38165c97481a", "nick": "nickname", "text": "Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group."},
+    {"type": "message", "id": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "nick": "kapad", "text": "i dont know if this easy or not, but i was think something the other day... Let's say, one day you/or some that knows, have some free time and artistic mood. Take a piece of paper and a pen, and draw some important/basic stanza routes with notes of a file/function name. Then post the image..."},
+    {"type": "reaction", "id": "018f9a57-6ed4-7c76-84d4-138d63f389b7", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "text": "👍"},
+    {"type": "system", "text": "This is a notification"},
+    {"type": "reaction", "id": "018f9a57-6ed4-7609-9d32-2ae7592cfe5f", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "text": "🔥"},
+    {"type": "reaction", "id": "018f9a57-6ed4-7a5d-9c6d-a31995a3e0c7", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "text": "👍🏻", "base": "👍"},
+];
+/*
+018f9a57-6ed4-7922-b777-28e5a81f74f5
+018f9a57-6ed4-7525-8d1c-b260860d081a
+018f9a57-6ed4-71c5-9a9b-17e58a81ab10
+018f9a57-6ed4-7796-a02a-b452c43d9ace
+018f9a57-6ed4-7e96-b3b5-de083d6091bc
+018f9a57-6ed4-722d-bcef-f10a03d82de4
+018f9a57-6ed4-74df-a40e-73c2e3be73d8
+018f9a57-6ed4-7ff8-9374-c987d9b77448
+018f9a57-6ed4-73b1-965e-3e04081499ac
+018f9a57-6ed4-7b1c-b649-6a7b8e3b44ca
+*/
+
+avatars = {
+    "rion": "😺",
+    "nickname": "🧙🏾‍♂️",
+    "kapad": "🫵"
+}
+
+const selfNick = "rion";
+var prevMessage = {
+    "type": undefined,
+    "nick": undefined,
+};
+
+function fromHTML(html, trim = true) {
+  // Process the HTML string.
+  html = trim ? html.trim() : html;
+  if (!html) return null;
+
+  // Then set up a new template element.
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  const result = template.content.children;
+
+  // Then return either an HTMLElement or HTMLCollection,
+  // based on whether the input HTML had one or more roots.
+  if (result.length === 1) return result[0];
+  return result;
+}
+
+function render_message(event) {
+    let classes = ["msg"];
+    if (prevMessage["type"] == "message" && prevMessage["nick"] == event["nick"]) {
+        classes.push("grnext")
+    }
+    if (event["nick"] == selfNick) {
+        classes.push("mymsg");
+    }
+    classes = classes.join(" ");
+    const avatar = new Option(avatars[event["nick"]]).innerHTML;
+    const nick = new Option(event["nick"]).innerHTML;
+    const msgtext = new Option(event["text"]).innerHTML.replace("\n", "<br/>");
+    const time = (new Date()).toLocaleTimeString();
+    let el = fromHTML(`<div class="${classes}" id="${event.id}">
+    <span class="avatar">${avatar}</span>
+    <span class="nick">${nick}</span>
+    <span class="time">${time}</span>
+    <span class="msgtext">${msgtext}</span>
+    <div class="reactions"></div>
+</div>`);
+    document.body.appendChild(el);
+}
+
+function render_reaction(event) {
+    const msg = document.getElementById(event.target);
+    const reactions = msg?.getElementsByClassName("reactions").item(0);
+    if (!reactions) {
+        return;
+    }
+    const reactionsList = reactions.getElementsByTagName("span");
+    let reaction = null;
+    for (let i = 0; i < reactionsList.length; i++) {
+        let span = reactionsList[i];
+        if (span.baseReaction === event["base"]) {
+            reaction = span;
+            break;
+        }
+    }
+    if (!reaction) {
+        reaction = document.createElement("span");
+        reaction.baseReaction = (event["base"] || event["text"]);
+        reaction.innerHTML = `1 <em>${event["text"]}</em>`;
+        reactions.appendChild(reaction);
+        return;
+    }
+
+    reaction.firstChild.textContent = (Number(reaction.firstChild.textContent) + 1) + " ";
+    const emojis = reaction.getElementsByTagName("em");
+    for (let i = 0; i < emojis.length; i++) {
+        if (emojis[i].textContent == event.text) {
+            return;
+        }
+    }
+    reaction.appendChild(fromHTML(`<em>${event.text}</em>`));
+}
+
+function render_system(event) {
+    let html = new Option(event["text"]).innerHTML;
+    document.body.appendChild(fromHTML(`<div class="sysmsg">${html}</div>`));
+}
+
+function render(event) {
+    switch (event["type"]) {
+        case "message": render_message(event); break;
+        case "reaction": render_reaction(event); break;
+        case "system": render_system(event); break;
+    }
+    if (event.type === "message" || event.type === "system") {
+        prevMessage = {
+            "type": event["type"],
+            "nick": event["nick"],
+        };
+    }
+    document.body.scrollTop = document.body.scrollHeight;
+}
+
+function ready() {
+    var event = events.shift();
+    render(event);
+    if (events.length) {
+        setTimeout(ready, 1000);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", ready);
+        </script>
         <style>
 body {
     width: 100%;
@@ -35,6 +176,7 @@ body {
     border-radius: 0 .6em .6em .6em;
     box-shadow: 0px 0px 0.5em black;
     clip-path: inset(-0.5em -5em -0.5em -5em);
+    word-wrap:break-word !important;
 }
 
 .msg::before {
@@ -125,9 +267,17 @@ body {
     margin-top: .3em;
     margin-right: .5em;
     background-color: #00000008;
+    user-select: none;
+}
+
+.reactions > span > em {
+    font-style: normal;
+    cursor: pointer;
 }
 
 .grnext {
+    display: flex;
+    flex-wrap: wrap;
     margin-top: -0.15em;
     padding-top: 0.3em;
     border-top-right-radius: 0;
@@ -137,8 +287,8 @@ body {
        | |_____| |
        |         |
        |_________|
-       where central part for text. everything else for shadow.
-       this 0.09em below together with margin-top: -0.1em; is a workaround for
+       where central part is for the text and everything else for the shadow.
+       this 0.08em below together with margin-top: -0.15em; is a workaround for
        shadow clipping Google Chrome bug.
     */
     clip-path: polygon(0 0,
@@ -154,21 +304,22 @@ body {
 }
 
 .grnext .time {
-	margin-top: 0.2em;
-	float: right;
+	right: inherit;
 	position: inherit;
-	right: -.1em;
-	padding-left: 1em;
+	display: flex;
+	align-items: flex-end;
+	order: 2;
+	margin-right: 0;
+	margin-left: auto;
+	margin-top: auto;
+}
+
+.grnext .reactions:not(:empty) {
+    flex-basis: calc(100% - 4em);
 }
 
 .grnext.mymsg .time {
-    left: -.1em;
-    right: auto;
-    float: left;
-    padding-left: 0;
-    padding-right: 0.5em;
-    box-sizing: border-box;
-    margin-top: 0.1em;
+    margin-right: 0.3em;
 }
 
 .grnext .nick {
@@ -207,7 +358,7 @@ body {
     <span class="nick">rion</span>
     <span class="time">10:01</span>
     <span class="msgtext">Next message Next message Next message Next message Next message Next message Next message Next message Next message </span>
-    <div class="reactions"><span>1 😋</span></div>
+    <div class="reactions"><span>1 <em>😋</em></span></div>
 </div>
 
 <div class="msg grnext mymsg">
@@ -244,7 +395,7 @@ body {
         Take a piece of paper and a pen, and draw some important/basic stanza routes with 
         notes of a file/function name. Then post the image...
     </span>
-    <div class="reactions"><span>2 👍👍🏻</span><span>1 🔥</span></div>
+    <div class="reactions"><span>2 <em>👍</em><em>👍🏻</em></span><span>1 <em>🔥</em></span></div>
 </div>
 
 <div class="sysmsg">
