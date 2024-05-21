@@ -13,10 +13,12 @@ var events = [
     {"type": "system", "text": "This is a notification"},
     {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "🔥"}, {"text": "👌"}]},
     {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "👍🏻", "base": "👍"}]},
+    {"type": "message", "id": "018f9a57-6ed4-7922-b777-28e5a81f74f5", "nick": "rion", "reply": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "text": "Sounds like a greate idea!"},
+    {"type": "message", "id": "018f9a57-6ed4-7525-8d1c-b260860d081a", "nick": "nickname", "reply": "018f9a57-6ed4-7d35-8968-bee2b92ece51", "text": "Stop writing this garbage"},
+    {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-7525-8d1c-b260860d081a", "reactions": [{"text": "😝"}]},
 ];
 /*
-018f9a57-6ed4-7922-b777-28e5a81f74f5
-018f9a57-6ed4-7525-8d1c-b260860d081a
+
 018f9a57-6ed4-71c5-9a9b-17e58a81ab10
 018f9a57-6ed4-7796-a02a-b452c43d9ace
 018f9a57-6ed4-7e96-b3b5-de083d6091bc
@@ -66,8 +68,17 @@ function render_message(event) {
     classes = classes.join(" ");
     const avatar = new Option(avatars[event["nick"]]).innerHTML;
     const nick = new Option(event["nick"]).innerHTML;
-    const msgtext = new Option(event["text"]).innerHTML.replace("\n", "<br/>");
-    const time = (new Date()).toLocaleTimeString();
+    let msgtext = new Option(event["text"]).innerHTML.replace("\n", "<br/>");
+    let quoteMsg = null;
+    if (event.reply) {
+        quoteMsg = document.getElementById(event.reply);
+        if (quoteMsg) {
+            const quoteNick = quoteMsg.getElementsByClassName("nick")[0].innerHTML;
+            const quoteText = quoteMsg.getElementsByClassName("msgtext")[0].innerHTML;
+            msgtext = `<blockquote><div>${quoteNick}</div>${quoteText}</blockquote>` + msgtext;
+        }
+    }
+    const time = (new Date()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     let el = fromHTML(`<div class="${classes}" id="${event.id}">
     <span class="avatar">${avatar}</span>
     <span class="nick">${nick}</span>
@@ -79,19 +90,15 @@ function render_message(event) {
     let shared_timer = {}
     el.addEventListener("mouseleave", function(){
         if (shared_timer.timer) {
-            console.log("clear timeout");
             clearTimeout(shared_timer.timer);
             shared_timer.timer = null;
         } else {
-            console.log("remove");
             const rs = el.getElementsByClassName("reactions_selector")[0];
             rs.parentNode.removeChild(rs);
         }
     });
     el.addEventListener("mouseenter", function(){
-        console.log("set timer");
         shared_timer.timer = setTimeout(function(){
-            console.log("show");
             let selector = el.appendChild(document.createElement("div"));
             selector.classList.add("reactions_selector");
             selector.textContent = "❤";
@@ -99,6 +106,12 @@ function render_message(event) {
             
         }, 1000);
     });
+    if (event.reply) {
+        const bq = el.getElementsByTagName("blockquote")[0];
+        if (bq) {
+            bq.addEventListener("click", () => {quoteMsg.scrollIntoView({"behavior": "smooth", "block": "center"})});
+        }
+    }
 }
 
 function render_reaction(event) {
@@ -167,7 +180,7 @@ function ready() {
     var event = events.shift();
     render(event);
     if (events.length) {
-        setTimeout(ready, 1000);
+        setTimeout(ready, 100);
     }
 }
 
@@ -319,7 +332,7 @@ body {
 
 .reactions_selector:hover {
     font-size: 140%;
-    bottom: .1em;
+    bottom: 0;
 }
 
 :not(.mymsg) .reactions_selector:hover {
@@ -404,66 +417,29 @@ body {
     padding-bottom: .2em;
 }
 
+blockquote {
+  background: #f0f0f080;
+  border: 0;
+  border-left: 3px solid #ccc;
+  margin: .5em;
+  margin-top: 0;
+  padding: 0.5em;
+  padding-top: 0;
+  border-radius: .2em;
+  color: #444;
+  cursor: pointer;
+}
+
+blockquote > div {
+    background: #ccc;
+    padding: .1em .5em;
+    font-weight: bold;
+    margin: 0 -.5em .3em;
+}
 
         </style>
     </head>
     <body>
-<div class="msg mymsg">
-    <span class="avatar">😺</span>
-    <span class="nick">rion</span>
-    <span class="time">10:00</span>
-    <span class="msgtext">This is text<br/>another line</span>
-    <div class="reactions"></div>
-</div>
-
-<div class="msg grnext mymsg">
-    <span class="avatar">😺</span>
-    <span class="nick">rion</span>
-    <span class="time">10:01</span>
-    <span class="msgtext">Next message Next message Next message Next message Next message Next message Next message Next message Next message </span>
-    <div class="reactions"><span>1 <em>😋</em></span></div>
-</div>
-
-<div class="msg grnext mymsg">
-    <span class="avatar">😺</span>
-    <span class="nick">rion</span>
-    <span class="time">10:02</span>
-    <span class="msgtext">3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message</span>
-    <div class="reactions"></div>
-</div>
-
-<div class="msg">
-    <span class="avatar">🧙🏾‍♂️</span>
-    <span class="nick">nick</span>
-    <span class="time">10:05</span>
-    <span class="msgtext">Another text</span>
-    <div class="reactions"></div>
-</div>
-
-<div class="msg grnext">
-    <span class="avatar">🧙🏾‍♂️</span>
-    <span class="nick">nick</span>
-    <span class="time">10:05</span>
-    <span class="msgtext">Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. </span>
-    <div class="reactions"></div>
-</div>
-
-<div class="msg">
-    <span class="avatar">🫵</span>
-    <span class="nick">kapad</span>
-    <span class="time">10:06</span>
-    <span class="msgtext">
-        i dont know if this easy or not, but i was think something the other day... 
-        Let's say, one day you/or some that knows, have some free time and artistic mood. 
-        Take a piece of paper and a pen, and draw some important/basic stanza routes with 
-        notes of a file/function name. Then post the image...
-    </span>
-    <div class="reactions"><span>2 <em>👍</em><em>👍🏻</em></span><span>1 <em>🔥</em></span></div>
-</div>
-
-<div class="sysmsg">
-    This is a notification
-</div>
 
     </body>
 </html>
