@@ -5,14 +5,14 @@ var events = [
     {"type": "message", "id": "018f9a57-6ed4-7ef5-8a86-ca6c5407b004", "nick": "rion", "text": "This is text\nanother line"},
     {"type": "message", "id": "018f9a57-6ed4-7328-976c-090bdbc9aabd", "nick": "rion", "text": "Next message Next message Next message Next message Next message Next message Next message Next message Next message"},
     {"type": "message", "id": "018f9a57-6ed4-7d35-8968-bee2b92ece51", "nick": "rion", "text": "3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message"},
-    {"type": "reaction", "id": "018f9a57-6ed4-7e74-898a-48ee2253aca2", "nick": "rion", "target": "018f9a57-6ed4-7328-976c-090bdbc9aabd", "reactions": [{"text": "😋"}]},
+    {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-7328-976c-090bdbc9aabd", "reactions": [{"text": "😋"}]},
     {"type": "message", "id": "018f9a57-6ed4-7491-9acb-eea4e5a58304", "nick": "nickname", "text": "Another text"},
     {"type": "message", "id": "018f9a57-6ed4-768e-bf78-38165c97481a", "nick": "nickname", "text": "Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group."},
     {"type": "message", "id": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "nick": "kapad", "text": "i dont know if this easy or not, but i was think something the other day... Let's say, one day you/or some that knows, have some free time and artistic mood. Take a piece of paper and a pen, and draw some important/basic stanza routes with notes of a file/function name. Then post the image..."},
-    {"type": "reaction", "id": "018f9a57-6ed4-7c76-84d4-138d63f389b7", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "👍"}]},
+    {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "👍"}]},
     {"type": "system", "text": "This is a notification"},
-    {"type": "reaction", "id": "018f9a57-6ed4-7609-9d32-2ae7592cfe5f", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "🔥"}, {"text": "👌"}]},
-    {"type": "reaction", "id": "018f9a57-6ed4-7a5d-9c6d-a31995a3e0c7", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "👍🏻", "base": "👍"}]},
+    {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "🔥"}, {"text": "👌"}]},
+    {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "👍🏻", "base": "👍"}]},
 ];
 /*
 018f9a57-6ed4-7922-b777-28e5a81f74f5
@@ -76,6 +76,29 @@ function render_message(event) {
     <div class="reactions"></div>
 </div>`);
     document.body.appendChild(el);
+    let shared_timer = {}
+    el.addEventListener("mouseleave", function(){
+        if (shared_timer.timer) {
+            console.log("clear timeout");
+            clearTimeout(shared_timer.timer);
+            shared_timer.timer = null;
+        } else {
+            console.log("remove");
+            const rs = el.getElementsByClassName("reactions_selector")[0];
+            rs.parentNode.removeChild(rs);
+        }
+    });
+    el.addEventListener("mouseenter", function(){
+        console.log("set timer");
+        shared_timer.timer = setTimeout(function(){
+            console.log("show");
+            let selector = el.appendChild(document.createElement("div"));
+            selector.classList.add("reactions_selector");
+            selector.textContent = "❤";
+            shared_timer.timer = null;
+            
+        }, 1000);
+    });
 }
 
 function render_reaction(event) {
@@ -284,6 +307,37 @@ body {
     cursor: pointer;
 }
 
+.reactions_selector {
+    position: absolute;
+    bottom: .3em;
+    left: -2.5em;
+    width: 3em;
+    height: 1.5em;
+    text-align: center;
+    cursor: pointer;
+}
+
+.reactions_selector:hover {
+    font-size: 140%;
+    bottom: .1em;
+}
+
+:not(.mymsg) .reactions_selector:hover {
+    left: -2.3em;
+    transition: bottom .5s, left .5s, font-size .5s;
+}
+
+.mymsg .reactions_selector {
+    left: inherit;
+    right: -2.5em;
+}
+
+.mymsg .reactions_selector:hover {
+    left: inherit;
+    right: -2.3em;
+    transition: bottom .5s, right .5s, font-size .5s;
+}
+
 .grnext {
     display: flex;
     flex-wrap: wrap;
@@ -302,10 +356,10 @@ body {
     */
     clip-path: polygon(0 0,
         0 -.5em,
-        -.5em -.5em,
-        -.5em calc(100% + .5em),
-        calc(100% + .5em) calc(100% + .5em),
-        calc(100% + .5em) -.5em,
+        -5em -.5em,
+        -5em calc(100% + .5em),
+        calc(100% + 5em) calc(100% + .5em),
+        calc(100% + 5em) -.5em,
         100% -.5em,
         100% 0.08em,
         0 0.08em
