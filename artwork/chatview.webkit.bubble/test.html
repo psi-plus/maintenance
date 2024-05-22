@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Psi Bubble</title>
         <script type="text/javascript">
 var events = [
     {"type": "message", "id": "018f9a57-6ed4-7ef5-8a86-ca6c5407b004", "nick": "rion", "text": "This is text\nanother line"},
@@ -57,6 +58,20 @@ avatars = {
     "kapad": "🫵"
 }
 
+available_reactions = [
+    "😂",
+    "🤣",
+    "🔥",
+    "👍",
+    "😭",
+    "🙏",
+    "❤️",
+    "😘",
+    "🥰",
+    "😍",
+    "😊",
+]
+
 const selfNick = "rion";
 var prevMessage = {
     "type": undefined,
@@ -80,7 +95,14 @@ function fromHTML(html, trim = true) {
 }
 
 function setup_reactions_selector() {
-    let rs = document.getElementById("reactions_selector");
+    const rs = document.createElement("div");
+    rs.classList.add("reaction_selector");
+    rs.id = "reaction_selector";
+    available_reactions.forEach(emoji => {
+        const em = rs.appendChild(document.createElement("em"));
+        em.textContent = emoji;
+    });
+
     rs.addEventListener("click", function(event){
         if (event.target.localName == "em") {
             event.target.parentNode.style.display = "none";
@@ -538,18 +560,5 @@ blockquote > div {
         </style>
     </head>
     <body>
-<div class="reactions_selector" id="reactions_selector">
-    <em>😂</em>
-    <em>🤣</em>
-    <em>🔥</em>
-    <em>👍</em>
-    <em>😭</em>
-    <em>🙏</em>
-    <em>❤️</em>
-    <em>😘</em>
-    <em>🥰</em>
-    <em>😍</em>
-    <em>😊</em>
-</div>
     </body>
 </html>
