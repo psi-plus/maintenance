@@ -129,6 +129,23 @@ function show_reactions_selector(nearEl, scrollEl) {
     }
 }
 
+function setup_context_menu() {
+    const menu = document.body.appendChild(document.createElement("div"));
+    menu.classList.add("context_menu");
+    menu.id = "context_menu";
+    document.addEventListener("contextmenu", function(event){
+        const nick = event.target.getAttribute("data-nick");
+        const is_msg = event.target.classList.contains("msg");
+        if (nick || is_msg) {
+            console.log(nick || event.target.id);
+            event.stopPropagation();
+            event.preventDefault();
+            menu.innerHTML = "";
+            return;
+        }
+    });
+}
+
 function render_message(event) {
     let classes = ["msg"];
     if (prevMessage["type"] == "message" && prevMessage["nick"] == event["nick"]) {
@@ -271,6 +288,7 @@ function handleEventQueue() {
 window.addEventListener("load", () => {
     console.log("ready");
     setup_reactions_selector();
+    setup_context_menu();    
     handleEventQueue()
 });
         </script>
@@ -555,6 +573,11 @@ blockquote > div {
     font-style: normal;
     cursor: pointer;
     font-size: 1.5rem;
+}
+
+.context_menu {
+    display: none;
+    flex-flow: column;
 }
 
         </style>
