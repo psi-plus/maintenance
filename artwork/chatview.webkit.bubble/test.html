@@ -95,9 +95,9 @@ function fromHTML(html, trim = true) {
 }
 
 function setup_reactions_selector() {
-    const rs = document.createElement("div");
-    rs.classList.add("reaction_selector");
-    rs.id = "reaction_selector";
+    const rs = document.body.appendChild(document.createElement("div"));
+    rs.classList.add("reactions_selector");
+    rs.id = "reactions_selector";
     available_reactions.forEach(emoji => {
         const em = rs.appendChild(document.createElement("em"));
         em.textContent = emoji;
