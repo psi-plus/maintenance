@@ -116,7 +116,7 @@ function render_message(event) {
     if (event["nick"] == selfNick) {
         classes.push("mymsg");
     } else {
-        nickControl = `<div class="answer">Answer</div>`;
+        nickControl = `<div class="reply">Reply</div>`;
     }
     classes = classes.join(" ");
     const avatar = new Option(avatars[event["nick"]]).innerHTML;
@@ -345,18 +345,18 @@ body {
     right: auto;
 }
 
-.answer {
+.reply {
 	display: block;
 	float: right;
 	text-align: right;
-	content: "Answer";
+	content: "Reply";
 	font-weight: normal;
 	cursor: pointer;
     opacity: 0.1;
     transition: opacity 0.3s linear;
 }
 
-.answer:hover {
+.reply:hover {
     opacity: 1;
     text-decoration: underline;
 }
