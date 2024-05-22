@@ -16,10 +16,10 @@ var events = [
     {"type": "message", "id": "018f9a57-6ed4-7922-b777-28e5a81f74f5", "nick": "rion", "reply": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "text": "Sounds like a greate idea!"},
     {"type": "message", "id": "018f9a57-6ed4-7525-8d1c-b260860d081a", "nick": "nickname", "reply": "018f9a57-6ed4-7d35-8968-bee2b92ece51", "text": "Stop writing this garbage"},
     {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-7525-8d1c-b260860d081a", "reactions": [{"text": "😝"}]},
+    {"type": "message", "id": "018f9a57-6ed4-71c5-9a9b-17e58a81ab10", "nick": "rion", "text": "short message"},
 ];
 /*
 
-018f9a57-6ed4-71c5-9a9b-17e58a81ab10
 018f9a57-6ed4-7796-a02a-b452c43d9ace
 018f9a57-6ed4-7e96-b3b5-de083d6091bc
 018f9a57-6ed4-722d-bcef-f10a03d82de4
@@ -89,7 +89,7 @@ function render_message(event) {
     document.body.appendChild(el);
     let shared_timer = {}
     el.addEventListener("mouseleave", function(){
-        if (shared_timer.timer) {
+        if (shared_timer.timer) { // if we were going to show it
             clearTimeout(shared_timer.timer);
             shared_timer.timer = null;
         } else {
@@ -102,6 +102,7 @@ function render_message(event) {
             let selector = el.appendChild(document.createElement("div"));
             selector.classList.add("reactions_selector");
             selector.textContent = "❤";
+            setTimeout(()=>{ console.log('adding'); selector.classList.add('noopacity'); }, 0);
             shared_timer.timer = null;
             
         }, 1000);
@@ -222,6 +223,8 @@ body {
     box-shadow: 0px 0px 0.5em black;
     clip-path: inset(-0.5em -5em -0.5em -5em);
     word-wrap:break-word !important;
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .msg::before {
@@ -245,6 +248,7 @@ body {
     margin-right: 3em;
     background-color: #ffd;
     border-radius: .6em 0 .6em .6em;
+    padding-top: .5em;
 }
 
 .mymsg::before {
@@ -269,18 +273,20 @@ body {
 }
 
 .time {
-    margin-top: -1.6em;
-    display: inline-block;
+    order: 4;
     right: .5em;
-    position: absolute;
-    font-size:80%;
-    font-weight: bold;
+    font-size:70%;
     color: #777;
+    align-items: flex-end;
+    margin-left: auto;
+    margin-top: auto;
 }
 
 .mymsg .time {
-    right: inherit;
-    left: .5em;
+    margin-top: inherit;
+    display: flex;
+	align-items: flex-end;
+	order: 2;
 }
 
 .avatar {
@@ -300,7 +306,9 @@ body {
 .msgtext {
     color: #111;
 }
-
+.reactions:not(:empty) {
+    flex-basis: calc(100% - 4em);
+}
 .reactions > span {
     display: inline-block;
     font-size: 70%;
@@ -328,6 +336,14 @@ body {
     height: 1.5em;
     text-align: center;
     cursor: pointer;
+    padding-top: 1em;
+    /*background-color: green;*/
+    opacity: 0;
+    transition: opacity 0.5s linear;
+}
+
+.noopacity {
+    opacity: 1;
 }
 
 .reactions_selector:hover {
@@ -378,22 +394,6 @@ body {
         0 0.08em
     );
 }
-
-.grnext .time {
-	right: inherit;
-	position: inherit;
-	display: flex;
-	align-items: flex-end;
-	order: 2;
-	margin-right: 0;
-	margin-left: auto;
-	margin-top: auto;
-}
-
-.grnext .reactions:not(:empty) {
-    flex-basis: calc(100% - 4em);
-}
-
 .grnext.mymsg .time {
     margin-right: 0.3em;
 }
