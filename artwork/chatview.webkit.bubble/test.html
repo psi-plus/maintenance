@@ -16,10 +16,30 @@ var events = [
     {"type": "system", "text": "This is a notification"},
     {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "🔥"}, {"text": "👌"}]},
     {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "👍🏻", "base": "👍"}]},
-    {"type": "message", "id": "018f9a57-6ed4-7922-b777-28e5a81f74f5", "nick": "rion", "reply": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "text": "Sounds like a great idea!"},
-    {"type": "message", "id": "018f9a57-6ed4-7525-8d1c-b260860d081a", "nick": "nickname", "reply": "018f9a57-6ed4-7d35-8968-bee2b92ece51", "text": "Stop writing this garbage"},
     {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-7525-8d1c-b260860d081a", "reactions": [{"text": "😝"}]},
     {"type": "message", "id": "018f9a57-6ed4-71c5-9a9b-17e58a81ab10", "nick": "rion", "text": "short message"},
+    {"type": "system", "text": "subject randomly changed to", "usertext": `• Psi+ Project — Development branch of Psi XMPP client - https://psi-plus.com/
+• Room languages: Russian, English
+• You may configure almost everything with help of Extended Options Plugin ;-)
+• Conference rules: https://psi-plus.com/wiki/conference_rules
+• Bug tracker: https://github.com/psi-im/psi/issues
+• Wiki: https://psi-plus.com/wiki/ || FAQ: https://psi-plus.com/wiki/faq
+• Forum: https://groups.google.com/group/psi-users
+• Psi and Psi+ translations https://www.transifex.com/tehnick/psi-plus/
+• Downloads: https://sourceforge.net/projects/psiplus/files/
+• Builds
+ - Windows:
+   + Psi installers: https://sourceforge.net/projects/psi/files/Psi/
+   + Psi+ installers: https://sourceforge.net/projects/psiplus/files/Windows/Personal-Builds/KukuRuzo/
+   + Psi+ portable builds: https://sourceforge.net/projects/psiplus/files/Windows/Personal-Builds/tehnick/
+ - macOS (10.14 or newer): https://sourceforge.net/projects/psiplus/files/macOS/tehnick/
+ - Linux (AppImage): https://sourceforge.net/projects/psiplus/files/Linux/tehnick/
+ - Ubuntu PPA: https://launchpad.net/~psi-plus/+archive/ubuntu/ppa
+ - Debian PPA: https://psi-plus.com/wiki/en:debian#nightly_builds
+ - Other Linux distributions: https://repology.org/metapackage/psi-plus/versions
+• $1000+500 for MAM (XEP-0313) https://github.com/psi-im/psi/issues/62#issuecomment-357450302 and from hx0 (ask liuch to share and quicken his work)`},
+    {"type": "message", "id": "018f9a57-6ed4-7922-b777-28e5a81f74f5", "nick": "rion", "reply": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "text": "Sounds like a great idea!"},
+    {"type": "message", "id": "018f9a57-6ed4-7525-8d1c-b260860d081a", "nick": "nickname", "reply": "018f9a57-6ed4-7d35-8968-bee2b92ece51", "text": "Stop writing this garbage"},
 ];
 /*
 018f9a57-6ed4-7796-a02a-b452c43d9ace
@@ -92,27 +112,32 @@ function render_message(event) {
     if (prevMessage["type"] == "message" && prevMessage["nick"] == event["nick"]) {
         classes.push("grnext")
     }
+    let nickControl = "";
     if (event["nick"] == selfNick) {
         classes.push("mymsg");
+    } else {
+        nickControl = `<div class="answer">Answer</div>`;
     }
     classes = classes.join(" ");
     const avatar = new Option(avatars[event["nick"]]).innerHTML;
     const nick = new Option(event["nick"]).innerHTML;
     let msgtext = new Option(event["text"]).innerHTML.replace("\n", "<br/>");
     let quoteMsg = null;
+    let quoteTxt = "";
     if (event.reply) {
         quoteMsg = document.getElementById(event.reply);
         if (quoteMsg) {
             const quoteNick = quoteMsg.getElementsByClassName("nick")[0].innerHTML;
             const quoteText = quoteMsg.getElementsByClassName("msgtext")[0].innerHTML;
-            msgtext = `<blockquote><div>${quoteNick}</div>${quoteText}</blockquote>` + msgtext;
+            quoteTxt = `<blockquote><div>${quoteNick}</div>${quoteText}</blockquote>`;
         }
     }
     const time = (new Date()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     let el = fromHTML(`<div class="${classes}" id="${event.id}">
     <span class="avatar">${avatar}</span>
-    <span class="nick">${nick}</span>
+    <span class="nick">${nick}${nickControl}</span>
     <span class="time">${time}</span>
+    ${quoteTxt}
     <span class="msgtext">${msgtext}</span>
     <div class="reactions"></div>
 </div>`);
@@ -188,8 +213,13 @@ function render_reaction(event) {
 }
 
 function render_system(event) {
-    let html = new Option(event["text"]).innerHTML;
-    document.body.appendChild(fromHTML(`<div class="sysmsg">${html}</div>`));
+    let text = new Option(event["text"]).innerHTML;
+    if (event["usertext"]) {
+        let usertext = event["usertext"].replaceAll("\n", "<br/>");
+        document.body.appendChild(fromHTML(`<div class="sysmsg">${text}<div class="usertext">${usertext}</div></div>`));
+    } else {
+        document.body.appendChild(fromHTML(`<div class="sysmsg">${text}</div>`));
+    }
 }
 
 function render(event) {
@@ -204,14 +234,14 @@ function render(event) {
             "nick": event["nick"],
         };
     }
-    document.body.scrollTo({"top": document.body.scrollHeight, "behavior": "smooth"})
+    document.documentElement.scrollTo({"top": document.documentElement.scrollHeight, "behavior": "smooth"})
 }
 
 function handleEventQueue() {
     var event = events.shift();
     render(event);
     if (events.length) {
-        setTimeout(handleEventQueue, 100);
+        setTimeout(handleEventQueue, 1000);
     }
 }
 
@@ -253,11 +283,15 @@ body {
     box-shadow: 0px 0px 0.5rem black;
 }
 
+.sysmsg .usertext {
+    text-align: left;
+    color: black;
+}
+
 .msg {
     margin: 0.5rem;
     margin-left: 3rem;
     padding: .5rem;
-    /* padding-top: 2rem; */
     position: relative;
     background-color: white;
     border-radius: 0 .6rem .6rem .6rem;
@@ -302,13 +336,28 @@ body {
 }
 
 .nick {
-    /* margin-top: -1.7rem; */
-    display: flex;
+    padding-bottom: .3em;
+    display: block;
     cursor: pointer;
     font-weight: bold;
     flex-basis: 100%;
     right: auto;
-    /* position: absolute; */
+}
+
+.answer {
+	display: block;
+	float: right;
+	text-align: right;
+	content: "Answer";
+	font-weight: normal;
+	cursor: pointer;
+    opacity: 0.1;
+    transition: opacity 0.3s linear;
+}
+
+.answer:hover {
+    opacity: 1;
+    text-decoration: underline;
 }
 
 .mymsg .nick {
@@ -382,7 +431,7 @@ body {
     padding-top: 1rem;
     /*background-color: green;*/
     opacity: 0;
-    transition: opacity 0.5s linear;
+    transition: opacity 0.5s linear, bottom .5s, font-size .5s;;
 }
 
 .noopacity {
@@ -394,17 +443,9 @@ body {
     bottom: .4rem;
 }
 
-:not(.mymsg) .like_button:hover {
-    transition: bottom .5s, font-size .5s;
-}
-
 .mymsg .like_button {
     left: inherit;
     right: -2.5rem;
-}
-
-.mymsg .like_button:hover {
-    transition: bottom .5s, font-size .5s;
 }
 
 .grnext {
@@ -433,9 +474,6 @@ body {
         100% 0.08rem,
         0 0.08rem
     );
-}
-.grnext.mymsg .time {
-    margin-right: 0.3rem;
 }
 
 .grnext .nick {
@@ -468,6 +506,7 @@ blockquote {
   border-radius: .2rem;
   color: #444;
   cursor: pointer;
+  flex-basis: 100%;
 }
 
 blockquote > div {
@@ -485,6 +524,7 @@ blockquote > div {
     border-radius: 0.2rem;
     background-color: #fafafa;
     box-shadow: 0px 0px 0.5rem black;
+    flex-wrap: wrap;
     z-index: 2;
 }
 
