@@ -173,7 +173,7 @@ function render(event) {
             "nick": event["nick"],
         };
     }
-    document.body.scrollTop = document.body.scrollHeight;
+    document.body.scrollTo({"top": document.body.scrollHeight, "behavior": "smooth"})
 }
 
 function ready() {
@@ -265,7 +265,7 @@ body {
 }
 
 .mymsg .nick {
-    right: 0.5em;
+    display: none;
 }
 
 .time {
@@ -323,7 +323,7 @@ body {
 .reactions_selector {
     position: absolute;
     bottom: .3em;
-    left: -2.5em;
+    left: -2.3em;
     width: 3em;
     height: 1.5em;
     text-align: center;
@@ -336,18 +336,18 @@ body {
 }
 
 :not(.mymsg) .reactions_selector:hover {
-    left: -2.3em;
+    left: -2.1em;
     transition: bottom .5s, left .5s, font-size .5s;
 }
 
 .mymsg .reactions_selector {
     left: inherit;
-    right: -2.5em;
+    right: -2.3em;
 }
 
 .mymsg .reactions_selector:hover {
     left: inherit;
-    right: -2.3em;
+    right: -2.1em;
     transition: bottom .5s, right .5s, font-size .5s;
 }
 
