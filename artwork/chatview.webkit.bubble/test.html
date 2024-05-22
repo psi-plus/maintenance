@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="utf-8" />
         <script type="text/javascript">
 var events = [
     {"type": "message", "id": "018f9a57-6ed4-7ef5-8a86-ca6c5407b004", "nick": "rion", "text": "This is text\nanother line"},
@@ -129,7 +130,7 @@ function render_message(event) {
         shared_timer.timer = setTimeout(function(){
             let selector = el.appendChild(document.createElement("div"));
             selector.classList.add("like_button");
-            selector.textContent = "❤";
+            selector.textContent = "❤️";
             setTimeout(()=>{ selector.classList.add('noopacity'); }, 0);
             shared_timer.timer = null;
             selector.addEventListener("click", () => show_reactions_selector(selector, document.documentElement));
