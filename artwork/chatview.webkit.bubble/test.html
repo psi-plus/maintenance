@@ -2,6 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <script type="text/javascript">
 var events = [
     {"type": "message", "id": "018f9a57-6ed4-7ef5-8a86-ca6c5407b004", "nick": "rion", "text": "This is text\nanother line"},
@@ -221,10 +222,14 @@ window.addEventListener("load", () => {
 });
         </script>
         <style>
+html {
+    font-size: 12pt;
+}
+
 body {
     width: 100%;
     height: 100%;
-    padding: .5em 0;
+    padding: .5rem 0;
     margin: 0;
     box-sizing: border-box;
     background: url(background.jpg);
@@ -233,73 +238,77 @@ body {
     color: black;
     font-family: sans, times;
     position: relative;
+    text-size-adjust: none;
+    -moz-text-size-adjust: none;
 }
 
 .sysmsg {
     background-color: rgb(122, 246, 246);
     color: #444;
-    padding: .4em 1em;
+    padding: .4rem 1rem;
     width: 70%;
-    margin: 0 auto .5em;
-    border-radius: 1em;
+    margin: 0 auto .5rem;
+    border-radius: 1rem;
     text-align: center;
-    box-shadow: 0px 0px 0.5em black;
+    box-shadow: 0px 0px 0.5rem black;
 }
 
 .msg {
-    margin: 0.5em;
-    margin-left: 3em;
-    padding: .5em;
-    padding-top: 1.5em;
+    margin: 0.5rem;
+    margin-left: 3rem;
+    padding: .5rem;
+    /* padding-top: 2rem; */
     position: relative;
     background-color: white;
-    border-radius: 0 .6em .6em .6em;
-    box-shadow: 0px 0px 0.5em black;
-    clip-path: inset(-0.5em -5em -0.5em -5em);
+    border-radius: 0 .6rem .6rem .6rem;
+    box-shadow: 0px 0px 0.5rem black;
+    clip-path: inset(-0.5rem -5rem -0.5rem -5rem);
     word-wrap:break-word !important;
     display: flex;
     flex-wrap: wrap;
 }
 
 .msg::before {
-    width: 2em;
-    height: 2em;
-    border: .5em solid white;
-    border-radius: 1.4em;
+    width: 2rem;
+    height: 2rem;
+    border: .5rem solid white;
+    border-radius: 1.4rem;
     content: "";
     position: absolute;
     top: 0;
     left: 0;
-    margin-top: -0.6em;
-    margin-left: -2.44em;
+    margin-top: -0.6rem;
+    margin-left: -2.44rem;
     display: inline-block;
     z-index: -1;
-    clip: rect(0.6em, 3em, 1.5em, 2em);
+    clip: rect(0.6rem, 3rem, 1.5rem, 2rem);
 }
 
 .mymsg {
-    margin-left: 0.5em;
-    margin-right: 3em;
+    margin-left: 0.5rem;
+    margin-right: 3rem;
     background-color: #ffd;
-    border-radius: .6em 0 .6em .6em;
-    padding-top: .5em;
+    border-radius: .6rem 0 .6rem .6rem;
+    padding-top: .5rem;
 }
 
 .mymsg::before {
     left: inherit;
     right: 0;
     margin-left: inherit;
-    margin-right: -2.44em;
+    margin-right: -2.44rem;
     border-color: #ffc;
-    clip: rect(0.6em, 2em, 1.5em, 0);
+    clip: rect(0.6rem, 2rem, 1.5rem, 0);
 }
 
 .nick {
-    margin-top: -1.4em;
-    display: inline-block;
+    /* margin-top: -1.7rem; */
+    display: flex;
     cursor: pointer;
     font-weight: bold;
-    position: absolute;
+    flex-basis: 100%;
+    right: auto;
+    /* position: absolute; */
 }
 
 .mymsg .nick {
@@ -308,8 +317,8 @@ body {
 
 .time {
     order: 4;
-    right: .5em;
-    font-size:70%;
+    right: .5rem;
+    font-size:.8rem;
     color: #777;
     align-items: flex-end;
     margin-left: auto;
@@ -324,15 +333,15 @@ body {
 }
 
 .avatar {
-    margin-left: -1.25em;
-    font-size:2.3em;
+    margin-left: -3rem;
+    font-size:2.3rem;
     top: 0;
     left: 0;
     position:absolute;
 }
 
 .mymsg .avatar {
-    margin-right: -1.25em;
+    margin-right: -3rem;
     left: inherit;
     right: 0;
 }
@@ -341,18 +350,18 @@ body {
     color: #111;
 }
 .reactions:not(:empty) {
-    flex-basis: calc(100% - 4em);
+    flex-basis: calc(100% - 4rem);
 }
 .reactions > span {
     display: inline-block;
-    font-size: 70%;
+    font-size: .8rem;
     font-weight: bold;
     border: 1px solid #aaa;
     color: gray;
-    padding: .2em .6em;
-    border-radius: 1.3em;
-    margin-top: .3em;
-    margin-right: .5em;
+    padding: .2rem .6rem;
+    border-radius: 1.3rem;
+    margin-top: .3rem;
+    margin-right: .5rem;
     background-color: #00000008;
     user-select: none;
 }
@@ -364,13 +373,13 @@ body {
 
 .like_button {
     position: absolute;
-    bottom: .3em;
-    left: -2.3em;
-    width: 3em;
-    height: 1.5em;
+    bottom: .3rem;
+    left: -2.5rem;
+    width: 3rem;
+    height: 1.5rem;
     text-align: center;
     cursor: pointer;
-    padding-top: 1em;
+    padding-top: 1rem;
     /*background-color: green;*/
     opacity: 0;
     transition: opacity 0.5s linear;
@@ -381,31 +390,28 @@ body {
 }
 
 .like_button:hover {
-    font-size: 140%;
-    bottom: 0;
+    font-size: 1.4rem;
+    bottom: .4rem;
 }
 
 :not(.mymsg) .like_button:hover {
-    left: -2.1em;
-    transition: bottom .5s, left .5s, font-size .5s;
+    transition: bottom .5s, font-size .5s;
 }
 
 .mymsg .like_button {
     left: inherit;
-    right: -2.3em;
+    right: -2.5rem;
 }
 
 .mymsg .like_button:hover {
-    left: inherit;
-    right: -2.1em;
-    transition: bottom .5s, right .5s, font-size .5s;
+    transition: bottom .5s, font-size .5s;
 }
 
 .grnext {
     display: flex;
     flex-wrap: wrap;
-    margin-top: -0.15em;
-    padding-top: 0.3em;
+    margin-top: -0.15rem;
+    padding-top: 0.3rem;
     border-top-right-radius: 0;
     border-top-left-radius: 0;
     /* We clip it like
@@ -414,22 +420,22 @@ body {
        |         |
        |_________|
        where central part is for the text and everything else for the shadow.
-       this 0.08em below together with margin-top: -0.15em; is a workaround for
+       this 0.08rem below together with margin-top: -0.15rem; is a workaround for
        shadow clipping Google Chrome bug.
     */
     clip-path: polygon(0 0,
-        0 -.5em,
-        -5em -.5em,
-        -5em calc(100% + .5em),
-        calc(100% + 5em) calc(100% + .5em),
-        calc(100% + 5em) -.5em,
-        100% -.5em,
-        100% 0.08em,
-        0 0.08em
+        0 -.5rem,
+        -5rem -.5rem,
+        -5rem calc(100% + .5rem),
+        calc(100% + 5rem) calc(100% + .5rem),
+        calc(100% + 5rem) -.5rem,
+        100% -.5rem,
+        100% 0.08rem,
+        0 0.08rem
     );
 }
 .grnext.mymsg .time {
-    margin-right: 0.3em;
+    margin-right: 0.3rem;
 }
 
 .grnext .nick {
@@ -448,43 +454,44 @@ body {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     margin-bottom: 0;
-    padding-bottom: .2em;
+    padding-bottom: .2rem;
 }
 
 blockquote {
   background: #f0f0f080;
   border: 0;
   border-left: 3px solid #ccc;
-  margin: .5em;
+  margin: .5rem;
   margin-top: 0;
-  padding: 0.5em;
+  padding: 0.5rem;
   padding-top: 0;
-  border-radius: .2em;
+  border-radius: .2rem;
   color: #444;
   cursor: pointer;
 }
 
 blockquote > div {
     background: #ccc;
-    padding: .1em .5em;
+    padding: .1rem .5rem;
     font-weight: bold;
-    margin: 0 -.5em .3em;
+    margin: 0 -.5rem .3rem;
 }
 
 .reactions_selector {
     display: none;
     position: absolute;
-    padding: .5em;
-    margin-top: 1em;
-    border-radius: 0.2em;
+    padding: .5rem;
+    margin-top: 1rem;
+    border-radius: 0.2rem;
     background-color: #fafafa;
-    box-shadow: 0px 0px 0.5em black;
+    box-shadow: 0px 0px 0.5rem black;
     z-index: 2;
 }
 
 .reactions_selector em {
     font-style: normal;
     cursor: pointer;
+    font-size: 1.5rem;
 }
 
         </style>
