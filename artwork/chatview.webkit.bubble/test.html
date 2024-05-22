@@ -120,14 +120,15 @@ function render_message(event) {
     }
     classes = classes.join(" ");
     const avatar = new Option(avatars[event["nick"]]).innerHTML;
-    const nick = new Option(event["nick"]).innerHTML;
+    const nickHtml = new Option(event["nick"]).innerHTML;
+    const nickAttr = encodeURIComponent(event["nick"]);
     let msgtext = new Option(event["text"]).innerHTML.replace("\n", "<br/>");
     let quoteMsg = null;
     let quoteTxt = "";
     if (event.reply) {
         quoteMsg = document.getElementById(event.reply);
         if (quoteMsg) {
-            const quoteNick = quoteMsg.getElementsByClassName("nick")[0].innerHTML;
+            const quoteNick = decodeURIComponent(quoteMsg.getElementsByClassName("nick")[0].getAttribute("data-nick"));
             const quoteText = quoteMsg.getElementsByClassName("msgtext")[0].innerHTML;
             quoteTxt = `<blockquote><div>${quoteNick}</div>${quoteText}</blockquote>`;
         }
@@ -135,7 +136,7 @@ function render_message(event) {
     const time = (new Date()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     let el = fromHTML(`<div class="${classes}" id="${event.id}">
     <span class="avatar">${avatar}</span>
-    <span class="nick">${nick}${nickControl}</span>
+    <span class="nick" data-nick="${nickAttr}">${nickHtml}${nickControl}</span>
     <span class="time">${time}</span>
     ${quoteTxt}
     <span class="msgtext">${msgtext}</span>
