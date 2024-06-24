@@ -1,25 +1,26 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Psi Bubble</title>
-        <script type="text/javascript">
-var events = [
-    {"type": "message", "id": "018f9a57-6ed4-7ef5-8a86-ca6c5407b004", "nick": "rion", "text": "This is text\nanother line"},
-    {"type": "message", "id": "018f9a57-6ed4-7328-976c-090bdbc9aabd", "nick": "rion", "text": "Next message Next message Next message Next message Next message Next message Next message Next message Next message"},
-    {"type": "message", "id": "018f9a57-6ed4-7d35-8968-bee2b92ece51", "nick": "rion", "text": "3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message"},
-    {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-7328-976c-090bdbc9aabd", "reactions": [{"text": "😋"}]},
-    {"type": "message", "id": "018f9a57-6ed4-7491-9acb-eea4e5a58304", "nick": "nickname", "text": "Another text"},
-    {"type": "message", "id": "018f9a57-6ed4-768e-bf78-38165c97481a", "nick": "nickname", "text": "Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group."},
-    {"type": "message", "id": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "nick": "kapad", "text": "i dont know if this easy or not, but i was think something the other day... Let's say, one day you/or some that knows, have some free time and artistic mood. Take a piece of paper and a pen, and draw some important/basic stanza routes with notes of a file/function name. Then post the image..."},
-    {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "👍"}]},
-    {"type": "system", "text": "This is a notification"},
-    {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "🔥"}, {"text": "👌"}]},
-    {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{"text": "👍🏻", "base": "👍"}]},
-    {"type": "reaction", "nick": "rion", "target": "018f9a57-6ed4-7525-8d1c-b260860d081a", "reactions": [{"text": "😝"}]},
-    {"type": "message", "id": "018f9a57-6ed4-71c5-9a9b-17e58a81ab10", "nick": "rion", "text": "short message"},
-    {"type": "system", "text": "subject randomly changed to", "usertext": `• Psi+ Project — Development branch of Psi XMPP client - https://psi-plus.com/
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Psi Bubble</title>
+    <script type="text/javascript">
+        var events = [
+            { "type": "message", "id": "018f9a57-6ed4-7ef5-8a86-ca6c5407b004", "nick": "rion", "text": "This is text\nanother line" },
+            { "type": "message", "id": "018f9a57-6ed4-7328-976c-090bdbc9aabd", "nick": "rion", "text": "Next message Next message Next message Next message Next message Next message Next message Next message Next message" },
+            { "type": "message", "id": "018f9a57-6ed4-7d35-8968-bee2b92ece51", "nick": "rion", "text": "3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message 3rd message" },
+            { "type": "reactions", "target": "018f9a57-6ed4-7328-976c-090bdbc9aabd", "reactions": [{ "text": "😋", "nicks": ["UserX", "UserY"] }] },
+            { "type": "message", "id": "018f9a57-6ed4-7491-9acb-eea4e5a58304", "nick": "nickname", "text": "Another text" },
+            { "type": "message", "id": "018f9a57-6ed4-768e-bf78-38165c97481a", "nick": "nickname", "text": "Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group. Next in group." },
+            { "type": "message", "id": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "nick": "kapad", "text": "i dont know if this easy or not, but i was think something the other day... Let's say, one day you/or some that knows, have some free time and artistic mood. Take a piece of paper and a pen, and draw some important/basic stanza routes with notes of a file/function name. Then post the image..." },
+            { "type": "reactions", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{ "text": "👍", "nicks": ["UserX"] }] },
+            { "type": "system", "text": "This is a notification" },
+            { "type": "reactions", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{ "text": "👍", "nicks": ["UserX"] }, { "text": "🔥", "nicks": ["UserY"] }, { "text": "👌", "nicks": ["UserY"] }] },
+            { "type": "reactions", "target": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "reactions": [{ "text": "👍🏻", "base": "👍", "nicks": ["UserZ"] }, { "text": "👍", "nicks": ["UserX"] }, { "text": "🔥", "nicks": ["UserY"] }, { "text": "👌", "nicks": ["UserY"] }] },
+            { "type": "message", "id": "018f9a57-6ed4-71c5-9a9b-17e58a81ab10", "nick": "rion", "text": "short message" },
+            {
+                "type": "system", "text": "subject randomly changed to", "usertext": `• Psi+ Project — Development branch of Psi XMPP client - https://psi-plus.com/
 • Room languages: Russian, English
 • You may configure almost everything with help of Extended Options Plugin ;-)
 • Conference rules: https://psi-plus.com/wiki/conference_rules
@@ -39,523 +40,529 @@ var events = [
  - Debian PPA: https://psi-plus.com/wiki/en:debian#nightly_builds
  - Other Linux distributions: https://repology.org/metapackage/psi-plus/versions
 • $1000+500 for MAM (XEP-0313) https://github.com/psi-im/psi/issues/62#issuecomment-357450302 and from hx0 (ask liuch to share and quicken his work)`},
-    {"type": "message", "id": "018f9a57-6ed4-7922-b777-28e5a81f74f5", "nick": "rion", "reply": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "text": "Sounds like a great idea!"},
-    {"type": "message", "id": "018f9a57-6ed4-7525-8d1c-b260860d081a", "nick": "nickname", "reply": "018f9a57-6ed4-7d35-8968-bee2b92ece51", "text": "Stop writing this garbage"},
-];
-/*
-018f9a57-6ed4-7796-a02a-b452c43d9ace
-018f9a57-6ed4-7e96-b3b5-de083d6091bc
-018f9a57-6ed4-722d-bcef-f10a03d82de4
-018f9a57-6ed4-74df-a40e-73c2e3be73d8
-018f9a57-6ed4-7ff8-9374-c987d9b77448
-018f9a57-6ed4-73b1-965e-3e04081499ac
-018f9a57-6ed4-7b1c-b649-6a7b8e3b44ca
-*/
+            { "type": "message", "id": "018f9a57-6ed4-7922-b777-28e5a81f74f5", "nick": "rion", "reply": "018f9a57-6ed4-75a8-8e06-dc71cf229b22", "text": "Sounds like a great idea!" },
+            { "type": "message", "id": "018f9a57-6ed4-7525-8d1c-b260860d081a", "nick": "nickname", "reply": "018f9a57-6ed4-7d35-8968-bee2b92ece51", "text": "Stop writing this garbage" },
+            { "type": "message", "id": "018f9a57-6ed4-7796-a02a-b452c43d9ace", "nick": "nickname", "edit": "018f9a57-6ed4-7491-9acb-eea4e5a58304", "alert": "018f9a57-6ed4-7491-9acb-eea4e5a58304", "text": "Edited message for rion" },
+            { "type": "reactions", "target": "018f9a57-6ed4-7525-8d1c-b260860d081a", "reactions": [{ "text": "😝", "nicks": ["UserX"] }] },
+        ];
+        /*
+        
+        018f9a57-6ed4-7e96-b3b5-de083d6091bc
+        018f9a57-6ed4-722d-bcef-f10a03d82de4
+        018f9a57-6ed4-74df-a40e-73c2e3be73d8
+        018f9a57-6ed4-7ff8-9374-c987d9b77448
+        018f9a57-6ed4-73b1-965e-3e04081499ac
+        018f9a57-6ed4-7b1c-b649-6a7b8e3b44ca
+        */
 
-avatars = {
-    "rion": "😺",
-    "nickname": "🧙🏾‍♂️",
-    "kapad": "🫵"
-}
-
-shared = {
-
-}
-
-available_reactions = [
-    "😂",
-    "🤣",
-    "🔥",
-    "👍",
-    "😭",
-    "🙏",
-    "❤️",
-    "😘",
-    "🥰",
-    "😍",
-    "😊",
-]
-
-const selfNick = "rion";
-var prevMessage = {
-    "type": undefined,
-    "nick": undefined,
-};
-
-function fromHTML(html, trim = true) {
-  // Process the HTML string.
-  html = trim ? html.trim() : html;
-  if (!html) return null;
-
-  // Then set up a new template element.
-  const template = document.createElement('template');
-  template.innerHTML = html;
-  const result = template.content.children;
-
-  // Then return either an HTMLElement or HTMLCollection,
-  // based on whether the input HTML had one or more roots.
-  if (result.length === 1) return result[0];
-  return result;
-}
-
-function setup_reactions_selector() {
-    const rs = document.body.appendChild(document.createElement("div"));
-    rs.classList.add("reactions_selector");
-    rs.id = "reactions_selector";
-    available_reactions.forEach(emoji => {
-        const em = rs.appendChild(document.createElement("em"));
-        em.textContent = emoji;
-    });
-
-    rs.addEventListener("click", function(event){
-        if (event.target.localName == "em") {
-            event.target.parentNode.style.display = "none";
+        avatars = {
+            "rion": "😺",
+            "nickname": "🧙🏾‍♂️",
+            "kapad": "🫵"
         }
-        event.stopPropagation();
-    });
-    rs.addEventListener("mouseleave", function(event){
-        rs.style.display = "none";
-        event.stopPropagation();
-    });
-}
 
-function show_reactions_selector(nearEl, scrollEl) {
-    const rs = document.getElementById("reactions_selector");
-    const nbr = nearEl.getBoundingClientRect();
-    rs.style.top = (nbr.top + scrollEl.scrollTop) + "px";
-    rs.style.display = "flex";
-    const selectorRect = rs.getBoundingClientRect();
-    const scrollRect = scrollEl.getBoundingClientRect();
-    if (nbr.left + selectorRect.width > scrollRect.right) {
-        rs.style.left = (nbr.right - selectorRect.width) + "px";
-    } else {
-        rs.style.left = nbr.left + "px";
-    }
-}
+        shared = {
 
-function setup_context_menu() {
-    document.addEventListener("contextmenu", function(event){
-        const nick = event.target.getAttribute("data-nick");
-        let msgNode;
-        if (!nick) {
-            msgNode = event.target;
-            while (msgNode) {
-                if (msgNode.classList && msgNode.classList.contains("msg")) {
-                    break;
-                }
-                msgNode = msgNode.parentNode;
-            }
         }
-        if (nick || msgNode) {
-            event.stopPropagation();
-            event.preventDefault();
 
-            let items;
-            if (nick) {
-                items = [
-                    {"id": "info", "text": "Info"},
-                    {"id": "private_chat", "text": "Open Chat"},
-                    {"id": "kick", "text": "Kick"}
-                ]
-            } else {
-                items = [
-                    {"id": "quote", "text": "Quote"},
-                    {"id": "forward", "text": "Forward"},
-                    {"id": "copy", "text": "Copy"}
-                ]
-            }
+        available_reactions = [
+            "😂",
+            "🤣",
+            "🔥",
+            "👍",
+            "😭",
+            "🙏",
+            "❤️",
+            "😘",
+            "🥰",
+            "😍",
+            "😊",
+        ]
 
-            show_context_menu(event.x, event.y + document.documentElement.scrollTop, items).then((id) => {
-                console.log(id + " selected");
-            }).catch(()=>{});
-            return false;
-        }
-    });
-}
-
-function show_context_menu(x, y, items) {
-    if (window.activeMenu) {
-        window.activeMenu.destroyMenu();
-    }
-    const menu = document.body.appendChild(document.createElement("div"));
-    menu.classList.add("context_menu");
-    return new Promise((resolve, reject) => {
-        for (let i=0; i < items.length; i++) {
-            const item = menu.appendChild(document.createElement("div"));
-            item.textContent = items[i].text;
-            item.menuItemId = items[i].id;
-            item.addEventListener("click", (event) => {
-                resolve(event.target.menuItemId);
-                event.stopPropagation();
-                menu.destroyMenu();
-            }, {"once": true});
-        }
-        menu.destroyMenu =  () => {
-            document.body.removeEventListener("click", menu.destroyMenu);
-            menu.parentNode.removeChild(menu);
-            window.activeMenu = undefined;
-            reject();
+        const selfNick = "rion";
+        var prevMessage = {
+            "type": undefined,
+            "nick": undefined,
         };
-        document.body.addEventListener("click", menu.destroyMenu, {"once": true});
 
-        menu.style.top = y + "px";
-        menu.style.left = x + "px";
-        window.activeMenu = menu;
-    });
-}
+        function fromHTML(html, trim = true) {
+            // Process the HTML string.
+            html = trim ? html.trim() : html;
+            if (!html) return null;
 
-function render_message(event) {
-    let classes = ["msg"];
-    if (prevMessage["type"] == "message" && prevMessage["nick"] == event["nick"]) {
-        classes.push("grnext")
-    }
-    let nickControl = "";
-    if (event["nick"] == selfNick) {
-        classes.push("mymsg");
-    } else {
-        nickControl = `<div class="reply">Reply</div>`;
-    }
-    classes = classes.join(" ");
-    const avatar = new Option(avatars[event["nick"]]).innerHTML;
-    const nickHtml = new Option(event["nick"]).innerHTML;
-    const nickAttr = encodeURIComponent(event["nick"]);
-    let msgtext = new Option(event["text"]).innerHTML.replace("\n", "<br/>");
-    let quoteMsg = null;
-    let quoteTxt = "";
-    if (event.reply) {
-        quoteMsg = document.getElementById(event.reply);
-        if (quoteMsg) {
-            const quoteNick = decodeURIComponent(quoteMsg.getElementsByClassName("nick")[0].getAttribute("data-nick"));
-            const quoteText = quoteMsg.getElementsByClassName("msgtext")[0].innerHTML;
-            quoteTxt = `<blockquote><div>${quoteNick}</div>${quoteText}</blockquote>`;
+            // Then set up a new template element.
+            const template = document.createElement('template');
+            template.innerHTML = html;
+            const result = template.content.children;
+
+            // Then return either an HTMLElement or HTMLCollection,
+            // based on whether the input HTML had one or more roots.
+            if (result.length === 1) return result[0];
+            return result;
         }
-    }
-    const time = (new Date()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    let el = fromHTML(`<div class="${classes}" id="${event.id}">
+
+        function setup_reactions_selector() {
+            const rs = document.body.appendChild(document.createElement("div"));
+            rs.classList.add("reactions_selector");
+            rs.id = "reactions_selector";
+            available_reactions.forEach(emoji => {
+                const em = rs.appendChild(document.createElement("em"));
+                em.textContent = emoji;
+            });
+
+            rs.addEventListener("click", function (event) {
+                if (event.target.localName == "em") {
+                    event.target.parentNode.style.display = "none";
+                }
+                event.stopPropagation();
+            });
+            rs.addEventListener("mouseleave", function (event) {
+                rs.style.display = "none";
+                event.stopPropagation();
+            });
+        }
+
+        function show_reactions_selector(nearEl, scrollEl) {
+            const rs = document.getElementById("reactions_selector");
+            const nbr = nearEl.getBoundingClientRect();
+            rs.style.top = (nbr.top + scrollEl.scrollTop) + "px";
+            rs.style.display = "flex";
+            const selectorRect = rs.getBoundingClientRect();
+            const scrollRect = scrollEl.getBoundingClientRect();
+            if (nbr.left + selectorRect.width > scrollRect.right) {
+                rs.style.left = (nbr.right - selectorRect.width) + "px";
+            } else {
+                rs.style.left = nbr.left + "px";
+            }
+        }
+
+        function setup_context_menu() {
+            document.addEventListener("contextmenu", function (event) {
+                const nick = event.target.getAttribute("data-nick");
+                let msgNode;
+                if (!nick) {
+                    msgNode = event.target;
+                    while (msgNode) {
+                        if (msgNode.classList && msgNode.classList.contains("msg")) {
+                            break;
+                        }
+                        msgNode = msgNode.parentNode;
+                    }
+                }
+                if (nick || msgNode) {
+                    event.stopPropagation();
+                    event.preventDefault();
+
+                    let items;
+                    if (nick) {
+                        items = [
+                            { "id": "info", "text": "Info" },
+                            { "id": "private_chat", "text": "Open Chat" },
+                            { "id": "kick", "text": "Kick" }
+                        ]
+                    } else {
+                        items = [
+                            { "id": "delete", "text": "Delete" },
+                            { "id": "reply", "text": "Reply" },
+                            { "id": "forward", "text": "Forward" },
+                            { "id": "copy", "text": "Copy" }
+                        ]
+                    }
+
+                    show_context_menu(event.x, event.y + document.documentElement.scrollTop, items).then((id) => {
+                        console.log(id + " selected");
+                    }).catch(() => { });
+                    return false;
+                }
+            });
+        }
+
+        function show_context_menu(x, y, items) {
+            if (window.activeMenu) {
+                window.activeMenu.destroyMenu();
+            }
+            const menu = document.body.appendChild(document.createElement("div"));
+            menu.classList.add("context_menu");
+            return new Promise((resolve, reject) => {
+                for (let i = 0; i < items.length; i++) {
+                    const item = menu.appendChild(document.createElement("div"));
+                    item.textContent = items[i].text;
+                    item.menuItemId = items[i].id;
+                    item.addEventListener("click", (event) => {
+                        resolve(event.target.menuItemId);
+                        event.stopPropagation();
+                        menu.destroyMenu();
+                    }, { "once": true });
+                }
+                menu.destroyMenu = () => {
+                    document.body.removeEventListener("click", menu.destroyMenu);
+                    menu.parentNode.removeChild(menu);
+                    window.activeMenu = undefined;
+                    reject();
+                };
+                document.body.addEventListener("click", menu.destroyMenu, { "once": true });
+
+                menu.style.top = y + "px";
+                menu.style.left = x + "px";
+                window.activeMenu = menu;
+            });
+        }
+
+        function render_message(event) {
+            let classes = ["msg"];
+            if (prevMessage["type"] == "message" && prevMessage["nick"] == event["nick"]) {
+                classes.push("grnext")
+            }
+            let nickControl = "";
+            if (event["nick"] == selfNick) {
+                classes.push("mymsg");
+            } else {
+                nickControl = `<div class="reply">Reply</div>`;
+            }
+            classes = classes.join(" ");
+            const avatar = new Option(avatars[event["nick"]]).innerHTML;
+            const nickHtml = new Option(event["nick"]).innerHTML;
+            const nickAttr = encodeURIComponent(event["nick"]);
+            let msgtext = new Option(event["text"]).innerHTML.replace("\n", "<br/>");
+            let quoteMsg = null;
+            let quoteTxt = "";
+            if (event.reply) {
+                quoteMsg = document.getElementById(event.reply);
+                if (quoteMsg) {
+                    const quoteNick = decodeURIComponent(quoteMsg.getAttribute("data-nick"));
+                    const quoteText = quoteMsg.getElementsByClassName("msgtext")[0].innerHTML;
+                    quoteTxt = `<blockquote><div>${quoteNick}</div>${quoteText}</blockquote>`;
+                }
+            }
+            const time = (new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let el = fromHTML(`<div class="${classes}" id="${event.id}" data-nick="${nickAttr}">
     <span class="avatar">${avatar}</span>
-    <span class="nick" data-nick="${nickAttr}">${nickHtml}${nickControl}</span>
+    <div class="msgheader">
+        <span class="nick">${nickHtml}</span>
+        ${nickControl}
+    </div>
     <span class="time">${time}</span>
     ${quoteTxt}
     <span class="msgtext">${msgtext}</span>
-    <div class="reactions"></div>
 </div>`);
-    document.body.appendChild(el);
-    let shared_timer = {}
-    el.addEventListener("mouseleave", function(){
-        if (shared_timer.timer) { // if we were going to show it
-            clearTimeout(shared_timer.timer);
-            shared_timer.timer = null;
-        } else {
-            const rs = el.getElementsByClassName("like_button")[0];
-            rs.parentNode.removeChild(rs);
-        }
-    });
-    el.addEventListener("mouseenter", function(){
-        shared_timer.timer = setTimeout(function(){
-            let selector = el.appendChild(document.createElement("div"));
-            selector.classList.add("like_button");
-            selector.textContent = "❤️";
-            setTimeout(()=>{ selector.classList.add('noopacity'); }, 0);
-            shared_timer.timer = null;
-            selector.addEventListener("click", () => show_reactions_selector(selector, document.documentElement));
-        }, 500);
-    });
-    if (event.reply) {
-        const bq = el.getElementsByTagName("blockquote")[0];
-        if (bq) {
-            bq.addEventListener("click", () => {quoteMsg.scrollIntoView({"behavior": "smooth", "block": "center"})});
-        }
-    }
-}
-
-function render_reaction(event) {
-    const msg = document.getElementById(event.target);
-    const reactions = msg?.getElementsByClassName("reactions").item(0);
-    if (!reactions) {
-        return;
-    }
-    for (let r = 0; r < event["reactions"].length; r++) {
-        const reactionsList = reactions.getElementsByTagName("span");
-        const ritem = event["reactions"][r];
-        const text = ritem["text"];
-        const base = ritem["base"];
-        let reaction = null;
-        for (let i = 0; i < reactionsList.length; i++) {
-            let span = reactionsList[i];
-            if (span.baseReaction === base) {
-                reaction = span;
-                break;
+            document.body.appendChild(el);
+            let shared_timer = {}
+            el.addEventListener("mouseleave", function () {
+                if (shared_timer.timer) { // if we were going to show it
+                    clearTimeout(shared_timer.timer);
+                    shared_timer.timer = null;
+                } else {
+                    const rs = el.getElementsByClassName("like_button")[0];
+                    rs.parentNode.removeChild(rs);
+                }
+            });
+            el.addEventListener("mouseenter", function () {
+                shared_timer.timer = setTimeout(function () {
+                    let selector = el.appendChild(document.createElement("div"));
+                    selector.classList.add("like_button");
+                    selector.textContent = "❤️";
+                    setTimeout(() => { selector.classList.add('noopacity'); }, 0);
+                    shared_timer.timer = null;
+                    selector.addEventListener("click", () => show_reactions_selector(selector, document.documentElement));
+                }, 500);
+            });
+            if (event.reply) {
+                const bq = el.getElementsByTagName("blockquote")[0];
+                if (bq) {
+                    bq.addEventListener("click", () => { quoteMsg.scrollIntoView({ "behavior": "smooth", "block": "center" }) });
+                }
             }
         }
-        if (!reaction) {
-            reaction = document.createElement("span");
-            reaction.baseReaction = (base || text);
-            reaction.innerHTML = `1 <em>${text}</em>`;
-            reactions.appendChild(reaction);
-            continue;
-        }
 
-        reaction.firstChild.textContent = (Number(reaction.firstChild.textContent) + 1) + " ";
-        const emojis = reaction.getElementsByTagName("em");
-        let found = false;
-        for (let i = 0; i < emojis.length; i++) {
-            if (emojis[i].textContent == text) {
-                found = true;
-                break;
+        function render_reactions(event) {
+            const msg = document.getElementById(event.target);
+            if (!msg) {
+                return;
+            }
+            let reactions = msg.getElementsByClassName("reactions").item(0);
+            if (reactions) {
+                reactions.innerHTML = "";
+            } else {
+                reactions = document.createElement("reactions");
+                reactions.className = "reactions";
+                msg.appendChild(reactions);
+            }
+
+            let groupped = {}
+            for (let r = 0; r < event["reactions"].length; r++) {
+                const base = event["reactions"][r].base || event["reactions"][r].text;
+                groupped[base] = groupped[base] || {"text": "", "nicks": []};
+                groupped[base].nicks = groupped[base].nicks.concat(event["reactions"][r].nicks);
+                groupped[base].text += event["reactions"][r].text;
+            }
+
+            for (const [base, value] of Object.entries(groupped)) {
+                const nicks = value.nicks.sort().filter((x, i, a) => !i || x != a[i-1]);
+                const reaction = document.createElement("span");
+                reaction.innerHTML = `${nicks.length} <em>${value.text}</em>`;
+                reaction.title = nicks.join("\n");
+                reactions.appendChild(reaction);
             }
         }
-        if (!found) {
-            reaction.appendChild(fromHTML(`<em>${text}</em>`));
+
+        function render_system(event) {
+            let text = new Option(event["text"]).innerHTML;
+            if (event["usertext"]) {
+                let usertext = event["usertext"].replaceAll("\n", "<br/>");
+                document.body.appendChild(fromHTML(`<div class="sysmsg">${text}<div class="usertext">${usertext}</div></div>`));
+            } else {
+                document.body.appendChild(fromHTML(`<div class="sysmsg">${text}</div>`));
+            }
         }
-    }
-}
 
-function render_system(event) {
-    let text = new Option(event["text"]).innerHTML;
-    if (event["usertext"]) {
-        let usertext = event["usertext"].replaceAll("\n", "<br/>");
-        document.body.appendChild(fromHTML(`<div class="sysmsg">${text}<div class="usertext">${usertext}</div></div>`));
-    } else {
-        document.body.appendChild(fromHTML(`<div class="sysmsg">${text}</div>`));
-    }
-}
+        function render(event) {
+            switch (event["type"]) {
+                case "message": render_message(event); break;
+                case "reactions": render_reactions(event); break;
+                case "system": render_system(event); break;
+            }
+            if (event.type === "message" || event.type === "system") {
+                prevMessage = {
+                    "type": event["type"],
+                    "nick": event["nick"],
+                };
+            }
+            document.documentElement.scrollTo({ "top": document.documentElement.scrollHeight, "behavior": "smooth" })
+        }
 
-function render(event) {
-    switch (event["type"]) {
-        case "message": render_message(event); break;
-        case "reaction": render_reaction(event); break;
-        case "system": render_system(event); break;
-    }
-    if (event.type === "message" || event.type === "system") {
-        prevMessage = {
-            "type": event["type"],
-            "nick": event["nick"],
-        };
-    }
-    document.documentElement.scrollTo({"top": document.documentElement.scrollHeight, "behavior": "smooth"})
-}
+        function handleEventQueue() {
+            var event = events.shift();
+            render(event);
+            if (events.length) {
+                setTimeout(handleEventQueue, 1000);
+            }
+        }
 
-function handleEventQueue() {
-    var event = events.shift();
-    render(event);
-    if (events.length) {
-        setTimeout(handleEventQueue, 1000);
-    }
-}
+        window.addEventListener("load", () => {
+            console.log("ready");
+            setup_reactions_selector();
+            setup_context_menu();
+            handleEventQueue()
+        });
+    </script>
+    <style>
+        html {
+            font-size: 12pt;
+        }
 
-window.addEventListener("load", () => {
-    console.log("ready");
-    setup_reactions_selector();
-    setup_context_menu();    
-    handleEventQueue()
-});
-        </script>
-        <style>
-html {
-    font-size: 12pt;
-}
+        body {
+            width: 100%;
+            height: 100%;
+            padding: .5rem 0;
+            margin: 0;
+            box-sizing: border-box;
+            background: url(background.jpg);
+            background-attachment: fixed;
+            background-size: cover;
+            color: black;
+            font-family: sans, times;
+            position: relative;
+            text-size-adjust: none;
+            -moz-text-size-adjust: none;
+            overflow-x: hidden;
+        }
 
-body {
-    width: 100%;
-    height: 100%;
-    padding: .5rem 0;
-    margin: 0;
-    box-sizing: border-box;
-    background: url(background.jpg);
-    background-attachment: fixed;
-    background-size: cover;
-    color: black;
-    font-family: sans, times;
-    position: relative;
-    text-size-adjust: none;
-    -moz-text-size-adjust: none;
-    overflow-x: hidden;
-}
+        .sysmsg {
+            background-color: rgb(122, 246, 246);
+            color: #444;
+            padding: .4rem 1rem;
+            width: 70%;
+            margin: 0 auto .5rem;
+            border-radius: 1rem;
+            text-align: center;
+            box-shadow: 0px 0px 0.5rem black;
+        }
 
-.sysmsg {
-    background-color: rgb(122, 246, 246);
-    color: #444;
-    padding: .4rem 1rem;
-    width: 70%;
-    margin: 0 auto .5rem;
-    border-radius: 1rem;
-    text-align: center;
-    box-shadow: 0px 0px 0.5rem black;
-}
+        .sysmsg .usertext {
+            text-align: left;
+            color: black;
+            word-break: break-word;
+        }
 
-.sysmsg .usertext {
-    text-align: left;
-    color: black;
-}
+        .msg {
+            margin: 0.5rem;
+            margin-left: 3rem;
+            padding: .5rem;
+            position: relative;
+            background-color: white;
+            border-radius: 0 .6rem .6rem .6rem;
+            box-shadow: 0px 0px 0.5rem black;
+            clip-path: inset(-0.5rem -5rem -0.5rem -5rem);
+            word-wrap: break-word !important;
+            display: flex;
+            flex-wrap: wrap;
+        }
 
-.msg {
-    margin: 0.5rem;
-    margin-left: 3rem;
-    padding: .5rem;
-    position: relative;
-    background-color: white;
-    border-radius: 0 .6rem .6rem .6rem;
-    box-shadow: 0px 0px 0.5rem black;
-    clip-path: inset(-0.5rem -5rem -0.5rem -5rem);
-    word-wrap:break-word !important;
-    display: flex;
-    flex-wrap: wrap;
-}
+        .msg::before {
+            width: 2rem;
+            height: 2rem;
+            border: .5rem solid white;
+            border-radius: 1.4rem;
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            margin-top: -0.6rem;
+            margin-left: -2.44rem;
+            display: inline-block;
+            z-index: -1;
+            clip: rect(0.6rem, 3rem, 1.5rem, 2rem);
+        }
 
-.msg::before {
-    width: 2rem;
-    height: 2rem;
-    border: .5rem solid white;
-    border-radius: 1.4rem;
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    margin-top: -0.6rem;
-    margin-left: -2.44rem;
-    display: inline-block;
-    z-index: -1;
-    clip: rect(0.6rem, 3rem, 1.5rem, 2rem);
-}
+        .mymsg {
+            margin-left: 0.5rem;
+            margin-right: 3rem;
+            background-color: #ffd;
+            border-radius: .6rem 0 .6rem .6rem;
+            padding-top: .5rem;
+        }
 
-.mymsg {
-    margin-left: 0.5rem;
-    margin-right: 3rem;
-    background-color: #ffd;
-    border-radius: .6rem 0 .6rem .6rem;
-    padding-top: .5rem;
-}
+        .mymsg::before {
+            left: inherit;
+            right: 0;
+            margin-left: inherit;
+            margin-right: -2.44rem;
+            border-color: #ffc;
+            clip: rect(0.6rem, 2rem, 1.5rem, 0);
+        }
 
-.mymsg::before {
-    left: inherit;
-    right: 0;
-    margin-left: inherit;
-    margin-right: -2.44rem;
-    border-color: #ffc;
-    clip: rect(0.6rem, 2rem, 1.5rem, 0);
-}
+        .msgheader {
+            display: block;
+            flex-basis: 100%;
+            position: relative;
+            height: 1.5em;
+        }
 
-.nick {
-    padding-bottom: .3em;
-    display: block;
-    cursor: pointer;
-    font-weight: bold;
-    flex-basis: 100%;
-    right: auto;
-}
+        .nick {
+            padding-bottom: .3em;
+            display: inline-block;
+            cursor: pointer;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
 
-.reply {
-	display: block;
-	float: right;
-	text-align: right;
-	content: "Reply";
-	font-weight: normal;
-	cursor: pointer;
-    opacity: 0.1;
-    transition: opacity 0.3s linear;
-}
+        .reply {
+            display: inline-block;
+            content: "Reply";
+            font-weight: normal;
+            cursor: pointer;
+            position:absolute;
+            right: 0;
+            opacity: 0.1;
+            transition: opacity 0.3s linear;
+        }
 
-.reply:hover {
-    opacity: 1;
-    text-decoration: underline;
-}
+        .reply:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
 
-.mymsg .nick {
-    display: none;
-}
+        .mymsg .msgheader {
+            display: none;
+        }
 
-.time {
-    order: 4;
-    right: .5rem;
-    font-size:.8rem;
-    color: #777;
-    align-items: flex-end;
-    margin-left: auto;
-    margin-top: auto;
-}
+        .time {
+            order: 4;
+            right: .5rem;
+            font-size: .8rem;
+            color: #777;
+            align-items: flex-end;
+            margin-left: auto;
+            margin-top: auto;
+        }
 
-.mymsg .time {
-    margin-top: inherit;
-    display: flex;
-	align-items: flex-end;
-	order: 2;
-}
+        .mymsg .time {
+            margin-top: inherit;
+            display: flex;
+            align-items: flex-end;
+            order: 2;
+        }
 
-.avatar {
-    margin-left: -3rem;
-    font-size:2.3rem;
-    top: 0;
-    left: 0;
-    position:absolute;
-}
+        .avatar {
+            margin-left: -3rem;
+            font-size: 2.3rem;
+            top: 0;
+            left: 0;
+            position: absolute;
+        }
 
-.mymsg .avatar {
-    margin-right: -3rem;
-    left: inherit;
-    right: 0;
-}
+        .mymsg .avatar {
+            margin-right: -3rem;
+            left: inherit;
+            right: 0;
+        }
 
-.msgtext {
-    color: #111;
-}
-.reactions:not(:empty) {
-    flex-basis: calc(100% - 4rem);
-}
-.reactions > span {
-    display: inline-block;
-    font-size: .8rem;
-    font-weight: bold;
-    border: 1px solid #aaa;
-    color: gray;
-    padding: .2rem .6rem;
-    border-radius: 1.3rem;
-    margin-top: .3rem;
-    margin-right: .5rem;
-    background-color: #00000008;
-    user-select: none;
-}
+        .msgtext {
+            color: #111;
+            word-break: break-word;
+        }
 
-.reactions > span > em {
-    font-style: normal;
-    cursor: pointer;
-}
+        .reactions:not(:empty) {
+            flex-basis: calc(100% - 4rem);
+        }
 
-.like_button {
-    position: absolute;
-    bottom: .3rem;
-    left: -2.5rem;
-    width: 3rem;
-    height: 1.5rem;
-    text-align: center;
-    cursor: pointer;
-    padding-top: 1rem;
-    /*background-color: green;*/
-    opacity: 0;
-    transition: opacity 0.5s linear, bottom .5s, font-size .5s;;
-}
+        .reactions>span {
+            display: inline-block;
+            font-size: .8rem;
+            font-weight: bold;
+            border: 1px solid #aaa;
+            color: gray;
+            padding: .2rem .6rem;
+            border-radius: 1.3rem;
+            margin-top: .3rem;
+            margin-right: .5rem;
+            background-color: #00000008;
+            user-select: none;
+        }
 
-.noopacity {
-    opacity: 1;
-}
+        .reactions>span>em {
+            font-style: normal;
+            cursor: pointer;
+        }
 
-.like_button:hover {
-    font-size: 1.4rem;
-    bottom: .4rem;
-}
+        .like_button {
+            position: absolute;
+            bottom: .3rem;
+            left: -2.5rem;
+            width: 3rem;
+            height: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            padding-top: 1rem;
+            /*background-color: green;*/
+            opacity: 0;
+            transition: opacity 0.5s linear, bottom .5s, font-size .5s;
+            ;
+        }
 
-.mymsg .like_button {
-    left: inherit;
-    right: -2.5rem;
-}
+        .noopacity {
+            opacity: 1;
+        }
 
-.grnext {
-    display: flex;
-    flex-wrap: wrap;
-    margin-top: -0.15rem;
-    padding-top: 0.3rem;
-    border-top-right-radius: 0;
-    border-top-left-radius: 0;
-    /* We clip it like
+        .like_button:hover {
+            font-size: 1.4rem;
+            bottom: .4rem;
+        }
+
+        .mymsg .like_button {
+            left: inherit;
+            right: -2.5rem;
+        }
+
+        .grnext {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: -0.15rem;
+            padding-top: 0.3rem;
+            border-top-right-radius: 0;
+            border-top-left-radius: 0;
+            /* We clip it like
         _       _
        | |_____| |
        |         |
@@ -564,104 +571,103 @@ body {
        this 0.08rem below together with margin-top: -0.15rem; is a workaround for
        shadow clipping Google Chrome bug.
     */
-    clip-path: polygon(0 0,
-        0 -.5rem,
-        -5rem -.5rem,
-        -5rem calc(100% + .5rem),
-        calc(100% + 5rem) calc(100% + .5rem),
-        calc(100% + 5rem) -.5rem,
-        100% -.5rem,
-        100% 0.08rem,
-        0 0.08rem
-    );
-}
+            clip-path: polygon(0 0,
+                    0 -.5rem,
+                    -5rem -.5rem,
+                    -5rem calc(100% + .5rem),
+                    calc(100% + 5rem) calc(100% + .5rem),
+                    calc(100% + 5rem) -.5rem,
+                    100% -.5rem,
+                    100% 0.08rem,
+                    0 0.08rem);
+        }
 
-.grnext .nick {
-    display: none;
-}
+        .grnext .msgheader {
+            display: none;
+        }
 
-.grnext .avatar {
-    display: none;
-}
+        .grnext .avatar {
+            display: none;
+        }
 
-.grnext:before {
-    display: none;
-}
+        .grnext:before {
+            display: none;
+        }
 
-.msg:has(+ .grnext) {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    margin-bottom: 0;
-    padding-bottom: .2rem;
-}
+        .msg:has(+ .grnext) {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+            margin-bottom: 0;
+            padding-bottom: .2rem;
+        }
 
-blockquote {
-  background: #f0f0f080;
-  border: 0;
-  border-left: 3px solid #ccc;
-  margin: .5rem;
-  margin-top: 0;
-  padding: 0.5rem;
-  padding-top: 0;
-  border-radius: .2rem;
-  color: #444;
-  cursor: pointer;
-  flex-basis: 100%;
-}
+        blockquote {
+            background: #f0f0f080;
+            border: 0;
+            border-left: 3px solid #ccc;
+            margin: .5rem;
+            margin-top: 0;
+            padding: 0.5rem;
+            padding-top: 0;
+            border-radius: .2rem;
+            color: #444;
+            cursor: pointer;
+            flex-basis: 100%;
+        }
 
-blockquote > div {
-    background: #ccc;
-    padding: .1rem .5rem;
-    font-weight: bold;
-    margin: 0 -.5rem .3rem;
-}
+        blockquote>div {
+            background: #ccc;
+            padding: .1rem .5rem;
+            font-weight: bold;
+            margin: 0 -.5rem .3rem;
+        }
 
-.reactions_selector {
-    display: none;
-    position: absolute;
-    padding: .5rem;
-    margin-top: 1rem;
-    border-radius: 0.2rem;
-    background-color: #fafafa;
-    box-shadow: 0px 0px 0.5rem black;
-    flex-wrap: wrap;
-    z-index: 2;
-}
+        .reactions_selector {
+            display: none;
+            position: absolute;
+            padding: .5rem;
+            margin-top: 1rem;
+            border-radius: 0.2rem;
+            background-color: #fafafa;
+            box-shadow: 0px 0px 0.5rem black;
+            flex-wrap: wrap;
+            z-index: 2;
+        }
 
-.reactions_selector em {
-    font-style: normal;
-    cursor: pointer;
-    font-size: 1.5rem;
-}
+        .reactions_selector em {
+            font-style: normal;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
 
-.context_menu {
-    position: absolute;
-    box-sizing: border-box;
-    flex-flow: column;
-    box-shadow: 0px 0px 0.5rem black;
-    border-radius: .3rem;
-    background-color: white;
-    z-index: 3;
-    overflow: hidden;
-}
+        .context_menu {
+            position: absolute;
+            box-sizing: border-box;
+            flex-flow: column;
+            box-shadow: 0px 0px 0.5rem black;
+            border-radius: .3rem;
+            background-color: white;
+            z-index: 3;
+            overflow: hidden;
+        }
 
-.context_menu > div {
-    box-sizing: border-box;
-    padding: .3rem .5rem;
-}
+        .context_menu>div {
+            box-sizing: border-box;
+            padding: .3rem .5rem;
+        }
 
-.context_menu > div + div {
-    border-top: 1px dotted #aaa;
-}
+        .context_menu>div+div {
+            border-top: 1px dotted #aaa;
+        }
 
-.context_menu > div:hover {
-    background-color: #ffa;
-    cursor: pointer;
-}
+        .context_menu>div:hover {
+            background-color: #ffa;
+            cursor: pointer;
+        }
+    </style>
+</head>
 
+<body>
+</body>
 
-        </style>
-    </head>
-    <body>
-    </body>
 </html>
