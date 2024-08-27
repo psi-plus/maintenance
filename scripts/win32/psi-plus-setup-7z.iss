@@ -107,7 +107,7 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 #define MyAppExeName "psi-plus.exe"
 #define WorkDir "C:\build\Installer\psi-plus-all"
 #define ResDir "C:\build\resources"
-#define PsiPSrcDir "C:\build\psi-plus-snapshots"
+#define PsiPSrcDir "C:\build\psi"
 #define CurrYear GetDateTimeString('yyyy', '', '')
 AppName=Psi+
 AppVersion={#AppVer}-x86
@@ -124,11 +124,11 @@ AppPublisher=Psi+ Project
 AppPublisherURL=https://psi-plus.com/
 LicenseFile={#PsiPSrcDir}\COPYING
 SetupIconFile={#PsiPSrcDir}\win32\app-plus.ico
-OutputDir="C:\build\Installer"
+OutputDir="C:\build\Installer\out"
 OutputBaseFilename=psi-plus-{#AppVer}-x86-setup
 Compression=lzma2/ultra64
 InternalCompressLevel=ultra64
-DefaultDirName={commonpf}\Psi-plus
+DefaultDirName={userpf}\Psi-plus
 ArchitecturesAllowed=x86 x64 ia64
 UninstallDisplayName=Psi+ {#AppVer}-x86
 DefaultGroupName=Psi+ (x86)
@@ -138,7 +138,7 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 DisableProgramGroupPage=auto
 AllowNoIcons=True
 MinVersion=0,6.1sp1
-PrivilegesRequired=poweruser
+PrivilegesRequired=none
 UsePreviousGroup=False
 DisableWelcomePage=False
 ShowTasksTreeLines=True
@@ -158,7 +158,7 @@ Source: "{#PsiPSrcDir}\iconsets\roster\*.jisp"; DestDir: "{app}\iconsets\roster"
 Source: "{#PsiPSrcDir}\sound\*"; DestDir: "{app}\sound"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
 ;Source: "{#PsiPSrcDir}\skins\*"; DestDir: "{app}\skins"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
 Source: "{#PsiPSrcDir}\CHANGELOG"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist; Components: common
-Source: "{#ResDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common; Excludes: "iconsets, *skins\mac, sounds"
+Source: "{#ResDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common; Excludes: "iconsets, *skins\mac, sound"
 Source: "{#WorkDir}\psi-plus.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin32
 Source: "{#WorkDir}\psi-plus-webkit.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin32w
 Source: "{#PsiPSrcDir}\COPYING"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist; Components: common
@@ -333,7 +333,7 @@ Name: "{group}\Psi+ (x86)"; Filename: "{app}\psi-plus-webkit.exe"; WorkingDir: "
 UseRelativePaths=True
 
 [Tasks]
-Name: "desktopitems_normal"; Description: "{cm:InstallDS}"; GroupDescription: "{cm:InstallDI}"; Flags: exclusive; Components: common
+Name: "desktopitems_normal"; Description: "{cm:InstallDS}"; GroupDescription: "{cm:InstallDI}"; Components: common
 Name: "uninstallitems"; Description: "{cm:InstallUN}"; Flags: unchecked; Components: common
 Name: "createregentry"; Description: "{cm:CreateRE}"; Components: common
 
@@ -390,10 +390,10 @@ Root: "HKCR"; Subkey: "xmpp\DefaultIcon"; ValueType: string; ValueData: """{app}
 Root: "HKCR"; Subkey: "xmpp\shell\open\command"; ValueType: string; ValueData: """{app}\psi-plus-webkit.exe"" ""--uri=%1"""; Flags: uninsclearvalue uninsdeletekeyifempty; Components: bin32w; Tasks: createregentry
 
 [Messages]
-english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%nWARNING! Since 1.5.1594 version installer do not contains iconpacks to reduce size. Please use Content Downloader plugin to install needed iconpacks
-french.WelcomeLabel2=Cela installera [name/ver] sur votre ordinateur.%n%nIl est recommandé de fermer toutes les autres applications avant de continuer.%n%nAVERTISSEMENT ! Depuis la version 1.5.1594, le programme d'installation ne contient pas de packs d'icônes pour réduire la taille. Veuillez utiliser le plugin Content Downloader pour installer les packs d'icônes nécessaires 
-russian.WelcomeLabel2=Это установит [name/ver] на ваш компьютер.%n%nПеред продолжением рекомендуется закрыть все другие приложения.%n%nВНИМАНИЕ! Начиная с версии 1.5.1594, инсталлятор не содержит пакеты иконок для уменьшения размера. Пожалуйста, воспользуйтесь Content Downloader плагином, чтобы установить необходимые иконки
-ukrainian.WelcomeLabel2=Це встановить [name/ver] на ваш комп'ютер.%n%nПеред продовженням рекомендовано закрити всі інші програми.%n%УВАГА! Починаючи з версії 1.5.1594, інсталятор не містить пакетів іконок для зменшення розміру. Будь ласка, скористайтесь Content Downloader плагіном, щоб встановити необхідні іконки
+english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%nWARNING! This installer do not contains iconpacks. Please use Content Downloader plugin to install needed iconpacks
+french.WelcomeLabel2=Cela installera [name/ver] sur votre ordinateur.%n%nIl est recommandé de fermer toutes les autres applications avant de continuer.%n%nAVERTISSEMENT ! Le programme d'installation ne contient pas de packs d'icônes. Veuillez utiliser le plugin Content Downloader pour installer les packs d'icônes nécessaires 
+russian.WelcomeLabel2=Это установит [name/ver] на ваш компьютер.%n%nПеред продолжением рекомендуется закрыть все другие приложения.%n%nВНИМАНИЕ! Инсталлятор не содержит пакеты иконок. Пожалуйста, воспользуйтесь Content Downloader плагином, чтобы установить необходимые иконки
+ukrainian.WelcomeLabel2=Це встановить [name/ver] на ваш комп'ютер.%n%nПеред продовженням рекомендовано закрити всі інші програми.%n%УВАГА! Інсталятор не містить пакетів іконок. Будь ласка, скористайтесь Content Downloader плагіном, щоб встановити необхідні іконки
 
 [Code]
 function InitializeUninstall(): Boolean;

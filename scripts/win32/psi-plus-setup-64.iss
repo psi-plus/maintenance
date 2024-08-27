@@ -107,10 +107,10 @@ Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 #define MyAppExeName "psi-plus.exe"
 #define WorkDir "C:\build\Installer"
 #define ResDir "C:\build\resources"
-#define PsiPSrcDir "C:\build\psi-plus-snapshots"
-#define AppVer GetFileVersion("C:\build\Installer\bin64\psi-plus.exe")
+#define PsiPSrcDir "C:\build\psi"
+#define AppVer GetFileVersion("C:\build\Installer\psi-plus.exe")
 #define CurrYear GetDateTimeString('yyyy', '', '')
-#define PluginsPrefix "plugins64"
+#define PluginsPrefix "plugins"
 AppName=Psi+
 AppVersion={#AppVer}-x64
 AppCopyright=© 2008-{#CurrYear} Psi+ Project
@@ -126,11 +126,11 @@ AppPublisher=Psi+ Project
 AppPublisherURL=https://psi-plus.com/
 LicenseFile={#PsiPSrcDir}\COPYING
 SetupIconFile={#PsiPSrcDir}\win32\app-plus.ico
-OutputDir={#WorkDir}
+OutputDir={#WorkDir}\out
 OutputBaseFilename=psi-plus-{#AppVer}-x64-setup
 Compression=lzma2/ultra64
 InternalCompressLevel=ultra64
-DefaultDirName={commonpf}\Psi-plus
+DefaultDirName={userpf}\Psi-plus
 ArchitecturesAllowed=x64 ia64
 UninstallDisplayName=Psi+ {#AppVer}
 DefaultGroupName=Psi+ (x64)
@@ -140,13 +140,14 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 ArchitecturesInstallIn64BitMode=x64 ia64
 MinVersion=0,6.1sp1
 DisableProgramGroupPage=auto
-PrivilegesRequired=poweruser
+PrivilegesRequired=none
 UsePreviousGroup=False
 AllowNoIcons=True
 DisableWelcomePage=False
 ShowTasksTreeLines=True
 WizardStyle=modern
 SetupLogging=True
+;SignTool=MsSign
 ;more consts
 #define SetupTypeReg "Inno Setup: Setup Type"
 #define SelectedComponentsReg "Inno Setup: Selected Components"
@@ -157,18 +158,18 @@ SetupLogging=True
 
 [Files]
 Source: "{#PsiPSrcDir}\certs\*"; DestDir: "{app}\certs"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
-Source: "{#PsiPSrcDir}\iconsets\roster\*.jisp"; DestDir: "{app}\iconsets\roster"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
-Source: "{#PsiPSrcDir}\sound\*"; DestDir: "{app}\sound"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
+Source: "{#WorkDir}\iconsets\roster\*.jisp"; DestDir: "{app}\iconsets\roster"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
+Source: "{#WorkDir}\sound\*"; DestDir: "{app}\sound"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
 ;Source: "{#PsiPSrcDir}\skins\*"; DestDir: "{app}\skins"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
-Source: "{#ResDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common; Excludes: "iconsets, *skins\mac, sounds"
-Source: "{#PsiPSrcDir}\client_icons.txt"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
+Source: "{#ResDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common; Excludes: "iconsets, *skins\mac, sound"
+Source: "{#WorkDir}\client_icons.txt"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist; Components: common
 Source: "{#PsiPSrcDir}\CHANGELOG"; DestDir: "{app}"; DestName: "CHANGELOG.TXT"; Flags: ignoreversion skipifsourcedoesntexist; Components: common
-Source: "{#WorkDir}\translations64\*"; DestDir: "{app}\translations"; Flags: ignoreversion recursesubdirs; Components: common
+Source: "{#WorkDir}\translations\*"; DestDir: "{app}\translations"; Flags: ignoreversion recursesubdirs; Components: common
 Source: "{#WorkDir}\lib64\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: common
 Source: "{#WorkDir}\psimedia\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: plugins\mediaplugin
 Source: "{#WorkDir}\webengine64\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs; Components: bin64w
-Source: "{#WorkDir}\bin64\psi-plus.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin64
-Source: "{#WorkDir}\bin64\psi-plus-webengine.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin64w
+Source: "{#WorkDir}\psi-plus.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin64
+Source: "{#WorkDir}\psi-plus-webengine.exe"; DestDir: "{app}"; Flags: ignoreversion; Components: bin64w
 Source: "{#PsiPSrcDir}\COPYING"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist; Components: common
 Source: "common\README.txt"; DestDir: "{app}"; Flags: ignoreversion; Components: common
 ;Dicts
@@ -393,10 +394,10 @@ Root: "HKCR"; Subkey: "xmpp\DefaultIcon"; ValueType: string; ValueData: """{app}
 Root: "HKCR"; Subkey: "xmpp\shell\open\command"; ValueType: string; ValueData: """{app}\psi-plus-webengine.exe"" ""--uri=%1"""; Flags: uninsclearvalue uninsdeletekeyifempty; Components: bin64w; Tasks: createregentry
 
 [Messages]
-english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%nWARNING! Since 1.5.1594 version installer do not contains iconpacks to reduce size. Please use Content Downloader plugin to install needed iconpacks
-french.WelcomeLabel2=Cela installera [name/ver] sur votre ordinateur.%n%nIl est recommandé de fermer toutes les autres applications avant de continuer.%n%nAVERTISSEMENT ! Depuis la version 1.5.1594, le programme d'installation ne contient pas de packs d'icônes pour réduire la taille. Veuillez utiliser le plugin Content Downloader pour installer les packs d'icônes nécessaires 
-russian.WelcomeLabel2=Это установит [name/ver] на ваш компьютер.%n%nПеред продолжением рекомендуется закрыть все другие приложения.%n%nВНИМАНИЕ! Начиная с версии 1.5.1594, инсталлятор не содержит пакеты иконок для уменьшения размера. Пожалуйста, воспользуйтесь Content Downloader плагином, чтобы установить необходимые иконки
-ukrainian.WelcomeLabel2=Це встановить [name/ver] на ваш комп'ютер.%n%nПеред продовженням рекомендовано закрити всі інші програми.%n%УВАГА! Починаючи з версії 1.5.1594, інсталятор не містить пакетів іконок для зменшення розміру. Будь ласка, скористайтесь Content Downloader плагіном, щоб встановити необхідні іконки
+english.WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%nWARNING! This installer do not contains iconpacks. Please use Content Downloader plugin to install needed iconpacks
+french.WelcomeLabel2=Cela installera [name/ver] sur votre ordinateur.%n%nIl est recommandé de fermer toutes les autres applications avant de continuer.%n%nAVERTISSEMENT ! Le programme d'installation ne contient pas de packs d'icônes. Veuillez utiliser le plugin Content Downloader pour installer les packs d'icônes nécessaires 
+russian.WelcomeLabel2=Это установит [name/ver] на ваш компьютер.%n%nПеред продолжением рекомендуется закрыть все другие приложения.%n%nВНИМАНИЕ! Инсталлятор не содержит пакеты иконок. Пожалуйста, воспользуйтесь Content Downloader плагином, чтобы установить необходимые иконки
+ukrainian.WelcomeLabel2=Це встановить [name/ver] на ваш комп'ютер.%n%nПеред продовженням рекомендовано закрити всі інші програми.%n%УВАГА! Інсталятор не містить пакетів іконок. Будь ласка, скористайтесь Content Downloader плагіном, щоб встановити необхідні іконки
 
 [Code]
 function InitializeUninstall(): Boolean;
@@ -569,7 +570,7 @@ function VCinstalled: Boolean;
       if RegQueryDWordValue(HKEY_LOCAL_MACHINE, key, 'Bld', bld) then begin
         if RegQueryDWordValue(HKEY_LOCAL_MACHINE, key, 'RBld', rbld) then begin
             Log('VC 2019 Redist Major is: ' + IntToStr(major) + ' Minor is: ' + IntToStr(minor) + ' Bld is: ' + IntToStr(bld) + ' Rbld is: ' + IntToStr(rbld));
-            // Version info was found. Return true if later or equal to our 14.29.30139.0 redistributable
+            // Version info was found. Return true if later or equal to our 14.29.30153.0 redistributable
             // Note brackets required because of weird operator precendence
             if (major >= 14) and (minor >= 29) and (bld >= 30153) and (rbld >= 0) then begin
               Result := True;
