@@ -4,14 +4,18 @@
 #CONSTANTS/КОНСТАНТЫ
 home=${HOME:-/home/$USER} #домашний каталог
 #guthub repositories
-psi_url="https://github.com/psi-im/psi.git"
-psi_plus_url="https://github.com/psi-plus/main.git"
-plugins_url="https://github.com/psi-im/plugins.git"
-langs_url="https://github.com/psi-plus/psi-plus-l10n.git"
-snapshots_url="https://github.com/psi-plus/psi-plus-snapshots.git"
-psimedia_url="https://github.com/psi-im/psimedia.git"
-resources_url="https://github.com/psi-im/resources.git"
+psi_im_prefix="https://github.com/psi-im"
+psi_plus_prefix="https://github.com/psi-plus"
+psi_url="${psi_im_prefix}/psi.git"
+psi_plus_url="${psi_plus_prefix}/main.git"
+plugins_url="${psi_im_prefix}/plugins.git"
+langs_url="${psi_plus_prefix}/psi-plus-l10n.git"
+snapshots_url="${psi_plus_prefix}/psi-plus-snapshots.git"
+psimedia_url="${psi_im_prefix}/psimedia.git"
+resources_url="${psi_im_prefix}/resources.git"
 def_prefix="/usr" #префикс для сборки пси+
+defualt_qt_ver=6
+build_psi_plus=ON
 #
 #DEFAULT OPTIONS/ОПЦИИ ПО УМОЛЧАНИЮ
 spell_flag="-DUSE_ENCHANT=OFF -DUSE_HUNSPELL=ON -DUSE_ASPELL=OFF"
@@ -51,7 +55,7 @@ DEF_CMAKE_INST_SUFFIX="share/psi+/plugins"
 DEF_PLUG_LIST="ALL"
 #тип сборки плагинов
 #Release | Debug | RelWithDebInfo
-DEF_CMAKE_BUILD_TYPE="Release"
+DEF_CMAKE_BUILD_TYPE="RelWithDebInfo"
 #MXE PATH
 mxe_root=${githubdir}/mxe
 #i386 mxe prefix
@@ -59,7 +63,7 @@ i686_mxe_prefix=${mxe_root}/usr/i686-w64-mingw32.shared
 x86_64_mxe_prefix=${mxe_root}/usr/x86_64-w64-mingw32.shared
 OLDPATH=${PATH}
 #default cmake FLAGS
-DEF_CMAKE_FLAGS="-DBUNDLED_IRIS_ALL=ON"
+DEF_CMAKE_FLAGS="-DBUNDLED_IRIS_ALL=ON -DPSI_PLUS=${build_psi_plus} -DQT_DEFAULT_MAJOR_VERSION=${defualt_qt_ver}"
 
 #WARNING: следующие переменные будут изменены в процессе работы скрипта автоматически
 buildpsi=${default_buildpsi} #инициализация переменной
@@ -108,13 +112,12 @@ fetch_url ()
       cd ${fetch_dir}
       git reset --hard
       git pull
-      git submodule update
+      git submodule update --init --recursive
       cd ${last_dir}
     else
       git clone ${f_url} ${fetch_dir}
       cd ${fetch_dir}
-      git submodule init
-      git submodule update
+      git submodule update --init --recursive
       cd ${last_dir}
     fi
   fi
@@ -270,12 +273,10 @@ get_psi_plus_version()
 prepare_psi_src ()
 {
   if [ ! -z "$1" ]; then
-    git archive --format=tar HEAD | ( cd $1 ; tar xf - )
-    (
-      export ddir="$1"
-      git submodule foreach "( git archive --format=tar HEAD ) \
-| ( cd \"${ddir}/\${path}\" ; tar xf - )"
-    )
+    git checkout-index -a -f --prefix="$1/"
+    if [ ! -z "$(git submodule status --recursive)" ]; then
+      git submodule foreach --recursive 'git checkout-index -a -f --prefix='$1'/$displaypath/'
+    fi
   fi
 }
 #Очистка временных каталогов
@@ -295,7 +296,7 @@ prepare_workspace ()
   cd ${upstream_src}
   prepare_psi_src ${workdir}
   cd ${buildpsi}/plugins && prepare_psi_src ${workdir}/plugins
-  check_dir ${workdir}/plugins/generic/psimedia
+  #check_dir ${workdir}/plugins/generic/psimedia
   cd ${buildpsi}/psimedia && prepare_psi_src ${workdir}/plugins/generic/psimedia
   check_dir ${workdir}/translations
   if [ -d "${buildpsi}/langs/translations" ]; then
@@ -306,14 +307,9 @@ prepare_workspace ()
     cp -a ${buildpsi}/resources/skins/* ${workdir}/skins/
   fi
   cd ${workdir}
-  patch_psi
+  #patch_psi
   get_psi_plus_version
   cd ${psiplus_src}
-  local suffix=""
-  local builddate=$(LANG=en date +'%F')
-  if [ ! -z "${iswebkit}" ]; then
-    suffix="-webkit"
-  fi
   echo $psi_plus_version > ${workdir}/version
 }
 #Подготовка исходников из репы снапшотов
@@ -354,9 +350,9 @@ prepare_builddir ()
 #Создание бэкапа исходников архивом tar
 backup_tar ()
 {
-  echo "Backup ${buildpsi##*/} into ${buildpsi%/*}/${buildpsi##*/}.tar.gz started..."
+  echo "Backup ${buildpsi##*/} into ${buildpsi%/*}/${buildpsi##*/}.tar.xz started..."
   cd ${buildpsi%/*}
-  tar -pczf ${buildpsi##*/}.tar.gz ${buildpsi##*/}
+  tar -pcjf ${buildpsi##*/}.tar.xz ${buildpsi##*/}
   echo "Backup finished..."; echo " "
 }
 #Подготовка архива tar
@@ -372,13 +368,13 @@ prepare_tar ()
   cp -r ${workdir} ${new_src}
   if [ -d "${new_src}" ]; then
     cd ${buildpsi}
-    tar -czf ${tar_name}.tar.gz ${tar_name}
+    tar -cjf ${tar_name}.tar.xz ${tar_name}
     rm -r -f ${new_src}
     if [ -d ${rpmsrc} ]; then
-      if [ -f "${rpmsrc}/${tar_name}.tar.gz" ]; then
-        rm -f ${rpmsrc}/${tar_name}.tar.gz
+      if [ -f "${rpmsrc}/${tar_name}.tar.xz" ]; then
+        rm -f ${rpmsrc}/${tar_name}.tar.xz
       fi
-      cp -f ${buildpsi}/${tar_name}.tar.gz ${rpmsrc}
+      cp -f ${buildpsi}/${tar_name}.tar.xz ${rpmsrc}
     fi
     echo "Preparing completed"
   fi
@@ -387,13 +383,16 @@ prepare_tar ()
 compile_psiplus ()
 {
   curd=$(pwd)
-  prepare_src
+  if [ ! -d "${workdir}" ]; then
+    prepare_src
+  fi
   cd ${workdir}
   local buildlog=${buildpsi}/build.log
   echo "***Build started***">${buildlog}
-  prepare_builddir ${builddir}
-  cd ${builddir}
-  flags="-DPSI_PLUS=ON ${DEF_CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DPSI_LIBDIR=${buildpsi}/build-plugins"
+  local bld_dir=${builddir}/psi
+  prepare_builddir ${bld_dir}
+  cd ${bld_dir}
+  flags="${DEF_CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DPSI_LIBDIR=${builddir}/plugins/psi -DPSI_DATADIR=${builddir}/psi/psi"
   if [ ! -z "$1" ]; then
     flags="${flags} -DCMAKE_INSTALL_PREFIX=$1"
   else
@@ -404,7 +403,7 @@ compile_psiplus ()
   else
     flags="${flags} -DCHAT_TYPE=${chat_type}"
   fi
-  cd ${builddir}
+  cd ${bld_dir}
   cbuild_path=${workdir}
   if [ ! -z "$2" ]; then
     cbuild_path=$2
@@ -417,7 +416,7 @@ compile_psiplus ()
   echo "***Build finished***">>${buildlog}
   if [ -z "$1" ]; then
     cmake --build . --target prepare-bin
-    echo "Psi+ installed in ${workdir}">>${buildlog}
+    echo "Psi+ installed in ${bld_dir}">>${buildlog}
   fi
   cd ${curd}
 }
@@ -433,7 +432,7 @@ install_pp_to_home ()
   echo "***Build started***">${buildlog}
   prepare_builddir ${builddir}
   cd ${builddir}
-  flags="-DPSI_PLUS=ON ${DEF_CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DVERBOSE_PROGRAM_NAME=ON -DCMAKE_INSTALL_PREFIX=${home}/build/psi-plus"
+  flags="${DEF_CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DBUNDLED_OMEMO_C_ALL=ON -DVERBOSE_PROGRAM_NAME=ON -DCMAKE_INSTALL_PREFIX=${home}/build/psi-plus"
   if [ -z "${iswebkit}" ]; then
     flags="${flags} -DCHAT_TYPE=basic"
   else
@@ -447,11 +446,7 @@ install_pp_to_home ()
   echo "--Starting psi-plus compilation">>${buildlog} &&
   cmake --build . --target all --parallel ${cpu_count} 2>>${buildlog} &&
   echo "***Build finished***">>${buildlog} &&
-  cmake --build . --target install || die "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}" 
-  #if [ -d "${home}/build/psi" ]; then
-  #  rm -rf ${home}/build/psi
-  #fi
-  #cp -a ${builddir}/psi ${home}/build/
+  cmake --build . --target install || die "${red}There were errors. Open ${buildpsi}/build.log to see${nocolor}"
   cd ${curd}
 }
 #Сборка из репы снапшотов
@@ -464,7 +459,7 @@ build_all_psiplus ()
   echo "***Build started***">${buildlog}
   prepare_builddir ${builddir}
   cd ${builddir}
-  flags="-DPSI_PLUS=ON ${DEF_CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DENABLE_PLUGINS=ON -DDEV_MODE=ON -DBUILD_DEV_PLUGINS=ON"
+  flags="${DEF_CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DBUNDLED_OMEMO_C_ALL=ON -DDEV_MODE=ON -DBUILD_DEV_PLUGINS=ON"
   if [ -z "${iswebkit}" ]; then
     flags="${flags} -DCHAT_TYPE=basic"
   else
@@ -495,16 +490,17 @@ build_cmake_plugins ()
     echo " "
   }
   curd=$(pwd)
-  if [ ! -f "${upstream_src}/CMakeLists.txt" ]; then
+  if [ ! -d "${workdir}" ]; then
     prepare_src
   fi
-  local plugdir=${buildpsi}/plugins
+  cd ${workdir}
+  local plugdir=${workdir}/plugins
   check_dir ${plugdir}
-  local b_dir=${buildpsi}/build-plugins
+  local b_dir=${builddir}/plugins
   prepare_builddir ${b_dir}
   cd ${b_dir}
-  p_inst_path=${b_dir}/plugins
-  plug_cmake_flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DBUILD_DEV_PLUGINS=ON -DPLUGINS_ROOT_DIR=${upstream_src}/src/plugins -DPsiPluginsApi_DIR=${plugdir}/cmake/modules"
+  p_inst_path=${b_dir}/psi/plugins
+  plug_cmake_flags="-DCMAKE_BUILD_TYPE=${DEF_CMAKE_BUILD_TYPE} -DBUILD_PLUGINS=${DEF_PLUG_LIST} -DBUILD_DEV_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DQT_DEFAULT_MAJOR_VERSION=${defualt_qt_ver} -DBUNDLED_OMEMO_C_ALL=ON -DPLUGINS_ROOT_DIR=${plugdir} -DPsiPluginsApi_DIR=${plugdir}/cmake/modules"
   echo -e "${blue}Do you want to install psi+ plugins into ${psi_homeplugdir}${nocolor} ${pink}[y/n(default)]${nocolor}"
   read isinstall
   if [ "${isinstall}" == "y" ]; then
@@ -669,7 +665,7 @@ install_locales ()
 #Запуск собранной версии
 run_psiplus ()
 {
-  local psi_binary_path=${builddir}/psi
+  local psi_binary_path=${builddir}/psi/psi
   if [ -f "${psi_binary_path}/psi-plus" ];then
     cd ${psi_binary_path}
     ./psi-plus
@@ -714,7 +710,7 @@ compile_psi_mxe()
 {
   local buildlog=${buildpsi}/build-mxe-${1}.log
   curd=$(pwd)
-  flags=""
+  flags="-DBUNDLED_IRIS_ALL=ON -DPSI_PLUS=${build_psi_plus} -DQT_DEFAULT_MAJOR_VERSION=5 -DDEV_MODE=ON -DVERBOSE_PROGRAM_NAME=ON"
   if [ ! -d "${workdir}" ]; then
     prepare_src
   fi
@@ -730,14 +726,14 @@ compile_psi_mxe()
     cmakecmd=run_mxe_cmake_64
   fi
   if [ ${devm} -eq 1 ]; then
-    flags="${flags} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DBUILD_DEV_PLUGINS=ON -DDEV_MODE=ON"
+    flags="${flags} -DENABLE_PLUGINS=ON -DBUILD_PSIMEDIA=ON -DBUILD_DEV_PLUGINS=ON"
   fi
   if [ ${wbkt} -eq 0 ]; then
     flags="${flags} -DCHAT_TYPE=basic"
   else
     flags="${flags} -DCHAT_TYPE=webkit"
   fi
-  flags="${flags} -DPSI_PLUS=ON ${DEF_CMAKE_FLAGS}  -DUSE_CCACHE=ON -DVERBOSE_PROGRAM_NAME=ON -DPLUGINS_NO_DEBUG=ON"
+  flags="${flags} -DUSE_CCACHE=ON -DPLUGINS_NO_DEBUG=ON"
   wrkdir=${builddir}
   check_dir ${wrkdir}
   cd ${wrkdir}
@@ -748,8 +744,7 @@ compile_psi_mxe()
   #echo "Press Enter to continue..." && read tmpvar
   ${cmakecmd} --build . --target all --parallel ${cpu_count} 2>>${buildlog} || die "${red}There were errors. Open ${buildlog} to see${nocolor}"
   if [ ${devm} -eq 1 ]; then
-    ${cmakecmd} --build . --target prepare-bin -- #copy default iconsets skins and themes
-    ${cmakecmd} --build . --target prepare-bin-libs -- #copy dependencies
+    ${cmakecmd} --build . --target prepare-bin --target prepare-bin-libs -- #copy default iconsets skins and themes #copy dependencies
   fi
   if [ -d "${mxe_outd}/$1" ] && [ ${devm} -ne 0 ]; then
     cd ${mxe_outd} && rm -rf $1
@@ -812,7 +807,11 @@ archivate_all()
 #Список зависимостей
 check_qt_deps()
 {
-	check_deps "cmake libhunspell-dev libhttp-parser-dev libminizip-dev libotr5-dev libqt5svg5-dev libqt5webkit5-dev libqt5x11extras5-dev libsignal-protocol-c-dev libsm-dev libssl-dev libtidy-dev libxss-dev qt5keychain-dev qtmultimedia5-dev zlib1g-dev qtmultimedia5-dev libqt5multimedia5-plugins qtbase5-dev qttools5-dev qttools5-dev-tools pkg-config libqt5x11extras5-dev"
+if [ $defualt_qt_ver -eq 5 ]; then
+	check_deps "git gcc g++ cmake libhunspell-dev libhttp-parser-dev libminizip-dev libotr5-dev libqt5svg5-dev libqt5webkit5-dev libqt5x11extras5-dev libsignal-protocol-c-dev libsm-dev libssl-dev libtidy-dev libxss-dev qt5keychain-dev qtmultimedia5-dev zlib1g-dev qtmultimedia5-dev libqt5multimedia5-plugins qtbase5-dev qttools5-dev qttools5-dev-tools pkg-config libqt5x11extras5-dev"
+else
+	check_deps "git gcc g++ cmake libhunspell-dev libhttp-parser-dev libminizip-dev libotr5-dev qt6-svg-dev qt6-webengine-dev libsm-dev libssl-dev libtidy-dev libxss-dev qtkeychain-qt6-dev qt6-multimedia-dev zlib1g-dev qt6-base-dev qt6-image-formats-plugins qt6-l10n-tools qt6-tools-dev pkg-config  libgcrypt20-dev libgpg-error-dev libgstreamer1.0-dev libgstreamer-plugins-bad1.0-dev libgstreamer-plugins-base1.0-dev"
+fi
 }
 #Проверка зависимостей в Ubuntu
 check_deps()
@@ -952,12 +951,12 @@ ${pink}[1]${nocolor} - Download All needed source files to build psi+
 ${pink}[2]${nocolor} - Prepare psi+ sources
 ${pink}[3]${nocolor} - Build psi+ binary
 ${pink}[4]${nocolor} - Build psi+ plugins
-${pink}[5]${nocolor} - Build psi+ with plugins from snapshots
+${pink}[5]${nocolor} - Build All MXE builds
 ${pink}--[51]${nocolor} - Build complete psi+ and install to HOME
 ${pink}[6]${nocolor} - Set ppbuild options
 ${pink}[7]${nocolor} - Prepare psi+ sources for development
 ${pink}[8]${nocolor} - Get help on additional actions
-${pink}[9]${nocolor} - Run compiled psi-plus binary
+${pink}[9]${nocolor} - Run compiled ${builddir}/psi/psi-plus binary
 ${pink}[0]${nocolor} - Exit"
 }
 #Справка по командам
@@ -974,9 +973,9 @@ ${pink}[il]${nocolor} - Install locales to $psi_datadir
 ${pink}[bl]${nocolor} - Just build locale files without installing
 ${pink}[ur]${nocolor} - Update resources
 ${pink}[bs]${nocolor} - Backup ${buildpsi##*/} directory in ${buildpsi%/*}
-${pink}[pw]${nocolor} - Prepare psi+ workspace (clean ${buildpsi}/build dir)
-${pink}[dp]${nocolor} - Run psi-plus binary under gdb debugger
-${pink}[bam]${nocolor} - Build both 32bit and 64bit builds with MXE
+${pink}[pw]${nocolor} - Prepare psi+ workspace (clean ${tmp_dir} dir)
+${pink}[dp]${nocolor} - Run ${builddir}/psi/psi-plus binary under gdb debugger
+${pink}[bp]${nocolor} - Build psi with plugins from snapshot
 ${pink}[cd]${nocolor} - Check build dependencies in Debian
 ${red}-------------------------------------------${nocolor}
 ${blue}Press Enter to continue...${nocolor}"
@@ -991,7 +990,7 @@ choose_action ()
     "2" ) prepare_src;;
     "3" ) compile_psiplus /usr;;
     "4" ) build_cmake_plugins;;
-    "5" ) build_all_psiplus;;
+    "5" ) build_all_mxe;;
     "6" ) set_config;;
     "7" ) prepare_dev;;
     "8" ) get_help;;
@@ -1007,7 +1006,7 @@ choose_action ()
     "bs" ) backup_tar;;
     "pw" ) prepare_workspace;;
     "dp" ) debug_psi;;
-    "bam" ) build_all_mxe;;
+    "bp" ) build_all_psiplus;;
     "b32" ) build_i686_mxe;;
     "b64" ) build_x86_64_mxe;;
     "cd" ) check_qt_deps;;
